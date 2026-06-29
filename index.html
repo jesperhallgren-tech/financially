@@ -1749,6 +1749,15 @@ function rDataMgmt(){
           <button onclick="sbPush()" class="btn pri sm" style="flex:1">⬆ Synka till molnet</button>
           <button onclick="sbPull()" class="btn sec sm" style="flex:1">⬇ Hämta från molnet</button>
         </div>`:`
+        <button onclick="sbGoogleLogin()" class="btn sec sm" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Fortsätt med Google
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="flex:1;height:.5px;background:var(--bd)"></div>
+          <span style="font-size:11px;color:var(--t3)">eller e-post</span>
+          <div style="flex:1;height:.5px;background:var(--bd)"></div>
+        </div>
         <input id="sb-login-email" class="inp" type="email" inputmode="email" placeholder="din@email.com" style="width:100%;box-sizing:border-box;margin-bottom:8px">
         <div id="sb-login-code-row" style="display:none;margin-bottom:8px">
           <input id="sb-login-code" class="inp" type="text" inputmode="numeric" maxlength="6" placeholder="123456" style="width:100%;box-sizing:border-box;letter-spacing:.2em;text-align:center">
@@ -5545,8 +5554,6 @@ async function onbEmailLogin(){
     if(statusEl){statusEl.textContent='Fel kod — försök igen.';statusEl.style.display='block';}
     return;
   }
-  sbUser=data?.user||null;
-  try{ await sbEnsureHousehold(); }catch(e){console.warn('[sbEnsureHousehold]',e.message);}
   showOnboarding(2);
 }
 
@@ -5607,15 +5614,19 @@ async function sbInlineLogin(){
     if(statusEl){statusEl.textContent='Fel kod — försök igen.';statusEl.style.display='block';}
     return;
   }
-  sbUser=data?.user||null;
-  try{ await sbEnsureHousehold(); }catch(e){console.warn('[sbEnsureHousehold]',e.message);}
   _sbLoginCodeSent=false;
-  showSnack('✓ Inloggad');
-  rDataMgmt();
 }
 
 function onbAuthClick(method){
-  alert('Bank-ID / '+method+' — integration Kommande. Använd e-post för nu.');
+  if(method==='google'){ sbGoogleLogin(); return; }
+  alert('Bank-ID / '+method+' — integration Kommande.');
+}
+
+async function sbGoogleLogin(){
+  if(!sb){alert('Molnklienten kunde inte initieras (inget nät?).');return;}
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]}});
+  if(error)alert('Google-inloggning misslyckades: '+error.message);
+  // Vid lyckad start omdirigeras sidan till Google, sedan tillbaka hit — resten hanteras av onAuthStateChange.
 }
 
 // ── Manuell synk mot molnet (push/pull) ──────────────────────
@@ -6807,12 +6818,17 @@ try{ensureIncomeItems();}catch(e){console.error('[ensureIncomeItems]',e.message)
 try{initSepAccToggle();}catch(e){console.error('[initSepAccToggle]',e.message);}
 try{rOv();}catch(e){console.error('[rOv init]',e.message);}
 if(sb){
-  sb.auth.getSession().then(({data})=>{
-    if(data?.session?.user){
-      sbUser=data.session.user;
-      sbEnsureHousehold().catch(e=>console.warn('[sbEnsureHousehold restore]',e.message));
+  sb.auth.onAuthStateChange((event,session)=>{
+    if(session?.user){
+      sbUser=session.user;
+      sbEnsureHousehold().then(()=>{
+        if(_sv==='data')rDataMgmt();
+        if(event==='SIGNED_IN')showSnack('✓ Inloggad — '+(sbUser.email||''));
+      }).catch(e=>console.warn('[sbEnsureHousehold]',e.message));
+    } else if(event==='SIGNED_OUT'){
+      sbUser=null;sbHouseholdId=null;
     }
-  }).catch(e=>console.warn('[sb getSession]',e.message));
+  });
 }
 setTimeout(function(){
   try{refreshSvProfileRow();}catch(e){console.warn('[refreshSvProfileRow]',e.message);}
