@@ -431,6 +431,24 @@ html,body{background:#1C1C1E!important}
 </div>
 </div></div>
 <div id="budget-setup-overlay"></div>
+
+<div id="welcome-gate" style="display:none;position:fixed;inset:0;z-index:900;background:var(--bg);overflow:hidden">
+  <div style="position:fixed;top:-15%;left:-10%;width:70%;height:50%;background:radial-gradient(circle,rgba(10,132,255,.16) 0%,transparent 70%);pointer-events:none;animation:onbGlowPulse 8s ease-in-out infinite"></div>
+  <div style="position:fixed;bottom:-20%;right:-15%;width:75%;height:55%;background:radial-gradient(circle,rgba(88,86,214,.14) 0%,transparent 70%);pointer-events:none;animation:onbGlowPulse 8s ease-in-out infinite 2s"></div>
+  <div style="position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;box-sizing:border-box;text-align:center">
+    <div class="brand-word" style="font-size:42px;margin-bottom:6px">Financially</div>
+    <div style="font-size:14px;color:var(--t3);margin-bottom:48px">Hela hushållets ekonomi, på ett ställe</div>
+    <div style="width:100%;max-width:340px">
+      <button onclick="sbGoogleLogin()" class="onb-cta" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" fill-opacity=".85" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" fill-opacity=".7" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" fill-opacity=".55" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Fortsätt med Google
+      </button>
+      <button onclick="skipWelcomeGate(true)" style="width:100%;padding:14px;background:none;border:none;color:var(--t3);font-size:14px;font-weight:600;cursor:pointer">Logga in med e-post i stället</button>
+      <button onclick="skipWelcomeGate(false)" style="width:100%;padding:14px;background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;margin-top:8px">Fortsätt utan konto</button>
+    </div>
+  </div>
+</div>
+
 <div id="app-wrap">
 <div class="nav"><div style="flex:1;min-width:0"><div class="nav-title" style="display:flex;align-items:center;gap:8px"><span class="brand-word" data-base="1">Financially</span></div></div><button onclick="openGlobalSearch()" id="nav-search-btn" style="background:none;border:none;cursor:pointer;padding:7px;color:var(--t2);display:flex;align-items:center;border-radius:10px;-webkit-tap-highlight-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><button onclick="nav('settings',this)" id="nav-gear-btn" style="background:none;border:none;cursor:pointer;padding:0;color:var(--t2);display:flex;align-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent"><div id="nav-avatar" style="width:30px;height:30px;border-radius:50%;background:var(--blbg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"><span id="nav-avatar-ic" style="font-size:13px;font-weight:700;color:var(--bl)">?</span><img id="nav-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover"></div></button></div>
 <div id="fab-cam" onclick="openCamera()" style="position:fixed;bottom:calc(188px + var(--sb));right:20px;z-index:290;width:44px;height:44px;border-radius:50%;background:var(--card);border:1.5px solid var(--bd);display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.15);cursor:pointer;-webkit-tap-highlight-color:transparent">
@@ -1749,13 +1767,14 @@ function rDataMgmt(){
         ${sbUser&&sbHouseholdId?`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:10px">
           <span>Senast synkad</span><span>${sbLastSyncAt?sbLastSyncAt.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}):'Aldrig'}</span>
         </div>`:''}
-        ${sbUser&&sbHouseholdId?`<div style="display:flex;gap:8px">
+        ${sbUser&&sbHouseholdId?`<div style="display:flex;gap:8px;margin-bottom:8px">
           <button onclick="sbPush()" class="btn pri sm" style="flex:1">⬆ Synka till molnet</button>
           <button onclick="sbPull()" class="btn sec sm" style="flex:1">⬇ Hämta från molnet</button>
         </div>`:sbUser?`
         <div style="font-size:12px;color:var(--err);margin-bottom:10px">Kunde inte skapa/hitta ditt hushåll${sbHouseholdError?(': '+sbHouseholdError):''}.</div>
-        <button onclick="sbRetryHousehold()" class="btn sec sm" style="width:100%">Försök igen</button>
-        `:`
+        <button onclick="sbRetryHousehold()" class="btn sec sm" style="width:100%;margin-bottom:8px">Försök igen</button>
+        `:''}
+        ${sbUser?`<button onclick="sbSignOut()" style="width:100%;padding:10px;background:none;border:none;color:var(--err);font-size:13px;font-weight:600;cursor:pointer">Logga ut</button>`:`
         <button onclick="sbGoogleLogin()" class="btn sec sm" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px">
           <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Fortsätt med Google
@@ -5729,6 +5748,32 @@ async function sbGoogleLogin(){
   // Vid lyckad start omdirigeras sidan till Google, sedan tillbaka hit — resten hanteras av onAuthStateChange.
 }
 
+// ── Välkomstskärm vid appstart (ej inloggad) ─────────────────
+function showWelcomeGate(){
+  const el=document.getElementById('welcome-gate');
+  if(el)el.style.display='block';
+}
+function hideWelcomeGate(){
+  const el=document.getElementById('welcome-gate');
+  if(el)el.style.display='none';
+  sessionStorage.setItem('hb_welcome_seen','1');
+}
+function skipWelcomeGate(goToEmailLogin){
+  hideWelcomeGate();
+  if(goToEmailLogin){
+    nav('settings');
+    _sv='data';rSv();
+  }
+}
+
+async function sbSignOut(){
+  if(!sb)return;
+  try{ await sb.auth.signOut(); }catch(e){ console.warn('[sbSignOut]',e.message); }
+  sbUser=null;sbHouseholdId=null;
+  showSnack('Utloggad');
+  if(_sv==='data')rDataMgmt();
+}
+
 // ── Manuell synk mot molnet (push/pull) ──────────────────────
 // Skriver över molnets rader för respektive tabell med det aktuella
 // lokala läget. Första, enkla versionen — fältnivå-historik (change_log)
@@ -6954,6 +6999,7 @@ if(sb){
   sb.auth.onAuthStateChange((event,session)=>{
     if(session?.user){
       sbUser=session.user;
+      hideWelcomeGate();
       sbEnsureHousehold().then((hhId)=>{
         if(_sv==='data')rDataMgmt();
         if(event==='SIGNED_IN'){
@@ -6966,6 +7012,12 @@ if(sb){
       }).catch(e=>console.warn('[sbEnsureHousehold]',e.message));
     } else if(event==='SIGNED_OUT'){
       sbUser=null;sbHouseholdId=null;
+    } else if(event==='INITIAL_SESSION'&&!session){
+      // Ingen aktiv inloggning hittades vid appstart — visa välkomstskärmen
+      // för återkommande användare (inte under den allra första onboardingen,
+      // som redan har ett eget inloggningssteg), max en gång per "session"
+      // (flik/cold start) så den inte stör vid varje liten navigering.
+      if(S.onboarded&&!sessionStorage.getItem('hb_welcome_seen'))showWelcomeGate();
     }
   });
 }
