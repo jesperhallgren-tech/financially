@@ -443,8 +443,15 @@ html,body{background:#1C1C1E!important}
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" fill-opacity=".85" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" fill-opacity=".7" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" fill-opacity=".55" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Fortsätt med Google
       </button>
-      <button onclick="skipWelcomeGate(true)" style="width:100%;padding:14px;background:none;border:none;color:var(--t3);font-size:14px;font-weight:600;cursor:pointer">Logga in med e-post i stället</button>
-      <button onclick="skipWelcomeGate(false)" style="width:100%;padding:14px;background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;margin-top:8px">Fortsätt utan konto</button>
+      <button id="gate-email-toggle" onclick="document.getElementById('gate-email-form').style.display='block';this.style.display='none'" style="width:100%;padding:14px;background:none;border:none;color:var(--t3);font-size:14px;font-weight:600;cursor:pointer">Logga in med e-post i stället</button>
+      <div id="gate-email-form" style="display:none;text-align:left;margin-top:8px">
+        <input id="gate-login-email" class="inp" type="email" inputmode="email" placeholder="din@email.com" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+        <div id="gate-login-code-row" style="display:none;margin-bottom:8px">
+          <input id="gate-login-code" class="inp" type="text" inputmode="numeric" maxlength="6" placeholder="123456" style="width:100%;box-sizing:border-box;letter-spacing:.2em;text-align:center">
+        </div>
+        <div id="gate-login-status" style="font-size:12px;color:var(--err);margin-bottom:8px;display:none"></div>
+        <button id="gate-login-btn" onclick="sbInlineLogin('gate')" class="btn pri sm" style="width:100%">Skicka kod</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1809,7 +1816,7 @@ function rDataMgmt(){
           <input id="sb-login-code" class="inp" type="text" inputmode="numeric" maxlength="6" placeholder="123456" style="width:100%;box-sizing:border-box;letter-spacing:.2em;text-align:center">
         </div>
         <div id="sb-login-status" style="font-size:12px;color:var(--err);margin-bottom:8px;display:none"></div>
-        <button id="sb-login-btn" onclick="sbInlineLogin()" class="btn pri sm" style="width:100%">Skicka kod</button>
+        <button id="sb-login-btn" onclick="sbInlineLogin('sb')" class="btn pri sm" style="width:100%">Skicka kod</button>
         `}
       </div>
     </div>
@@ -5647,16 +5654,13 @@ async function onbEmailLogin(){
   if(name&&P.me)P.me.name=name;
   saveLS();
 
-  // Inget e-post angivet — fortsätt helt lokalt utan molnkonto (som tidigare).
   if(!email){
-    if(!name){alert('Ange minst e-post eller namn för att fortsätta.');return;}
-    showOnboarding(2);
+    if(statusEl){statusEl.textContent='Ange din e-postadress för att logga in.';statusEl.style.display='block';}
     return;
   }
 
   if(!sb){
-    // Supabase-klienten kunde inte initieras (t.ex. inget nät) — fortsätt lokalt.
-    showOnboarding(2);
+    if(statusEl){statusEl.textContent='Kunde inte ansluta till molnet — kontrollera din uppkoppling och försök igen.';statusEl.style.display='block';}
     return;
   }
 
@@ -5754,19 +5758,20 @@ async function sbLoadHistory(){
   }
 }
 
-let _sbLoginCodeSent=false;
-async function sbInlineLogin(){
+let _sbLoginCodeSent={};
+async function sbInlineLogin(prefix){
+  prefix=prefix||'sb';
   if(!sb){showSnack('Molnklienten kunde inte initieras.');return;}
-  const email=(document.getElementById('sb-login-email')?.value||'').trim();
-  const statusEl=document.getElementById('sb-login-status');
-  const btn=document.getElementById('sb-login-btn');
+  const email=(document.getElementById(prefix+'-login-email')?.value||'').trim();
+  const statusEl=document.getElementById(prefix+'-login-status');
+  const btn=document.getElementById(prefix+'-login-btn');
   if(statusEl)statusEl.style.display='none';
   if(!email){
     if(statusEl){statusEl.textContent='Ange en e-postadress.';statusEl.style.display='block';}
     return;
   }
 
-  if(!_sbLoginCodeSent){
+  if(!_sbLoginCodeSent[prefix]){
     if(btn){btn.disabled=true;btn.textContent='Skickar kod…';}
     const{error}=await sb.auth.signInWithOtp({email});
     if(btn)btn.disabled=false;
@@ -5774,14 +5779,14 @@ async function sbInlineLogin(){
       if(statusEl){statusEl.textContent='Kunde inte skicka kod: '+error.message;statusEl.style.display='block';}
       return;
     }
-    _sbLoginCodeSent=true;
-    document.getElementById('sb-login-code-row').style.display='block';
-    document.getElementById('sb-login-email').disabled=true;
+    _sbLoginCodeSent[prefix]=true;
+    document.getElementById(prefix+'-login-code-row').style.display='block';
+    document.getElementById(prefix+'-login-email').disabled=true;
     if(btn)btn.textContent='Bekräfta kod';
     return;
   }
 
-  const code=(document.getElementById('sb-login-code')?.value||'').trim();
+  const code=(document.getElementById(prefix+'-login-code')?.value||'').trim();
   if(code.length<6){
     if(statusEl){statusEl.textContent='Ange den 6-siffriga koden från mejlet.';statusEl.style.display='block';}
     return;
@@ -5793,7 +5798,7 @@ async function sbInlineLogin(){
     if(statusEl){statusEl.textContent='Fel kod — försök igen.';statusEl.style.display='block';}
     return;
   }
-  _sbLoginCodeSent=false;
+  _sbLoginCodeSent[prefix]=false;
 }
 
 function onbAuthClick(method){
@@ -5817,13 +5822,6 @@ function hideWelcomeGate(){
   const el=document.getElementById('welcome-gate');
   if(el)el.style.display='none';
   sessionStorage.setItem('hb_welcome_seen','1');
-}
-function skipWelcomeGate(goToEmailLogin){
-  hideWelcomeGate();
-  if(goToEmailLogin){
-    nav('settings');
-    _sv='data';rSv();
-  }
 }
 
 async function sbSignOut(){
