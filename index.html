@@ -7073,7 +7073,7 @@ try{loadLS();}catch(e){console.error('[loadLS]',e.message);}
 // redan onboardats — annars hinner appens lokala data (namn, belopp osv.)
 // alltid synas en kort stund innan den asynkrona inloggningskontrollen
 // svarar. Den döljs bara igen om/när en riktig session bekräftas nedan.
-try{ if(S.onboarded) showWelcomeGate(); }catch(e){console.error('[welcomeGate initial]',e.message);}
+try{ showWelcomeGate(); }catch(e){console.error('[welcomeGate initial]',e.message);}
 try{cleanupDemoSparandeItem();}catch(e){console.error('[cleanupDemoSparandeItem]',e.message);}
 try{compInc();}catch(e){console.error('[compInc]',e.message);}
 try{loadP();}catch(e){console.error('[loadP]',e.message);}
@@ -7087,6 +7087,12 @@ if(sb){
       sbUser=session.user;
       hideWelcomeGate();
       refreshSignOutRow();
+      if(!S.onboarded){
+        // Inloggad, men hushållet har aldrig slutfört onboarding — kör den nu,
+        // som första steget EFTER inloggning (istället för innan/parallellt,
+        // vilket tidigare kunde missas helt för helt nya besökare).
+        try{ showOnboarding(0); }catch(e){console.warn('[showOnboarding post-login]',e.message);}
+      }
       sbEnsureHousehold().then((hhId)=>{
         if(_sv==='data')rDataMgmt();
         if(event==='SIGNED_IN'){
@@ -7104,7 +7110,7 @@ if(sb){
       // Ingen aktiv inloggning bekräftad — spärren visas redan synkront sedan
       // sidladdningens start (fail-closed), så här bekräftar vi bara att den
       // förblir synlig (utan att ändra ev. "redan visad"-flagga).
-      if(S.onboarded)showWelcomeGate();
+      showWelcomeGate();
     }
   });
 }
