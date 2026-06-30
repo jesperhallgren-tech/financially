@@ -818,6 +818,17 @@ const SPARANDE_SUBCATS=[
   {id:'investering',lbl:'Investeringar'},
   {id:'pension',lbl:'Pensionssparande'},
 ];
+const BAL_ASSET_CATS=[
+  {id:'boende',lbl:'Bostad'},
+  {id:'sparande',lbl:'Sparande'},
+  {id:'annat',lbl:'Andra tillg\u00e5ngar'},
+];
+const BAL_DEBT_CATS=[
+  {id:'bolan',lbl:'Bol\u00e5n'},
+  {id:'studielan',lbl:'Studiel\u00e5n'},
+  {id:'kort',lbl:'Krediter & konsumentl\u00e5n'},
+  {id:'annat',lbl:'Andra skulder'},
+];
 const srcBadge=src=>{const[c]=srcClr[src]||srcClr.manual;return `<span style="font-size:10px;color:${c};font-weight:600">${{manual:'Manuell',bank:'Bank',avanza:'Avanza',nordnet:'Nordnet',annat:'K\u00e4lla'}[src]||'Manuell'}</span>`;};
 const PBB=58800,ST=625800,DF='hushallsbudget_data.json',LS='hb_v4';
 
@@ -3990,6 +4001,14 @@ function rBalItemEditor(){
     <input class="inp" id="bie-label" value="${(item.label||'').replace(/"/g,'&quot;')}" style="width:100%">
   </div>`;
 
+  const catOptsList=type==='a'?BAL_ASSET_CATS:BAL_DEBT_CATS;
+  html+=`<div style="margin-bottom:14px">
+    <div class="bs-who-label" style="margin-bottom:6px">Kategori</div>
+    <select class="sel" id="bie-cat" onchange="bieSetCat(this.value)" style="width:100%">
+      ${catOptsList.map(c=>`<option value="${c.id}"${item.cat===c.id?' selected':''}>${c.lbl}</option>`).join('')}
+    </select>
+  </div>`;
+
   html+=`<div style="margin-bottom:14px">
     <div class="bs-who-label" style="margin-bottom:6px">Belopp</div>
     <div class="bs-amount-wrap"><input class="bs-amount-input" id="bie-amount" type="number" inputmode="decimal" value="${amt||''}" placeholder="0"><span class="bs-amount-suffix">kr</span></div>
@@ -4088,6 +4107,21 @@ function rBoendeFields(item,itemId){
       <a href="https://www.hemnet.se" target="_blank" style="flex:1;padding:8px;border-radius:10px;background:var(--bd2);color:var(--t2);text-decoration:none;font-size:12px;font-weight:500;text-align:center">\u2197 Hemnet</a>
     </div>
   </div>`;
+}
+
+function bieSetCat(newCat){
+  const{type,itemId}=_balEditCtx;
+  const arr=type==='a'?S.assets2:S.debts2;
+  const item=arr.find(i=>i.id===itemId);
+  if(!item)return;
+  item.cat=newCat;
+  if(type==='a'&&newCat==='sparande'){
+    if(!item.subcat)item.subcat='konto';
+  } else {
+    item.subcat=null;
+  }
+  hapLight();
+  rBalItemEditor();
 }
 
 function bieSetWho(who){
@@ -5794,7 +5828,22 @@ function skipWelcomeGate(goToEmailLogin){
 
 async function sbSignOut(){
   if(!sb)return;
-  try{ await sb.auth.signOut(); }catch(e){ console.warn('[sbSignOut]',e.message); }
+  try{
+    await sb.auth.signOut();
+  }catch(e){
+    console.warn('[sbSignOut]',e.message);
+    // Nätverket kan ha hindrat servern från att ogiltigförklara sessionen —
+    // se i alla fall till att rensa lokalt så en omladdning inte återupplivar
+    // en "spöksession".
+    try{ await sb.auth.signOut({scope:'local'}); }catch(e2){console.warn('[sbSignOut local]',e2.message);}
+  }
+  // Extra säkerhetsnät: ta bort eventuella kvarvarande Supabase-sessionsnycklar
+  // direkt ur localStorage, oavsett vad signOut() ovan lyckades med.
+  try{
+    Object.keys(localStorage).forEach(k=>{
+      if(k.startsWith('sb-')&&k.includes('-auth-token'))localStorage.removeItem(k);
+    });
+  }catch(e){}
   sbUser=null;sbHouseholdId=null;
   if(_sv==='data')rDataMgmt();
   refreshSignOutRow();
