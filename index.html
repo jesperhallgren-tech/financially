@@ -5567,11 +5567,16 @@ async function sbEnsureHousehold(){
     sbHouseholdId=existing[0].household_id;
     return sbHouseholdId;
   }
-  const{data:hh,error:e2}=await sb.from('households').insert({name:'Mitt hushåll',mode:S.mode||'par'}).select('id').single();
+  // Genererar ID:t själva istället för att be databasen skicka tillbaka det
+  // (.select() på en nyskapad rad kräver enligt behörighetsreglerna att man
+  // redan är medlem — vilket man inte är förrän household_users-raden nedan
+  // skapats. Att läsa tillbaka hade alltså alltid misslyckats med "0 rader").
+  const newId=(crypto?.randomUUID)?crypto.randomUUID():'h'+Date.now()+Math.random().toString(36).slice(2);
+  const{error:e2}=await sb.from('households').insert({id:newId,name:'Mitt hushåll',mode:S.mode||'par'});
   if(e2){console.warn('[sbEnsureHousehold create]',e2.message);return null;}
-  sbHouseholdId=hh.id;
+  sbHouseholdId=newId;
   const{error:e3}=await sb.from('household_users').insert({household_id:sbHouseholdId,user_id:sbUser.id,role:'owner'});
-  if(e3)console.warn('[sbEnsureHousehold link]',e3.message);
+  if(e3){console.warn('[sbEnsureHousehold link]',e3.message);sbHouseholdId=null;return null;}
   return sbHouseholdId;
 }
 
