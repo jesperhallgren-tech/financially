@@ -5821,7 +5821,6 @@ function showWelcomeGate(){
 function hideWelcomeGate(){
   const el=document.getElementById('welcome-gate');
   if(el)el.style.display='none';
-  sessionStorage.setItem('hb_welcome_seen','1');
 }
 
 async function sbSignOut(){
@@ -5846,9 +5845,7 @@ async function sbSignOut(){
   if(_sv==='data')rDataMgmt();
   refreshSignOutRow();
   // Efter explicit utloggning ska man mötas av inloggningsskärmen igen,
-  // inte bli kvar i appen — visa den oavsett tidigare "redan visad denna
-  // session"-spärr, och nollställ spärren så en omladdning beter sig likadant.
-  sessionStorage.removeItem('hb_welcome_seen');
+  // inte bli kvar i appen.
   showWelcomeGate();
 }
 
@@ -7071,6 +7068,12 @@ function syncNavPad(){
 window.addEventListener('resize',syncNavPad);
 syncNavPad();
 try{loadLS();}catch(e){console.error('[loadLS]',e.message);}
+// Fail-closed: visa spärren OMEDELBART (synkront, innan något asynkront
+// inloggnings-anrop ens hunnit starta) för återkommande användare som inte
+// redan onboardats — annars hinner appens lokala data (namn, belopp osv.)
+// alltid synas en kort stund innan den asynkrona inloggningskontrollen
+// svarar. Den döljs bara igen om/när en riktig session bekräftas nedan.
+try{ if(S.onboarded) showWelcomeGate(); }catch(e){console.error('[welcomeGate initial]',e.message);}
 try{cleanupDemoSparandeItem();}catch(e){console.error('[cleanupDemoSparandeItem]',e.message);}
 try{compInc();}catch(e){console.error('[compInc]',e.message);}
 try{loadP();}catch(e){console.error('[loadP]',e.message);}
@@ -7098,11 +7101,10 @@ if(sb){
       sbUser=null;sbHouseholdId=null;
       refreshSignOutRow();
     } else if(event==='INITIAL_SESSION'&&!session){
-      // Ingen aktiv inloggning hittades vid appstart — visa välkomstskärmen
-      // för återkommande användare (inte under den allra första onboardingen,
-      // som redan har ett eget inloggningssteg), max en gång per "session"
-      // (flik/cold start) så den inte stör vid varje liten navigering.
-      if(S.onboarded&&!sessionStorage.getItem('hb_welcome_seen'))showWelcomeGate();
+      // Ingen aktiv inloggning bekräftad — spärren visas redan synkront sedan
+      // sidladdningens start (fail-closed), så här bekräftar vi bara att den
+      // förblir synlig (utan att ändra ev. "redan visad"-flagga).
+      if(S.onboarded)showWelcomeGate();
     }
   });
 }
