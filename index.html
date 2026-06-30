@@ -1745,6 +1745,9 @@ function rDataMgmt(){
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:10px">
           <span>Status</span><span>${sbUser?'Inloggad — '+(sbUser.email||''):'Inte inloggad'}</span>
         </div>
+        ${sbUser&&sbHouseholdId?`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:10px">
+          <span>Senast synkad</span><span>${sbLastSyncAt?sbLastSyncAt.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'}):'Aldrig'}</span>
+        </div>`:''}
         ${sbUser&&sbHouseholdId?`<div style="display:flex;gap:8px">
           <button onclick="sbPush()" class="btn pri sm" style="flex:1">⬆ Synka till molnet</button>
           <button onclick="sbPull()" class="btn sec sm" style="flex:1">⬇ Hämta från molnet</button>
@@ -4446,7 +4449,17 @@ if(document.readyState!=='loading')initBrowSwipe();
 function dirty(...tabs){if(tabs.includes(_act))requestAnimationFrame(()=>{try{compInc();renderTab(_act);}catch(e){console.warn('[dirty]',e.message);}});}
 function renderTab(id){
   if(id==='settings'){_sv=_sv||null;rSv();return;}switch(id){case'ov':rOv();break;case'budget':rBudget();break;case'actual':/* merged into budget tab */break;case'bal':rBal();setTimeout(()=>{rAllocDonut();},50);break;case'goals':rGoals();break;}}
-function saveLS(){try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}}
+function saveLS(){try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}sbScheduleAutoSync();}
+
+// ── Automatisk molnsynk ───────────────────────────────────────
+// Körs en kort stund efter senaste ändringen (debounce) så att flera
+// snabba redigeringar i rad bara ger en synk, inte en per knapptryck.
+let _sbAutoSyncT=null;
+function sbScheduleAutoSync(){
+  if(!sb||!sbUser||!sbHouseholdId)return;
+  clearTimeout(_sbAutoSyncT);
+  _sbAutoSyncT=setTimeout(()=>{ sbPush(true).catch(e=>console.warn('[sbAutoSync]',e.message)); },4000);
+}
 function loadLS(){try{const r=localStorage.getItem(LS);if(r){applyP(JSON.parse(r));return true;}}catch(e){}return false;}
 async function saveFile(){const blob=new Blob([JSON.stringify(build(),null,2)],{type:'application/json'});const file=new File([blob],'hushallsbudget.json',{type:'application/json'});if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Budget J&N'});return;}catch(e){if(e.name==='AbortError')return;}}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hushallsbudget.json';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function dlog(m){const e=document.getElementById('dlog');if(e){if(e.textContent==='\u2013')e.textContent='';e.textContent+=`[${new Date().toLocaleTimeString('sv-SE')}] ${m}\n`;e.scrollTop=1e6;}}
@@ -5647,11 +5660,11 @@ async function sbGoogleLogin(){
 // Skriver över molnets rader för respektive tabell med det aktuella
 // lokala läget. Första, enkla versionen — fältnivå-historik (change_log)
 // och automatisk bakgrundssynk är ett uppföljande steg.
-async function sbPush(){
-  if(!sb||!sbUser||!sbHouseholdId){showSnack('Inte inloggad mot molnet.');return;}
+let sbLastSyncAt=null;
+async function sbPush(silent){
+  if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
   try{
-    hapMed();
-    showSnack('Synkar till molnet…');
+    if(!silent){hapMed();showSnack('Synkar till molnet…');}
 
     await sb.from('assets').delete().eq('household_id',sbHouseholdId);
     if((S.assets2||[]).length){
@@ -5678,17 +5691,19 @@ async function sbPush(){
     const totD=(S.debts2||[]).reduce((s,a)=>s+Math.abs(a.amount||0),0);
     await sb.from('value_history').insert({household_id:sbHouseholdId,series_key:'net_worth',value:totA-totD});
 
-    showSnack('✓ Synkat till molnet');
+    sbLastSyncAt=new Date();
+    if(_sv==='data')rDataMgmt();
+    if(!silent)showSnack('✓ Synkat till molnet');
   }catch(e){
     console.warn('[sbPush]',e.message);
-    showSnack('Synk misslyckades: '+e.message);
+    if(!silent)showSnack('Synk misslyckades: '+e.message);
   }
 }
 
-async function sbPull(){
-  if(!sb||!sbUser||!sbHouseholdId){showSnack('Inte inloggad mot molnet.');return;}
+async function sbPull(silent){
+  if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
   try{
-    showSnack('Hämtar från molnet…');
+    if(!silent)showSnack('Hämtar från molnet…');
     const[{data:assets,error:e1},{data:debts,error:e2},{data:goals,error:e3}]=await Promise.all([
       sb.from('assets').select('*').eq('household_id',sbHouseholdId),
       sb.from('debts').select('*').eq('household_id',sbHouseholdId),
@@ -5700,12 +5715,16 @@ async function sbPull(){
     if(debts)S.debts2=debts.map(d=>({id:d.meta?.localId||d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
     if(goals)S.goals=goals.map(g=>({id:g.meta?.localId||g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
 
-    markUns();saveLS();
+    markUns();
+    clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
+    try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
+    sbLastSyncAt=new Date();
     dirty('ov','bal','goals');
-    showSnack('✓ Hämtat från molnet');
+    if(_sv==='data')rDataMgmt();
+    if(!silent)showSnack('✓ Hämtat från molnet');
   }catch(e){
     console.warn('[sbPull]',e.message);
-    showSnack('Hämtning misslyckades: '+e.message);
+    if(!silent)showSnack('Hämtning misslyckades: '+e.message);
   }
 }
 
@@ -6835,9 +6854,15 @@ if(sb){
   sb.auth.onAuthStateChange((event,session)=>{
     if(session?.user){
       sbUser=session.user;
-      sbEnsureHousehold().then(()=>{
+      sbEnsureHousehold().then((hhId)=>{
         if(_sv==='data')rDataMgmt();
-        if(event==='SIGNED_IN')showSnack('✓ Inloggad — '+(sbUser.email||''));
+        if(event==='SIGNED_IN'){
+          showSnack('✓ Inloggad — '+(sbUser.email||''));
+        } else if(event==='INITIAL_SESSION'&&hhId){
+          // Appen öppnades med en redan inloggad session (ny enhet/webbläsare,
+          // eller samma enhet en ny dag) — hämta senaste molndata automatiskt.
+          sbPull(true).catch(e=>console.warn('[sbAutoPull]',e.message));
+        }
       }).catch(e=>console.warn('[sbEnsureHousehold]',e.message));
     } else if(event==='SIGNED_OUT'){
       sbUser=null;sbHouseholdId=null;
