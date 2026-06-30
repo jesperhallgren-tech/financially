@@ -7119,7 +7119,7 @@ try{snapNW();}catch(e){console.warn('[snapNW]',e);}
 // så caches.match() missade alltid och allt gick via nätverket varje gång).
 if('serviceWorker' in navigator){
   const swCode=`
-const CACHE_NAME='financially-v1';
+const CACHE_NAME='financially-v2';
 const PRECACHE=[
   'https://fonts.googleapis.com/css2?family=Lobster&display=swap'
 ];
@@ -7137,6 +7137,24 @@ self.addEventListener('activate',e=>{
 });
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
+  // Sidans egen HTML (navigering) ska ALDRIG cache-först:as — annars kan en
+  // uppdaterad version av appen aldrig nå webbläsaren igen, eftersom varje
+  // omladdning skulle servera den allra första cachade kopian för evigt.
+  // Nätverket provas alltid först; cachen är bara en offline-reserv.
+  const isNavigation=e.request.mode==='navigate'||e.request.destination==='document';
+  if(isNavigation){
+    e.respondWith(
+      fetch(e.request).then(networkResponse=>{
+        if(networkResponse&&networkResponse.ok){
+          const copy=networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache=>cache.put(e.request,copy)).catch(()=>{});
+        }
+        return networkResponse;
+      }).catch(()=>caches.match(e.request))
+    );
+    return;
+  }
+  // Övriga resurser (typsnitt m.m.) kan fortsatt cache-först:as säkert.
   e.respondWith(
     caches.match(e.request).then(cached=>{
       if(cached)return cached;
