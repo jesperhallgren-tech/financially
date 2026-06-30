@@ -1610,7 +1610,12 @@ function rYearCompareGrid(year, container){
 
 // ═══ Kvitto-kamera (AI Vision) ════════════════════════════════
 function openCamera(){
-  if(!IN_CLAUDE){showSnack('Kräver Claude.ai-miljö');return;}
+  const canUseClaudeProxy=IN_CLAUDE;
+  const canUseOwnProxy=!!(sb&&sbUser);
+  if(!canUseClaudeProxy&&!canUseOwnProxy){
+    showSnack('Logga in (Inställningar → Datahantering) för att använda kvitto-scan');
+    return;
+  }
   const input=document.createElement('input');
   input.type='file';
   input.accept='image/*';
@@ -1627,32 +1632,34 @@ function openCamera(){
         r.onerror=()=>rej(new Error('Läsfel'));
         r.readAsDataURL(file);
       });
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-6',
-          max_tokens:300,
-          messages:[{role:'user',content:[
-            {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
-            {type:'text',text:'Extrahera från detta kvitto: totalt belopp (kr), butik/beskrivning, datum (YYYY-MM-DD). Svara BARA med JSON: {"amount":123,"desc":"Butiknamn","date":"2024-01-15"}. Om du inte kan avgöra, sätt null.'}
-          ]}]
-        })
-      });
-      const data=await resp.json();
+      const content=[
+        {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
+        {type:'text',text:'Extrahera från detta kvitto: totalt belopp (kr), butik/beskrivning, datum (YYYY-MM-DD). Svara BARA med JSON: {"amount":123,"desc":"Butiknamn","date":"2024-01-15"}. Om du inte kan avgöra, sätt null.'}
+      ];
+      let data;
+      if(canUseClaudeProxy){
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content}]})
+        });
+        data=await resp.json();
+      } else {
+        data=await callAIProxy(content,300);
+      }
       const text=data.content?.[0]?.text||'';
       const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
-      
+
       // Pre-fill FAB
       if(parsed.amount){document.getElementById('fab-amt').value=Math.abs(parsed.amount);}
       if(parsed.desc){document.getElementById('fab-desc').value=parsed.desc;}
       if(parsed.date){document.getElementById('fab-date').value=parsed.date;}
-      
+
       openFAB();
       showSnack('✓ Kvitto inläst — kontrollera och spara');
     }catch(err){
       console.warn('[camera]',err);
-      showSnack('Kunde inte läsa kvitto — fyll i manuellt');
+      showSnack(err?.message||'Kunde inte läsa kvitto — fyll i manuellt');
       openFAB();
     }
   };
@@ -4530,6 +4537,23 @@ function setDS(s,l){
   if(dot){dot.style.background=s==='ok'?'var(--ok)':s==='uns'||s==='spin'?'var(--warn)':s==='err'?'var(--err)':'var(--t3)';}
   if(!b)return;b.className='ds '+s;if(t)t.textContent=l||s;if(i){if(s==='spin'){i.innerHTML='<span class="spin-ico">\u21bb</span>';}else{i.textContent=s==='ok'?'\u2713':s==='uns'?'\u2191':s==='err'?'\u26a0':'\u2601';}}}
 function dbClick(){if(!IN_CLAUDE){alert('Drive kr\u00e4ver Claude.ai-kontexten.\n\nAnv\u00e4nd Spara JSON-fil under Inst. f\u00f6r att synka.');return;}const s=document.getElementById('dsb')?.className||'';if(s.includes('idle'))loadDrive(true);else if(s.includes('uns')||s.includes('err'))saveDrive(true);}
+// ── AI-anrop via egen Supabase Edge Function (utanför Claude.ai) ──
+// content: Anthropic content-block-array (text/image), se Edge Function-koden.
+async function callAIProxy(content,maxTokens,system){
+  if(!sb||!sbUser)throw new Error('Logga in för att använda AI-funktioner');
+  const{data:sessionData}=await sb.auth.getSession();
+  const token=sessionData?.session?.access_token;
+  if(!token)throw new Error('Ingen aktiv inloggning');
+  const resp=await fetch(SB_URL+'/functions/v1/ai-proxy',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({content,maxTokens,system}),
+  });
+  const data=await resp.json();
+  if(!resp.ok)throw new Error(data?.error||('HTTP '+resp.status));
+  return data;
+}
+
 async function callD(prompt,tok,sys){try{
   const body={model:'claude-sonnet-4-20250514',max_tokens:tok||1024,
     messages:[{role:'user',content:prompt}],
