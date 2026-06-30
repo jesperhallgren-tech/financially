@@ -142,7 +142,7 @@ body{max-width:680px;margin:0 auto;padding-bottom:calc(120px + var(--sb));min-he
 .inp.ri{text-align:right}
 .sel{padding:10px 13px;font-size:15px;border:.5px solid var(--bd);border-radius:var(--r);background:var(--inp-bg,#2C2C2E);color:var(--t1);width:100%;-webkit-appearance:none;outline:none}
 .sel.sm{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--inp-bg,#2C2C2E)}
-.brow{display:flex;align-items:center;padding:10px 0;border-top:.5px solid var(--bd3);gap:10px}
+.brow{display:flex;align-items:center;padding:10px 14px 10px 28px;border-top:.5px solid var(--bd3);gap:10px}
 .brow:first-child{border-top:none}
 .brow-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .brow-left{flex:1;min-width:0}
@@ -432,7 +432,7 @@ html,body{background:#1C1C1E!important}
 </div></div>
 <div id="budget-setup-overlay"></div>
 <div id="app-wrap">
-<div class="nav"><div style="flex:1;min-width:0"><div class="nav-title" style="display:flex;align-items:center;gap:8px"><span class="brand-word" data-base="1">Financially</span></div></div><button onclick="openGlobalSearch()" id="nav-search-btn" style="background:none;border:none;cursor:pointer;padding:7px;color:var(--t2);display:flex;align-items:center;border-radius:10px;-webkit-tap-highlight-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><button onclick="nav('settings',this)" id="nav-gear-btn" style="background:none;border:none;cursor:pointer;padding:7px;color:var(--t2);display:flex;align-items:center;border-radius:10px;-webkit-tap-highlight-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
+<div class="nav"><div style="flex:1;min-width:0"><div class="nav-title" style="display:flex;align-items:center;gap:8px"><span class="brand-word" data-base="1">Financially</span></div></div><button onclick="openGlobalSearch()" id="nav-search-btn" style="background:none;border:none;cursor:pointer;padding:7px;color:var(--t2);display:flex;align-items:center;border-radius:10px;-webkit-tap-highlight-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><button onclick="nav('settings',this)" id="nav-gear-btn" style="background:none;border:none;cursor:pointer;padding:0;color:var(--t2);display:flex;align-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent"><div id="nav-avatar" style="width:30px;height:30px;border-radius:50%;background:var(--blbg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"><span id="nav-avatar-ic" style="font-size:13px;font-weight:700;color:var(--bl)">?</span><img id="nav-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover"></div></button></div>
 <div id="fab-cam" onclick="openCamera()" style="position:fixed;bottom:calc(188px + var(--sb));right:20px;z-index:290;width:44px;height:44px;border-radius:50%;background:var(--card);border:1.5px solid var(--bd);display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.15);cursor:pointer;-webkit-tap-highlight-color:transparent">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
 </div>
@@ -961,7 +961,7 @@ try{
 let _act='ov';
 function nav(id,btn){
   if(id==='goals')setTimeout(rGoals,0);
-  if(id!=='settings'&&_sv){_sv=null;const bk=document.getElementById('sv-back-btn');if(bk)bk.style.display='none';const navTitleEl=document.querySelector('.nav-title');if(navTitleEl)navTitleEl.innerHTML='<span class="brand-word" data-base="1">Financially</span>';}
+  if(id!=='settings'&&_sv){_sv=null;const bk=document.getElementById('sv-back-btn');if(bk)bk.style.display='none';}
 document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tb').forEach(t=>t.classList.remove('on'));document.getElementById('page-'+id).classList.add('on');btn?.classList.add('on');_act=id;hapLight();window.scrollTo(0,0);requestAnimationFrame(function(){try{compInc();}catch(e){console.warn('[nav compInc]',e.message);}try{renderTab(id);}catch(e){console.error('[nav renderTab]',e.message);}});
   syncFabVisibility();}
 
@@ -1917,6 +1917,20 @@ function isFamilj(){return getMode()==='familj';}
 
 // Namn för person 1 och 2 (namnbaserat, ej J/N)
 function p1Name(){return P.me.name||'Jag';}
+
+// Håller header-avataren (ersätter f.d. kugghjul) synkad med huvudanvändarens
+// foto/namn — anropas vid app-start och varje gång foto eller namn ändras.
+function refreshNavAvatar(){
+  const img=document.getElementById('nav-avatar-img');
+  const ic=document.getElementById('nav-avatar-ic');
+  if(!img||!ic)return;
+  if(P.me?.photo){
+    img.src=P.me.photo;img.style.display='block';ic.style.display='none';
+  } else {
+    img.style.display='none';ic.style.display='block';
+    ic.textContent=(P.me?.name||'?').charAt(0).toUpperCase();
+  }
+}
 function p2Name(){
   const partner=P.family.find(m=>['fru','sambo','man','partner'].includes(m.role||''));
   return partner?.name||P.family[0]?.name||'Partner';
@@ -5760,6 +5774,18 @@ async function sbPush(silent){
     delG=goalIds.length?delG.not('id','in','('+goalIds.map(id=>`"${id}"`).join(',')+')'):delG;
     await delG;
 
+    // Profiler (huvudanvändare + familjemedlemmar) — "me" har ett fast
+    // stabilt ID eftersom hushållet bara har en huvudanvändare; varje
+    // familjemedlem använder sitt eget lokala ID, precis som tillgångar etc.
+    const memberRows=[{id:'me',household_id:sbHouseholdId,name:P.me?.name||'',role:'jag',dob:P.me?.dob||null,gender:P.me?.gender||null,occupation:P.me?.occ||null,photo:P.me?.photo||null,meta:{city:P.me?.city,sector:P.me?.sector,email:P.me?.email,phone:P.me?.phone}}];
+    (P.family||[]).forEach(m=>{
+      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:null,photo:m.photo||null,meta:{email:m.email,phone:m.phone}});
+    });
+    const{error:eMem}=await sb.from('members').upsert(memberRows,{onConflict:'id'});
+    if(eMem)throw eMem;
+    const memberIds=memberRows.map(m=>m.id);
+    await sb.from('members').delete().eq('household_id',sbHouseholdId).not('id','in','('+memberIds.map(id=>`"${id}"`).join(',')+')');
+
     // Tre separata tidsserier, så de kan plottas var för sig senare
     // (inte bara nettovärdet som tidigare).
     const totA=(S.assets2||[]).reduce((s,a)=>s+Math.abs(a.amount||0),0);
@@ -5783,22 +5809,31 @@ async function sbPull(silent){
   if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
   try{
     if(!silent)showSnack('Hämtar från molnet…');
-    const[{data:assets,error:e1},{data:debts,error:e2},{data:goals,error:e3}]=await Promise.all([
+    const[{data:assets,error:e1},{data:debts,error:e2},{data:goals,error:e3},{data:members,error:e4}]=await Promise.all([
       sb.from('assets').select('*').eq('household_id',sbHouseholdId),
       sb.from('debts').select('*').eq('household_id',sbHouseholdId),
       sb.from('goals').select('*').eq('household_id',sbHouseholdId),
+      sb.from('members').select('*').eq('household_id',sbHouseholdId),
     ]);
-    if(e1||e2||e3)throw(e1||e2||e3);
+    if(e1||e2||e3||e4)throw(e1||e2||e3||e4);
 
     if(assets)S.assets2=assets.map(a=>({id:a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
     if(debts)S.debts2=debts.map(d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
     if(goals)S.goals=goals.map(g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
+    if(members){
+      const me=members.find(m=>m.id==='me');
+      if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||''};
+      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||''}));
+    }
 
     markUns();
     clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
     try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
+    try{storeP();}catch(e){}
     sbLastSyncAt=new Date();
     dirty('ov','bal','goals');
+    refreshNavAvatar();
+    if(document.getElementById('family-list'))renderFamilyList();
     if(_sv==='data')rDataMgmt();
     if(!silent)showSnack('✓ Hämtat från molnet');
   }catch(e){
@@ -6679,25 +6714,8 @@ function rSv(){
   const bk=document.getElementById('sv-back-btn');
   const bi=document.getElementById('sv-back-inner');
   if(bk)bk.style.display=_sv?'':'none';
-  // Update nav title for sub-page
-  const navTitleEl=document.querySelector('.nav-title');
-  if(navTitleEl){
-    const titles={
-      'user-settings':'Användarinställningar',
-      'personal-me':'Mina uppgifter',
-      'personal-family':'Andra profiler',
-      'personal-member':'Familjemedlem',
-      'privacy':'Integritet & säkerhet',
-      'subscription':'Abonnemang',
-      'tax':'Skatt & räntor',
-      'categories':'Budgetkategorier',
-      'data':'Datahantering',
-      'about':'Om',
-    };
-    const appName=document.querySelector('.nav-title')?.dataset?.base||'Financially';
-    if(_sv&&titles[_sv]){navTitleEl.innerHTML='<span style="font-family:inherit">'+titles[_sv]+'</span>';}
-    else{navTitleEl.innerHTML='<span class="brand-word" data-base="1">Financially</span>';}
-  }
+  // Loggan "Financially" ska alltid synas i headern, även på undersidor —
+  // sidans namn syns redan i sidans egen rubrik längre ner.
   if(bi)bi.onclick=function(){
     if(['personal-family','personal-member'].includes(_sv)){_sv='personal-family';}
     else if(['tax','categories'].includes(_sv)){_sv='user-settings';}
@@ -6745,6 +6763,7 @@ function setMePhoto(data){
   if(img){img.src=data;img.style.display='block';}
   const ic=document.getElementById('me-photo-ic');
   if(ic)ic.style.display='none';
+  refreshNavAvatar();
 }
 function setMbrPhoto(data){
   const m=P.family.find(x=>x.id===_svMbr);if(!m)return;
@@ -6765,7 +6784,7 @@ function saveP(){
         dd=document.getElementById('p-me-dob-d');
   P.me.dob=(dy&&dm&&dd&&dy.value&&dm.value&&dd.value)?
     dy.value+'-'+dm.value+'-'+dd.value:'';
-  onGross();storeP();refreshSvProfileRow();
+  onGross();storeP();refreshSvProfileRow();refreshNavAvatar();
 }
 function loadMeForm(){
   ['name','city','gender','occ','sector','email','phone'].forEach(f=>{
@@ -6788,6 +6807,7 @@ function loadMeForm(){
 }
 function storeP(){
   try{localStorage.setItem('hb_P',JSON.stringify(P));}catch(e){}
+  sbScheduleAutoSync();
 }
 function loadP(){
   try{
@@ -6803,7 +6823,7 @@ function renderFamilyList(){
   P.family.forEach((m,i)=>{
     const last=i===P.family.length-1;
     html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${last?'':'border-bottom:.5px solid var(--bd);'}cursor:pointer" onclick="_svMbr='${m.id}';_sv='personal-member';rSv()">
-      <div style="width:32px;height:32px;border-radius:50%;background:var(--blbg);display:flex;align-items:center;justify-content:center;color:var(--bl);font-size:14px;font-weight:600;flex-shrink:0">${m.name.charAt(0).toUpperCase()}</div>
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--blbg);display:flex;align-items:center;justify-content:center;color:var(--bl);font-size:14px;font-weight:600;flex-shrink:0;overflow:hidden">${m.photo?`<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">`:m.name.charAt(0).toUpperCase()}</div>
       <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:400;color:var(--t1)">${m.name}</div>
       <div style="font-size:12px;color:var(--t3);margin-top:1px">${ROLES[m.role]||m.role||'Familjemedlem'}</div></div>
       <span style="color:var(--t3)">${chev}</span>
@@ -6926,6 +6946,7 @@ try{loadLS();}catch(e){console.error('[loadLS]',e.message);}
 try{cleanupDemoSparandeItem();}catch(e){console.error('[cleanupDemoSparandeItem]',e.message);}
 try{compInc();}catch(e){console.error('[compInc]',e.message);}
 try{loadP();}catch(e){console.error('[loadP]',e.message);}
+try{refreshNavAvatar();}catch(e){console.error('[refreshNavAvatar]',e.message);}
 try{ensureIncomeItems();}catch(e){console.error('[ensureIncomeItems]',e.message);}
 try{initSepAccToggle();}catch(e){console.error('[initSepAccToggle]',e.message);}
 try{rOv();}catch(e){console.error('[rOv init]',e.message);}
