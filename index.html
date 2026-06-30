@@ -450,7 +450,7 @@ html,body{background:#1C1C1E!important}
 </div>
 
 <div id="app-wrap">
-<div class="nav"><div style="flex:1;min-width:0"><div class="nav-title" style="display:flex;align-items:center;gap:8px"><span class="brand-word" data-base="1">Financially</span></div></div><button onclick="openGlobalSearch()" id="nav-search-btn" style="background:none;border:none;cursor:pointer;padding:7px;color:var(--t2);display:flex;align-items:center;border-radius:10px;-webkit-tap-highlight-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><button onclick="nav('settings',this)" id="nav-gear-btn" style="background:none;border:none;cursor:pointer;padding:0;color:var(--t2);display:flex;align-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent"><div id="nav-avatar" style="width:30px;height:30px;border-radius:50%;background:var(--blbg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"><span id="nav-avatar-ic" style="font-size:13px;font-weight:700;color:var(--bl)">?</span><img id="nav-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover"></div></button></div>
+<div class="nav"><button id="sv-back-inner" onclick="(function(){if(['personal-family','personal-member'].includes(_sv)){_sv='personal-family';}else if(['tax','categories'].includes(_sv)){_sv='user-settings';}else{_sv=null;}rSv();})()" style="display:none;background:rgba(60,60,67,.18);border:none;cursor:pointer;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;flex-shrink:0;color:var(--t1);margin-right:8px;-webkit-tap-highlight-color:transparent"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><div style="flex:1;min-width:0"><div class="nav-title" style="display:flex;align-items:center;gap:8px"><span class="brand-word" data-base="1">Financially</span></div></div><button onclick="openGlobalSearch()" id="nav-search-btn" style="background:none;border:none;cursor:pointer;padding:7px;color:var(--t2);display:flex;align-items:center;border-radius:10px;-webkit-tap-highlight-color:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><button onclick="nav('settings',this)" id="nav-gear-btn" style="background:none;border:none;cursor:pointer;padding:0;color:var(--t2);display:flex;align-items:center;border-radius:50%;-webkit-tap-highlight-color:transparent"><div id="nav-avatar" style="width:30px;height:30px;border-radius:50%;background:var(--blbg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"><span id="nav-avatar-ic" style="font-size:13px;font-weight:700;color:var(--bl)">?</span><img id="nav-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover"></div></button></div>
 <div id="fab-cam" onclick="openCamera()" style="position:fixed;bottom:calc(188px + var(--sb));right:20px;z-index:290;width:44px;height:44px;border-radius:50%;background:var(--card);border:1.5px solid var(--bd);display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.15);cursor:pointer;-webkit-tap-highlight-color:transparent">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
 </div>
@@ -523,7 +523,7 @@ html,body{background:#1C1C1E!important}
 <div id="page-bal" class="page"></div>
 <div id="page-goals" class="page"></div>
 <div id="page-settings" class="page">
-<div id="sv-back-btn" style="display:none;position:fixed;top:calc(var(--st,0px) + 60px);left:16px;z-index:200;"><button id="sv-back-inner" style="background:rgba(60,60,67,.18);border:none;cursor:pointer;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t1);transition:opacity .15s;-webkit-tap-highlight-color:transparent;pointer-events:all;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button></div><div id="sv-main">
+<div id="sv-main">
 
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-top:4px">
   <div style="width:46px;height:46px;border-radius:16px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
@@ -981,7 +981,7 @@ try{
 let _act='ov';
 function nav(id,btn){
   if(id==='goals')setTimeout(rGoals,0);
-  if(id!=='settings'&&_sv){_sv=null;const bk=document.getElementById('sv-back-btn');if(bk)bk.style.display='none';}
+  if(id!=='settings'&&_sv){_sv=null;const bi=document.getElementById('sv-back-inner');if(bi)bi.style.display='none';}
 document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tb').forEach(t=>t.classList.remove('on'));document.getElementById('page-'+id).classList.add('on');btn?.classList.add('on');_act=id;hapLight();window.scrollTo(0,0);requestAnimationFrame(function(){try{compInc();}catch(e){console.warn('[nav compInc]',e.message);}try{renderTab(id);}catch(e){console.error('[nav renderTab]',e.message);}});
   syncFabVisibility();}
 
@@ -5772,9 +5772,13 @@ async function sbSignOut(){
   if(!sb)return;
   try{ await sb.auth.signOut(); }catch(e){ console.warn('[sbSignOut]',e.message); }
   sbUser=null;sbHouseholdId=null;
-  showSnack('Utloggad');
   if(_sv==='data')rDataMgmt();
   refreshSignOutRow();
+  // Efter explicit utloggning ska man mötas av inloggningsskärmen igen,
+  // inte bli kvar i appen — visa den oavsett tidigare "redan visad denna
+  // session"-spärr, och nollställ spärren så en omladdning beter sig likadant.
+  sessionStorage.removeItem('hb_welcome_seen');
+  showWelcomeGate();
 }
 
 // Liten, alltid-synlig utloggningsrad direkt under "Inställningar"-rubriken
@@ -6771,17 +6775,10 @@ function rSv(){
   const main=document.getElementById('sv-main');
   if(main)main.style.display=_sv?'none':'';
   refreshSignOutRow();
-  const bk=document.getElementById('sv-back-btn');
   const bi=document.getElementById('sv-back-inner');
-  if(bk)bk.style.display=_sv?'':'none';
+  if(bi)bi.style.display=_sv?'flex':'none';
   // Loggan "Financially" ska alltid synas i headern, även på undersidor —
   // sidans namn syns redan i sidans egen rubrik längre ner.
-  if(bi)bi.onclick=function(){
-    if(['personal-family','personal-member'].includes(_sv)){_sv='personal-family';}
-    else if(['tax','categories'].includes(_sv)){_sv='user-settings';}
-    else{_sv=null;}
-    rSv();
-  };
   all.forEach(k=>{
     const el=document.getElementById('sv-'+k);
     if(el)el.style.display=_sv===k?'':'none';
