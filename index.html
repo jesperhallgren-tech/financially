@@ -530,6 +530,8 @@ html,body{background:#1C1C1E!important}
   <div style="font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.4px;line-height:1.15">Inställningar</div>
 </div>
 
+<div id="sv-signout-row"></div>
+
 <div class="gc" style="padding:0;margin-bottom:16px">
   <div onclick="_sv='personal-me';rSv()" style="display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">
     <div style="width:32px;height:32px;border-radius:9px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bl)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
@@ -5772,6 +5774,18 @@ async function sbSignOut(){
   sbUser=null;sbHouseholdId=null;
   showSnack('Utloggad');
   if(_sv==='data')rDataMgmt();
+  refreshSignOutRow();
+}
+
+// Liten, alltid-synlig utloggningsrad direkt under "Inställningar"-rubriken
+// på huvudsidan — bara synlig när man faktiskt är inloggad mot molnet.
+function refreshSignOutRow(){
+  const el=document.getElementById('sv-signout-row');
+  if(!el)return;
+  el.innerHTML=sbUser?`<button onclick="sbSignOut()" class="gc" style="width:100%;display:flex;align-items:center;gap:10px;padding:11px 16px;margin-bottom:16px;border:none;cursor:pointer;color:var(--err);font-size:14px;font-weight:600;text-align:left;-webkit-tap-highlight-color:transparent">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Logga ut (${sbUser.email||''})
+  </button>`:'';
 }
 
 // ── Manuell synk mot molnet (push/pull) ──────────────────────
@@ -6756,6 +6770,7 @@ function rSv(){
   const all=['user-settings','personal-me','personal-family','personal-member','privacy','subscription','tax','categories','data','about'];
   const main=document.getElementById('sv-main');
   if(main)main.style.display=_sv?'none':'';
+  refreshSignOutRow();
   const bk=document.getElementById('sv-back-btn');
   const bi=document.getElementById('sv-back-inner');
   if(bk)bk.style.display=_sv?'':'none';
@@ -7000,6 +7015,7 @@ if(sb){
     if(session?.user){
       sbUser=session.user;
       hideWelcomeGate();
+      refreshSignOutRow();
       sbEnsureHousehold().then((hhId)=>{
         if(_sv==='data')rDataMgmt();
         if(event==='SIGNED_IN'){
@@ -7012,6 +7028,7 @@ if(sb){
       }).catch(e=>console.warn('[sbEnsureHousehold]',e.message));
     } else if(event==='SIGNED_OUT'){
       sbUser=null;sbHouseholdId=null;
+      refreshSignOutRow();
     } else if(event==='INITIAL_SESSION'&&!session){
       // Ingen aktiv inloggning hittades vid appstart — visa välkomstskärmen
       // för återkommande användare (inte under den allra första onboardingen,
