@@ -961,6 +961,7 @@ try{
 let _act='ov';
 function nav(id,btn){
   if(id==='goals')setTimeout(rGoals,0);
+  if(id!=='settings'&&_sv){_sv=null;const bk=document.getElementById('sv-back-btn');if(bk)bk.style.display='none';const navTitleEl=document.querySelector('.nav-title');if(navTitleEl)navTitleEl.innerHTML='<span class="brand-word" data-base="1">Financially</span>';}
 document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tb').forEach(t=>t.classList.remove('on'));document.getElementById('page-'+id).classList.add('on');btn?.classList.add('on');_act=id;hapLight();window.scrollTo(0,0);requestAnimationFrame(function(){try{compInc();}catch(e){console.warn('[nav compInc]',e.message);}try{renderTab(id);}catch(e){console.error('[nav renderTab]',e.message);}});
   syncFabVisibility();}
 
@@ -1773,6 +1774,10 @@ function rDataMgmt(){
         `}
       </div>
     </div>
+    ${sbUser&&sbHouseholdId?`<div class="gc" style="padding:13px 16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Senaste ändringar</div>
+      <div id="sb-history">Laddar…</div>
+    </div>`:''}
     <div class="gc" style="padding:0;margin-bottom:12px">
       <div style="padding:13px 16px;border-bottom:.5px solid var(--bd)">
         <div style="font-size:13px;font-weight:600;margin-bottom:8px">Drive-synkronisering</div>
@@ -1841,6 +1846,7 @@ function rDataMgmt(){
         </button>
       </div>
     </div>`;
+  if(sbUser&&sbHouseholdId)sbLoadHistory();
 }
 
 // CSV-export av alla transaktioner
@@ -3727,6 +3733,7 @@ function closeGemItemEditor(){
   setTimeout(()=>{if(sheet)sheet.style.display='none';},300);
   _gemEditCtx=null;
   _addItemCat=null;
+  _addItemIncGroup=null;
 }
 
 function rGemItemEditor(){
@@ -4128,7 +4135,25 @@ function confirmDeleteBalItem(type,itemId){
 // ══ Universal "L\u00e4gg till post" \u2014 v\u00e4lj makrokategori \u2192 namn/belopp/f\u00f6rdelning ══
 let _addItemCat=null;
 
-function openAddGemItem(presetCat){
+let _addItemIncGroup=null;
+function openAddGemItem(presetCat,incGroup){
+  // Inkomst-grupperna (Lön/Utdelning/Bidrag/Övriga) skapas redan med fasta
+  // ID:n av ensureIncomeItems() (dolda när beloppet är 0). Om en sådan post
+  // redan finns för den klickade gruppen ska "+ Lägg till" redigera DEN,
+  // inte skapa en ny lös post som hamnar i "Andra inkomster" eftersom den
+  // inte matchar gruppens ID-mönster.
+  if(presetCat==='inkomst'&&incGroup){
+    const gem=S.budget.gem||[];
+    let existing=null;
+    if(incGroup==='lon'){
+      const lonItems=gem.filter(i=>i.id.startsWith('inc_lon_'));
+      if(lonItems.length===1)existing=lonItems[0];
+    } else {
+      existing=gem.find(i=>i.id===incGroup)||null;
+    }
+    if(existing){ openGemItemEditor(existing.id); return; }
+  }
+  _addItemIncGroup=incGroup||null;
   _addItemCat=presetCat||null;
   _gemEditCtx=null;
   hapLight();
@@ -4247,7 +4272,7 @@ function aieSave(){
   const shareInp=document.getElementById('aie-share-value');
   const shareMode=shareInp?.value||'income';
 
-  const id='u'+Date.now().toString(36);
+  const id=(_addItemCat==='inkomst'&&_addItemIncGroup==='lon')?'inc_lon_'+Date.now().toString(36):'u'+Date.now().toString(36);
   const maxOrder=Math.max(0,...(S.budget.gem||[]).filter(i=>i.cat===_addItemCat).map(i=>i.order||0));
   const newItem={id,label,split:'D',amount,cat:_addItemCat,order:maxOrder+1};
   if(who!=='shared'){
@@ -4343,7 +4368,7 @@ function rIncomeSection(targetEl){
     if(isOpen){
       const activeItems=gItems.filter(item=>item.amount&&Math.abs(item.amount)>=1);
       if(!activeItems.length){
-        inner=`<div style="padding:10px 14px 10px 28px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();openAddGemItem('inkomst')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
+        inner=`<div style="padding:10px 14px 10px 28px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();openAddGemItem('inkomst','${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
       } else {
         activeItems.forEach(item=>{
           const totHtml=`<span class="brow-tot" style="${item.amount?'color:var(--ok)':'color:var(--t3);font-weight:400'}">${item.amount?'+'+fmt(item.amount):'Ej satt'}</span>`;
@@ -4354,7 +4379,7 @@ function rIncomeSection(targetEl){
           </div><div class="brow-swipe-content"><div class="brow"><div class="brow-body"><div class="brow-left">${nameHtml}</div>${totHtml}</div></div></div></div>`;
         });
         inner+=`<div style="padding:10px 0 2px;text-align:center">
-          <button onclick="event.stopPropagation();openAddGemItem('inkomst')" style="background:none;color:var(--bl);border:none;font-size:13px;font-weight:600;cursor:pointer;padding:4px">+ L\u00e4gg till</button>
+          <button onclick="event.stopPropagation();openAddGemItem('inkomst','${g.id}')" style="background:none;color:var(--bl);border:none;font-size:13px;font-weight:600;cursor:pointer;padding:4px">+ L\u00e4gg till</button>
         </div>`;
       }
     }
@@ -5602,6 +5627,40 @@ async function sbRetryHousehold(){
   if(_sv==='data')rDataMgmt();
 }
 
+// ── Historik (change_log) ────────────────────────────────────
+const SB_FIELD_LABELS={value:'belopp',current_amount:'sparat belopp',monthly_contrib:'månadsbelopp'};
+const SB_TABLE_LABELS={assets:'Tillgång',debts:'Skuld',goals:'Mål'};
+async function sbLoadHistory(){
+  const el=document.getElementById('sb-history');
+  if(!el||!sb||!sbHouseholdId)return;
+  try{
+    const{data,error}=await sb.from('change_log').select('*').eq('household_id',sbHouseholdId).order('changed_at',{ascending:false}).limit(8);
+    if(error)throw error;
+    if(!data||!data.length){
+      el.innerHTML='<div style="font-size:13px;color:var(--t3)">Inga ändringar loggade ännu.</div>';
+      return;
+    }
+    // Slå upp etikett för posten (t.ex. "Sparkonto") via lokal data, om den finns.
+    const labelFor=(table,id)=>{
+      const list=table==='assets'?S.assets2:table==='debts'?S.debts2:S.goals;
+      return(list||[]).find(x=>x.id===id)?.label||SB_TABLE_LABELS[table]||table;
+    };
+    el.innerHTML=data.map(row=>{
+      const fieldLbl=SB_FIELD_LABELS[row.field_name]||row.field_name;
+      const oldV=row.old_value!=null?fmt(Math.round(Number(row.old_value))):'–';
+      const newV=row.new_value!=null?fmt(Math.round(Number(row.new_value))):'–';
+      const when=new Date(row.changed_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      return`<div style="padding:8px 0;border-top:.5px solid var(--bd);font-size:12px">
+        <div style="color:var(--t1)">${labelFor(row.table_name,row.record_id)} — ${fieldLbl}: ${oldV} → ${newV}</div>
+        <div style="color:var(--t3);margin-top:1px">${when}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    console.warn('[sbLoadHistory]',e.message);
+    el.innerHTML='<div style="font-size:12px;color:var(--err)">Kunde inte ladda historik.</div>';
+  }
+}
+
 let _sbLoginCodeSent=false;
 async function sbInlineLogin(){
   if(!sb){showSnack('Molnklienten kunde inte initieras.');return;}
@@ -5666,30 +5725,50 @@ async function sbPush(silent){
   try{
     if(!silent){hapMed();showSnack('Synkar till molnet…');}
 
-    await sb.from('assets').delete().eq('household_id',sbHouseholdId);
+    // Upsert med appens egna lokala ID:n som radens nyckel (istället för
+    // att radera allt och skapa nytt) — det är detta som gör att databasens
+    // change_log-utlösare faktiskt ser en UPPDATERING och kan logga
+    // gammalt-vs-nytt värde. Rader som tagits bort lokalt raderas separat,
+    // baserat på vilka ID:n som FINNS lokalt nu.
+    const assetIds=(S.assets2||[]).map(a=>a.id);
     if((S.assets2||[]).length){
-      const rows=S.assets2.map(a=>({household_id:sbHouseholdId,category:a.cat||'annat',subcategory:a.subcat||null,label:a.label||'',value:Math.abs(a.amount||0),meta:{localId:a.id,src:a.src,own:a.own,sJ:a.sJ,sN:a.sN}}));
-      const{error}=await sb.from('assets').insert(rows);
+      const rows=S.assets2.map(a=>({id:a.id,household_id:sbHouseholdId,category:a.cat||'annat',subcategory:a.subcat||null,label:a.label||'',value:Math.abs(a.amount||0),meta:{src:a.src,own:a.own,sJ:a.sJ,sN:a.sN}}));
+      const{error}=await sb.from('assets').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
+    let del=sb.from('assets').delete().eq('household_id',sbHouseholdId);
+    del=assetIds.length?del.not('id','in','('+assetIds.map(id=>`"${id}"`).join(',')+')'):del;
+    await del;
 
-    await sb.from('debts').delete().eq('household_id',sbHouseholdId);
+    const debtIds=(S.debts2||[]).map(d=>d.id);
     if((S.debts2||[]).length){
-      const rows=S.debts2.map(d=>({household_id:sbHouseholdId,category:d.cat||'annat',label:d.label||'',value:Math.abs(d.amount||0),meta:{localId:d.id,src:d.src,own:d.own,sJ:d.sJ,sN:d.sN}}));
-      const{error}=await sb.from('debts').insert(rows);
+      const rows=S.debts2.map(d=>({id:d.id,household_id:sbHouseholdId,category:d.cat||'annat',label:d.label||'',value:Math.abs(d.amount||0),meta:{src:d.src,own:d.own,sJ:d.sJ,sN:d.sN}}));
+      const{error}=await sb.from('debts').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
+    let delD=sb.from('debts').delete().eq('household_id',sbHouseholdId);
+    delD=debtIds.length?delD.not('id','in','('+debtIds.map(id=>`"${id}"`).join(',')+')'):delD;
+    await delD;
 
-    await sb.from('goals').delete().eq('household_id',sbHouseholdId);
+    const goalIds=(S.goals||[]).map(g=>g.id);
     if((S.goals||[]).length){
-      const rows=S.goals.map(g=>({household_id:sbHouseholdId,label:g.label||'',target_amount:g.target||0,target_date:null,current_amount:getEffectiveCurrent(g)||0,monthly_contrib:getEffectiveMonthly(g)||0,meta:{localId:g.id,type:g.type,owner:g.owner}}));
-      const{error}=await sb.from('goals').insert(rows);
+      const rows=S.goals.map(g=>({id:g.id,household_id:sbHouseholdId,label:g.label||'',target_amount:g.target||0,target_date:null,current_amount:getEffectiveCurrent(g)||0,monthly_contrib:getEffectiveMonthly(g)||0,meta:{type:g.type,owner:g.owner}}));
+      const{error}=await sb.from('goals').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
+    let delG=sb.from('goals').delete().eq('household_id',sbHouseholdId);
+    delG=goalIds.length?delG.not('id','in','('+goalIds.map(id=>`"${id}"`).join(',')+')'):delG;
+    await delG;
 
+    // Tre separata tidsserier, så de kan plottas var för sig senare
+    // (inte bara nettovärdet som tidigare).
     const totA=(S.assets2||[]).reduce((s,a)=>s+Math.abs(a.amount||0),0);
     const totD=(S.debts2||[]).reduce((s,a)=>s+Math.abs(a.amount||0),0);
-    await sb.from('value_history').insert({household_id:sbHouseholdId,series_key:'net_worth',value:totA-totD});
+    await sb.from('value_history').insert([
+      {household_id:sbHouseholdId,series_key:'net_worth',value:totA-totD},
+      {household_id:sbHouseholdId,series_key:'total_assets',value:totA},
+      {household_id:sbHouseholdId,series_key:'total_debts',value:totD},
+    ]);
 
     sbLastSyncAt=new Date();
     if(_sv==='data')rDataMgmt();
@@ -5711,9 +5790,9 @@ async function sbPull(silent){
     ]);
     if(e1||e2||e3)throw(e1||e2||e3);
 
-    if(assets)S.assets2=assets.map(a=>({id:a.meta?.localId||a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
-    if(debts)S.debts2=debts.map(d=>({id:d.meta?.localId||d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
-    if(goals)S.goals=goals.map(g=>({id:g.meta?.localId||g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
+    if(assets)S.assets2=assets.map(a=>({id:a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
+    if(debts)S.debts2=debts.map(d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
+    if(goals)S.goals=goals.map(g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
 
     markUns();
     clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
