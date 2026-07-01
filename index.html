@@ -146,9 +146,9 @@ body{max-width:680px;margin:0 auto;padding-bottom:calc(120px + var(--sb));min-he
 .brow:first-child{border-top:none}
 .brow-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .brow-left{flex:1;min-width:0}
-.brow-name{font-size:14px;font-weight:400;color:var(--t2);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow-name{font-size:13px;font-weight:400;color:var(--t2);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .brow-split{font-size:11px;color:var(--t3);margin-top:2px;display:block;font-variant-numeric:tabular-nums}
-.brow-tot{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--t2)}
+.brow-tot{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--t2)}
 .brow-edit{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:.5px solid var(--bd);flex-wrap:wrap}
 .brow-edit:first-child{border-top:none}
 .ksep{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:10px 0 5px;border-top:.5px solid var(--bd);margin-top:2px}
@@ -4062,7 +4062,19 @@ function rGemItemEditor(){
   </div>`;
 
   const isLonItem=item.id.startsWith('inc_lon_');
-  if(isShared&&!isLonItem){
+  const isIncomeItem=item.cat==='inkomst';
+  if(isShared&&!isLonItem&&isIncomeItem){
+    // Inkomst har inget att "betala" eller dela procentuellt \u2014 bara vems den \u00e4r.
+    const isFixed=item.shares&&item.shares.length===1&&item.shares[0].mode==='fixed';
+    const payerId=isFixed?item.shares[0].personId:null;
+    html+=`<div style="margin-bottom:14px">
+      <div class="bs-who-label">Vems inkomst?</div>
+      <div class="bs-split-row">
+        <button class="bs-split-btn ${!isFixed?'on':''}" onclick="gieSetWho('shared')">Delat</button>
+        ${contributors.map(c=>`<button class="bs-split-btn ${payerId===c.id?'on':''}" onclick="gieSetWho('${c.id}')">${c.name}</button>`).join('')}
+      </div>
+    </div>`;
+  } else if(isShared&&!isLonItem){
     const isFixed=item.shares&&item.shares.length===1&&item.shares[0].mode==='fixed';
     const payerId=isFixed?item.shares[0].personId:null;
     html+=`<div style="margin-bottom:6px">
@@ -4588,7 +4600,17 @@ function rAddGemItemSheet(){
     <div class="bs-amount-wrap"><input class="bs-amount-input" id="aie-amount" type="number" inputmode="decimal" placeholder="0"><span class="bs-amount-suffix">kr / m\u00e5n</span></div>
   </div>`;
 
-  if(isShared){
+  if(isShared&&_addItemCat==='inkomst'){
+    // Inkomst har inget att "betala" eller dela procentuellt \u2014 bara vems den \u00e4r.
+    html+=`<div style="margin-bottom:14px">
+      <div class="bs-who-label">Vems inkomst?</div>
+      <div class="bs-split-row">
+        <button class="bs-split-btn on" id="aie-who-shared" onclick="aieSetWho('shared')">Delat</button>
+        ${contributors.map(c=>`<button class="bs-split-btn" id="aie-who-${c.id}" onclick="aieSetWho('${c.id}')">${c.name}</button>`).join('')}
+      </div>
+    </div>`;
+    html+=`<input type="hidden" id="aie-who-value" value="shared">`;
+  } else if(isShared){
     const globalPct=getGlobalDefaultPct();
     const aieP1=contributors[0]?.name||p1Name();
     const aieP2=contributors[1]?.name||p2Name();
