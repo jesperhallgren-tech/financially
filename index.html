@@ -4527,21 +4527,24 @@ let _addItemCat=null;
 
 let _addItemIncGroup=null;
 function openAddGemItem(presetCat,incGroup){
-  // Inkomst-grupperna (Lön/Utdelning/Bidrag/Övriga) skapas redan med fasta
-  // ID:n av ensureIncomeItems() (dolda när beloppet är 0). Om en sådan post
-  // redan finns för den klickade gruppen ska "+ Lägg till" redigera DEN,
-  // inte skapa en ny lös post som hamnar i "Andra inkomster" eftersom den
-  // inte matchar gruppens ID-mönster.
+  // F\u00f6rsta g\u00e5ngen en grupp (Utdelning/Bidrag/\u00d6vriga) anv\u00e4nds finns bara en
+  // of\u00e4rdig baspost (amount:0, skapad av ensureIncomeItems()) \u2014 d\u00e5 \u00e4r det en
+  // bekv\u00e4mlighet att "+ L\u00e4gg till" bara \u00f6ppnar redigering av DEN, ist\u00e4llet
+  // f\u00f6r att skapa en till tom rad. Men s\u00e5 fort den posten fyllts i, eller om
+  // gruppen redan har flera poster, ska "+ L\u00e4gg till" alltid skapa en RIKTIG
+  // ny, namngiven rad \u2014 annars kan man aldrig ha t.ex. tv\u00e5 olika bidrag.
   if(presetCat==='inkomst'&&incGroup){
     const gem=S.budget.gem||[];
-    let existing=null;
+    let groupItems;
     if(incGroup==='lon'){
-      const lonItems=gem.filter(i=>i.id.startsWith('inc_lon_'));
-      if(lonItems.length===1)existing=lonItems[0];
+      groupItems=gem.filter(i=>i.id.startsWith('inc_lon_'));
     } else {
-      existing=gem.find(i=>i.id===incGroup)||null;
+      groupItems=gem.filter(i=>i.id===incGroup||i.id.startsWith(incGroup+'_'));
     }
-    if(existing){ openGemItemEditor(existing.id); return; }
+    if(groupItems.length===1&&!groupItems[0].amount){
+      openGemItemEditor(groupItems[0].id);
+      return;
+    }
   }
   _addItemIncGroup=incGroup||null;
   _addItemCat=presetCat||null;
@@ -4672,7 +4675,9 @@ function aieSave(){
   const shareInp=document.getElementById('aie-share-value');
   const shareMode=shareInp?.value||'income';
 
-  const id=(_addItemCat==='inkomst'&&_addItemIncGroup==='lon')?'inc_lon_'+Date.now().toString(36):'u'+Date.now().toString(36);
+  const incGroupPrefixes={lon:'inc_lon_',inc_div:'inc_div_',inc_bid:'inc_bid_',inc_ovr:'inc_ovr_'};
+  const prefix=(_addItemCat==='inkomst'&&incGroupPrefixes[_addItemIncGroup])||null;
+  const id=prefix?prefix+Date.now().toString(36):'u'+Date.now().toString(36);
   const maxOrder=Math.max(0,...(S.budget.gem||[]).filter(i=>i.cat===_addItemCat).map(i=>i.order||0));
   const newItem={id,label,split:'D',amount,cat:_addItemCat,order:maxOrder+1};
   if(who!=='shared'){
@@ -4742,9 +4747,9 @@ function rIncomeSection(targetEl){
 
   const INC_GROUPS=[
     {id:'lon',label:'L\u00f6n',ic:'coin',match:i=>i.id.startsWith('inc_lon_')},
-    {id:'inc_div',label:'Utdelning',ic:'coin',match:i=>i.id==='inc_div'},
-    {id:'inc_bid',label:'Bidrag',ic:'coin',match:i=>i.id==='inc_bid'},
-    {id:'inc_ovr',label:'\u00d6vriga inkomster',ic:'coin',match:i=>i.id==='inc_ovr'},
+    {id:'inc_div',label:'Utdelning',ic:'coin',match:i=>i.id==='inc_div'||i.id.startsWith('inc_div_')},
+    {id:'inc_bid',label:'Bidrag',ic:'coin',match:i=>i.id==='inc_bid'||i.id.startsWith('inc_bid_')},
+    {id:'inc_ovr',label:'\u00d6vriga inkomster',ic:'coin',match:i=>i.id==='inc_ovr'||i.id.startsWith('inc_ovr_')},
   ];
   const matchedIds=new Set();
   INC_GROUPS.forEach(g=>{items.filter(g.match).forEach(i=>matchedIds.add(i.id));});
