@@ -569,6 +569,11 @@ html,body{background:#1C1C1E!important}
     <div style="flex:1;min-width:0"><div style="font-size:16px;color:var(--t1)">Abonnemang</div></div>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
   </div>
+  <div onclick="_sv='milestones';rSv()" style="border-top:.5px solid var(--bd3);display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+    <div style="width:32px;height:32px;border-radius:9px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bl)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg></div>
+    <div style="flex:1;min-width:0"><div style="font-size:16px;color:var(--t1)">Milstolpar</div></div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
   <div style="border-top:.5px solid var(--bd3);display:flex;align-items:center;gap:14px;padding:12px 16px">
     <div style="width:32px;height:32px;border-radius:9px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bl)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
     <div style="flex:1;min-width:0">
@@ -606,7 +611,7 @@ html,body{background:#1C1C1E!important}
 <!-- ══ SUB-PAGES ══════════════════════════════════════════════ -->
 <div id="sv-personal-me" style="display:none">
 <div style="font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.4px;margin-bottom:4px;padding-top:4px">Mina uppgifter</div>
-<div style="font-size:13px;color:var(--t3);margin-bottom:20px">Profil och personuppgifter</div><div class="gc" style="padding:14px 16px;margin-bottom:8px;text-align:center"><div class="avatar-upload" onclick="pickPhoto('me',setMePhoto)"><svg id="me-photo-ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><img id="me-photo" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"></div><div class="avatar-lbl">Tryck f&#xf6;r att v&#xe4;lja bild</div></div><div class="gt">Profil</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Namn</div><input class="inp" type="text" id="p-me-name" placeholder="Ditt namn" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Bostadsort</div><input class="inp" type="text" id="p-me-city" placeholder="Stockholm" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Personuppgifter</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">K&#xf6;n</div><select class="sel" id="p-me-gender" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="man">Man</option><option value="kvinna">Kvinna</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">Syssels&#xe4;ttning</div><select class="sel" id="p-me-occ" onchange="saveP();tglSector('me')" style="width:100%"><option value="">Ej angett</option><option value="anstalld">Anst&#xe4;lld</option><option value="egenforetagare">Egenf&#xf6;retagare</option><option value="student">Student</option><option value="foraldraledig">F&#xf6;r&#xe4;ldraledig</option><option value="pensionar">Pension&#xe4;r</option><option value="arbetssokande">Arbetss&#xf6;kande</option><option value="annat">Annat</option></select></div><div id="p-me-sector-row" class="fi" style="margin-bottom:10px;display:none"><div class="fl">Sektor / inriktning</div><select class="sel" id="p-me-sector" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="teknik_it">Teknik &amp; IT</option><option value="finans">Finans &amp; ekonomi</option><option value="halsa_vard">Hälsa &amp; vård</option><option value="utbildning">Utbildning &amp; forskning</option><option value="handel">Handel &amp; e-handel</option><option value="bygg_fastighet">Bygg &amp; fastighet</option><option value="media">Media &amp; kommunikation</option><option value="juridik_hr">Juridik &amp; HR</option><option value="offentlig">Offentlig förvaltning</option><option value="industri">Industri &amp; tillverkning</option><option value="kultur">Kultur &amp; kreativ</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">F&#xf6;delsedatum</div><div style="display:flex;gap:6px"><select class="sel" id="p-me-dob-y" onchange="saveP()" style="flex:2;min-width:0"><option value="">År</option><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option></select><select class="sel" id="p-me-dob-m" onchange="saveP()" style="flex:3;min-width:0"><option value="">Mån</option><option value="01">Januari</option><option value="02">Februari</option><option value="03">Mars</option><option value="04">April</option><option value="05">Maj</option><option value="06">Juni</option><option value="07">Juli</option><option value="08">Augusti</option><option value="09">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">December</option></select><select class="sel" id="p-me-dob-d" onchange="saveP()" style="flex:1.5;min-width:0"><option value="">Dag</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div></div></div></div><div class="gt">Kontakt</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">E-post</div><input class="inp" type="email" id="p-me-email" placeholder="din@epost.se" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Telefon</div><input class="inp" type="tel" id="p-me-phone" placeholder="+46 70 000 00 00" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Inkomst</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Bruttolön (kr/mån)</div><input class="inp" type="number" id="p-me-gross" inputmode="numeric" placeholder="0" oninput="meUpdateNet()" style="width:100%"></div><div class="fi" style="margin-bottom:4px"><div class="fl">Nettolön (kr/mån)</div><input class="inp" type="number" id="p-me-net" inputmode="numeric" placeholder="Beräknas automatiskt" oninput="saveP()" style="width:100%"></div><div style="font-size:11px;color:var(--t3);margin-bottom:10px;padding-left:2px">Bruttolön → netto beräknas med dina skatteinställningar</div></div></div></div>
+<div style="font-size:13px;color:var(--t3);margin-bottom:20px">Profil och personuppgifter</div><div class="gc" style="padding:14px 16px;margin-bottom:8px;text-align:center"><div class="avatar-upload" onclick="pickPhoto('me',setMePhoto)"><svg id="me-photo-ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><img id="me-photo" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"></div><div class="avatar-lbl">Tryck f&#xf6;r att v&#xe4;lja bild</div></div><div class="gt">Profil</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Namn</div><input class="inp" type="text" id="p-me-name" placeholder="Ditt namn" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Bostadsort</div><input class="inp" type="text" id="p-me-city" placeholder="Stockholm" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Personuppgifter</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">K&#xf6;n</div><select class="sel" id="p-me-gender" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="man">Man</option><option value="kvinna">Kvinna</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">Syssels&#xe4;ttning</div><select class="sel" id="p-me-occ" onchange="saveP();tglSector('me')" style="width:100%"><option value="">Ej angett</option><option value="anstalld">Anst&#xe4;lld</option><option value="egenforetagare">Egenf&#xf6;retagare</option><option value="student">Student</option><option value="foraldraledig">F&#xf6;r&#xe4;ldraledig</option><option value="pensionar">Pension&#xe4;r</option><option value="arbetssokande">Arbetss&#xf6;kande</option><option value="annat">Annat</option></select></div><div id="p-me-sector-row" class="fi" style="margin-bottom:10px;display:none"><div class="fl">Sektor / inriktning</div><select class="sel" id="p-me-sector" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="teknik_it">Teknik &amp; IT</option><option value="finans">Finans &amp; ekonomi</option><option value="halsa_vard">Hälsa &amp; vård</option><option value="utbildning">Utbildning &amp; forskning</option><option value="handel">Handel &amp; e-handel</option><option value="bygg_fastighet">Bygg &amp; fastighet</option><option value="media">Media &amp; kommunikation</option><option value="juridik_hr">Juridik &amp; HR</option><option value="offentlig">Offentlig förvaltning</option><option value="industri">Industri &amp; tillverkning</option><option value="kultur">Kultur &amp; kreativ</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">F&#xf6;delsedatum</div><div style="display:flex;gap:6px"><select class="sel" id="p-me-dob-y" onchange="saveP()" style="flex:2;min-width:0"><option value="">År</option><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option></select><select class="sel" id="p-me-dob-m" onchange="saveP()" style="flex:3;min-width:0"><option value="">Mån</option><option value="01">Januari</option><option value="02">Februari</option><option value="03">Mars</option><option value="04">April</option><option value="05">Maj</option><option value="06">Juni</option><option value="07">Juli</option><option value="08">Augusti</option><option value="09">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">December</option></select><select class="sel" id="p-me-dob-d" onchange="saveP()" style="flex:1.5;min-width:0"><option value="">Dag</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div></div></div></div><div class="gt">Kontakt</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">E-post</div><input class="inp" type="email" id="p-me-email" placeholder="din@epost.se" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Telefon</div><input class="inp" type="tel" id="p-me-phone" placeholder="+46 70 000 00 00" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Inkomst</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Bruttolön (kr/mån)</div><input class="inp" type="number" id="p-me-gross" inputmode="numeric" placeholder="0" oninput="meUpdateNet()" style="width:100%"></div><div class="fi" style="margin-bottom:4px"><div class="fl">Nettolön (kr/mån)</div><input class="inp" type="number" id="p-me-net" inputmode="numeric" placeholder="Beräknas automatiskt" oninput="saveP()" style="width:100%"></div><div style="font-size:11px;color:var(--t3);margin-bottom:6px;padding-left:2px">Bruttolön → netto beräknas med dina skatteinställningar</div><button onclick="toggleTaxBreakdown('me')" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:8px">Visa skattespecifikation</button><div id="tax-breakdown-me" style="display:none;margin-top:4px"></div></div></div></div>
 
 
 <div id="sv-personal-family" style="display:none">
@@ -642,6 +647,14 @@ html,body{background:#1C1C1E!important}
       <span id="sep-acc-toggle-bg" style="position:absolute;inset:0;background:var(--bd2);border-radius:14px;transition:background .2s"></span>
       <span id="sep-acc-toggle-dot" style="position:absolute;top:3px;left:3px;width:22px;height:22px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
     </label>
+  </div>
+  <div id="split-method-row" style="border-top:.5px solid var(--bd3);display:none;padding:12px 16px">
+    <div style="font-size:16px;color:var(--t1);margin-bottom:2px">Standardf\u00f6rdelning f\u00f6r delade kostnader</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Anv\u00e4nds som f\u00f6rslag n\u00e4r ni delar en kostnad \u2014 kan alltid \u00e4ndras per post</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="setSplitMethod('income')" id="split-method-income" style="flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--bd);background:var(--bd2);font-size:13px;font-weight:500;cursor:pointer;color:var(--t2)">Efter inkomst</button>
+      <button onclick="setSplitMethod('equal')" id="split-method-equal" style="flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--bd);background:var(--bd2);font-size:13px;font-weight:500;cursor:pointer;color:var(--t2)">Lika (50/50)</button>
+    </div>
   </div>
 </div>
 
@@ -701,6 +714,12 @@ html,body{background:#1C1C1E!important}
   <span style="font-size:9px;font-weight:700;letter-spacing:.3px;color:var(--bl);background:var(--blbg);padding:3px 8px;border-radius:5px">AKTIV</span>
 </div>
 <div style="font-size:13px;color:var(--t3);padding:0 4px">Fler niv\u00e5er kan tillkomma n\u00e4r appen l\u00e4mnar beta.</div>
+</div>
+
+<div id="sv-milestones" style="display:none">
+<div style="font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.4px;margin-bottom:4px;padding-top:4px">Milstolpar</div>
+<div style="font-size:13px;color:var(--t3);margin-bottom:20px">Er resa mot en starkare ekonomi</div>
+<div id="milestones-page-content"></div>
 </div>
 
 <div id="sv-about" style="display:none">
@@ -860,13 +879,20 @@ const BAL_ASSET_CATS=[
   {id:'annat',lbl:'Andra tillg\u00e5ngar'},
 ];
 const BAL_DEBT_CATS=[
-  {id:'bolan',lbl:'Bol\u00e5n'},
-  {id:'studielan',lbl:'Studiel\u00e5n'},
-  {id:'kort',lbl:'Krediter & konsumentl\u00e5n'},
+  {id:'bolan',lbl:'Bolån'},
+  {id:'studielan',lbl:'Studielån'},
+  {id:'kort',lbl:'Krediter & konsumentlån'},
   {id:'annat',lbl:'Andra skulder'},
 ];
+// Större svenska bolåneaktörer, i ungefärlig marknadsandelsordning — täcker
+// merparten av hushåll. "Annan bank" öppnar ett fritextfält som reserv.
+const MORTGAGE_LENDERS=[
+  'Swedbank','SEB','Handelsbanken','Nordea','Danske Bank',
+  'Länsförsäkringar Bank','SBAB','ICA Banken','Skandiabanken','Sparbanken',
+  'Landshypotek Bank','Stabelo','Hypoteket','Avanza','Nordnet',
+];
 const srcBadge=src=>{const[c]=srcClr[src]||srcClr.manual;return `<span style="font-size:10px;color:${c};font-weight:600">${{manual:'Manuell',bank:'Bank',avanza:'Avanza',nordnet:'Nordnet',annat:'K\u00e4lla'}[src]||'Manuell'}</span>`;};
-const PBB=58800,ST=625800,DF='hushallsbudget_data.json',LS='hb_v4';
+const PBB=59200,ST=643000,DF='hushallsbudget_data.json',LS='hb_v4';
 
 const DATA_V=7;
 function migrateData(p){
@@ -1122,9 +1148,72 @@ function showMilestoneOverlay(m){
     <div style="font-size:40px;margin-bottom:12px">🎉</div>
     <div style="font-size:19px;font-weight:800;color:var(--t1);margin-bottom:8px">${m.title.replace(' 🎉','')}</div>
     <div style="font-size:14px;color:var(--t2);line-height:1.5;margin-bottom:24px">${m.text}</div>
-    <button onclick="document.getElementById('milestone-overlay').remove()" class="btn pri" style="width:100%">Toppen!</button>
+    <button onclick="document.getElementById('milestone-overlay').remove()" class="btn pri" style="width:100%;margin-bottom:10px">Toppen!</button>
+    <button onclick="document.getElementById('milestone-overlay').remove();nav('settings');_sv='milestones';rSv();" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:4px">Se alla milstolpar</button>
   </div>`;
   hapHeavy();
+}
+
+// Sida med uppn\u00e5dda + kommande milstolpar. \u00c5teranv\u00e4nder samma tr\u00f6sklar som
+// checkMilestones() s\u00e5 de tv\u00e5 aldrig kan hamna i otakt med varandra.
+function rMilestonesPage(){
+  const el=document.getElementById('milestones-page-content');
+  if(!el)return;
+  const seen=S.milestonesSeen||[];
+  let tA=0,tD=0;
+  (S.assets2||[]).forEach(a=>tA+=Math.abs(a.amount||0));
+  (S.debts2||[]).forEach(d=>tD+=Math.abs(d.amount||0));
+  const nw=tA-tD;
+
+  const achieved=NW_MILESTONES.filter(m=>seen.includes('nw_'+m));
+  const upcoming=NW_MILESTONES.filter(m=>!seen.includes('nw_'+m));
+  const freshUpdateCount=seen.filter(k=>k.startsWith('freshupdate_')).length;
+
+  let html='';
+
+  html+=`<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:10px">Uppnådda (${achieved.length+(freshUpdateCount?1:0)})</div>`;
+  if(!achieved.length&&!freshUpdateCount){
+    html+=`<div class="gc" style="padding:16px;margin-bottom:24px;text-align:center;font-size:13px;color:var(--t3)">Inga milstolpar uppnådda ännu — fortsätt så kommer de!</div>`;
+  } else {
+    html+='<div class="gc" style="padding:0;margin-bottom:24px">';
+    achieved.slice().reverse().forEach((m,i)=>{
+      html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:.5px solid var(--bd3)':''}">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--okbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">🎉</div>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;color:var(--t1)">Nettovärde passerade ${fmtM(m)}</div></div>
+      </div>`;
+    });
+    if(freshUpdateCount){
+      html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${achieved.length?'border-top:.5px solid var(--bd3)':''}">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--okbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">👍</div>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;color:var(--t1)">Höll data aktuell efter en paus</div><div style="font-size:12px;color:var(--t3);margin-top:1px">${freshUpdateCount} ${freshUpdateCount===1?'gång':'gånger'}</div></div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+
+  html+=`<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:10px">Kommande</div>`;
+  if(!upcoming.length){
+    html+=`<div class="gc" style="padding:16px;text-align:center;font-size:13px;color:var(--t3)">Alla nettovärde-milstolpar uppnådda — imponerande!</div>`;
+  } else {
+    html+='<div class="gc" style="padding:0">';
+    upcoming.forEach((m,i)=>{
+      const pct=Math.max(0,Math.min(100,Math.round(nw/m*100)));
+      const remaining=Math.max(0,m-nw);
+      html+=`<div style="padding:12px 16px;${i>0?'border-top:.5px solid var(--bd3)':''}">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:14px;font-weight:500;color:var(--t1)">Nettovärde ${fmtM(m)}</span>
+          <span style="font-size:12px;color:var(--t3)">${pct}%</span>
+        </div>
+        <div style="height:6px;background:var(--bd2);border-radius:3px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;width:${pct}%;background:var(--bl);border-radius:3px"></div>
+        </div>
+        <div style="font-size:12px;color:var(--t3)">${remaining>0?fmtM(remaining)+' kvar':'Nästan där!'}</div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+
+  el.innerHTML=html;
 }
 
 
@@ -2093,6 +2182,7 @@ function setMode(m){
   dirty('ov','budget','actual','bal','goals');
   refreshSvProfileRow();
   initSepAccToggle();
+  initSplitMethodRow();
 }
 
 
@@ -2721,10 +2811,14 @@ function getLonAmount(personId){
 }
 
 function getContributors(){
-  const list=[{id:'me',name:p1Name(),gross:getLonAmount('me')}];
+  // OBS: anv\u00e4nder de RIKTIGA bruttol\u00f6ne-f\u00e4lten (P.me.gross / medlemmens .gross),
+  // inte getLonAmount() (som l\u00e4ser NETTOl\u00f6nen sparad i budgetposten inc_lon_<id>).
+  // Tidigare bugg: getLonAmount()s netto-v\u00e4rde m\u00e4rktes som "gross" h\u00e4r, vilket
+  // fick compInc() att k\u00f6ra netto genom skatteber\u00e4kningen \u00e4nnu en g\u00e5ng.
+  const list=[{id:'me',name:p1Name(),gross:P.me?.gross||0}];
   (P.family||[]).forEach(f=>{
     if(f.canContribute){
-      list.push({id:f.id,name:f.name||'Familjemedlem',gross:getLonAmount(f.id)});
+      list.push({id:f.id,name:f.name||'Familjemedlem',gross:f.gross||0});
     }
   });
   return list;
@@ -3210,6 +3304,29 @@ function initSepAccToggle(){
   if(dot)dot.style.left=on?'21px':'3px';
 }
 
+// Standardf\u00f6rdelning f\u00f6r delade kostnader: efter inkomst (default, matchar
+// tidigare hårdkodat beteende) eller lika 50/50. Sparas p\u00e5 hush\u00e5llsniv\u00e5.
+function setSplitMethod(method){
+  S.splitMethod=method;
+  saveLS();
+  initSplitMethodRow();
+  hapLight();
+}
+function initSplitMethodRow(){
+  const row=document.getElementById('split-method-row');
+  if(row)row.style.display=isSingel()?'none':'block';
+  const method=S.splitMethod||'income';
+  const incBtn=document.getElementById('split-method-income');
+  const eqBtn=document.getElementById('split-method-equal');
+  [[incBtn,'income'],[eqBtn,'equal']].forEach(([btn,val])=>{
+    if(!btn)return;
+    const isActive=method===val;
+    btn.style.background=isActive?'var(--blbg)':'var(--bd2)';
+    btn.style.borderColor=isActive?'var(--bl)':'var(--bd)';
+    btn.style.color=isActive?'var(--bl)':'var(--t2)';
+  });
+}
+
 
 // ══ Proaktiv veckosammanfattning ═══════════════════════════════
 
@@ -3402,9 +3519,10 @@ function submitNewSubcat(catId){
 let _bsState=null; // {catIdx, skipped:Set}
 
 function getGlobalDefaultPct(){
-  // Anv\u00e4ndarens andel av hush\u00e5llets totala bruttoinkomst (avrundat)
   const contributors=getContributors();
   if(contributors.length<2)return 100;
+  if((S.splitMethod||'income')==='equal')return 50;
+  // Anv\u00e4ndarens andel av hush\u00e5llets totala bruttoinkomst (avrundat)
   const total=contributors.reduce((s,c)=>s+(c.gross||0),0);
   if(total<=0)return Math.round(100/contributors.length);
   return Math.round((contributors[0].gross||0)/total*100);
@@ -3520,7 +3638,8 @@ function bsResetToDefault(itemId){
 
 function bsSetAmount(itemId,val){
   const item=(S.budget.gem||[]).find(i=>i.id===itemId);
-  if(!item||item.locked||item.computed)return; // beräknade poster (t.ex. bolåneränta) kan inte skrivas över manuellt
+  if(!item||item.computed)return; // bara beräknade poster (t.ex. bolåneränta) kan inte skrivas över manuellt \u2014
+  // "locked" skyddar bara mot radering, inte mot att \u00e4ndra beloppet (tidigare bugg: hindrade b\u00e5da).
   const n=parseFloat(val)||0;
   item.amount=-Math.abs(n); // utgifter lagras negativt
   // Om fixed shares finns, justera om s\u00e5 de fortfarande summerar till nya beloppet
@@ -3620,7 +3739,7 @@ function rBudgetSetupStep(){
       <div class="bs-default-bar"><div class="bs-default-bar-a" style="width:${globalPct}%"></div><div class="bs-default-bar-b" style="width:${100-globalPct}%"></div></div>
       <div class="bs-default-legend"><span><b>${p1} ${globalPct}%</b></span><span><b>${p2} ${100-globalPct}%</b></span></div>
       <div class="bs-default-note">Beräknat utifrån er inkomstfördelning. Används som startpunkt för alla poster ni delar — du kan alltid justera enskilda poster nedan.
-      <a href="#" onclick="event.preventDefault();showSnack('Öppna Inställningar → Hushåll för att ändra beräkningssätt');">Ändra beräkningssätt i Inställningar →</a></div>
+      <a href="#" onclick="event.preventDefault();nav('settings');_sv='user-settings';rSv();">Ändra beräkningssätt i Inställningar →</a></div>
     </div>`;
   }
 
@@ -4154,10 +4273,17 @@ function rBalItemEditor(){
   </div>`;
 
   if(type==='d'&&item.cat==='bolan'){
-    html+=`<div class="gt" style="margin:0 0 8px">L\u00e5nedetaljer</div>
+    const knownLender=MORTGAGE_LENDERS.includes(item.institute);
+    const isOtherLender=!!item.institute&&!knownLender;
+    html+=`<div class="gt" style="margin:0 0 8px">Lånedetaljer</div>
     <div style="margin-bottom:10px">
       <div class="bs-who-label" style="margin-bottom:6px">Bank / institut</div>
-      <input class="inp" id="bie-institute" value="${(item.institute||'').replace(/"/g,'&quot;')}" placeholder="T.ex. SEB, Swedbank, Handelsbanken" style="width:100%">
+      <select class="sel" id="bie-institute" onchange="bieToggleOtherLender(this.value)" style="width:100%">
+        <option value=""${!item.institute?' selected':''}>Välj bank</option>
+        ${MORTGAGE_LENDERS.map(l=>`<option value="${l}"${item.institute===l?' selected':''}>${l}</option>`).join('')}
+        <option value="__other__"${isOtherLender?' selected':''}>Annan bank</option>
+      </select>
+      <input class="inp" id="bie-institute-other" value="${isOtherLender?item.institute.replace(/"/g,'&quot;'):''}" placeholder="Ange bankens namn" style="width:100%;margin-top:8px;display:${isOtherLender?'block':'none'}">
     </div>
     <div style="margin-bottom:10px">
       <div class="bs-who-label" style="margin-bottom:6px">R\u00e4ntetyp</div>
@@ -4282,6 +4408,11 @@ function bieSetRateType(t){
   rBalItemEditor();
 }
 
+function bieToggleOtherLender(val){
+  const otherInp=document.getElementById('bie-institute-other');
+  if(otherInp)otherInp.style.display=val==='__other__'?'block':'none';
+}
+
 function bieSetWho(who){
   const{type,itemId}=_balEditCtx;
   const arr=type==='a'?S.assets2:S.debts2;
@@ -4331,7 +4462,10 @@ function bieSave(){
   if(subcatSel)item.subcat=subcatSel.value;
   if(type==='d'&&item.cat==='bolan'){
     const instEl=document.getElementById('bie-institute');
-    if(instEl)item.institute=instEl.value.trim();
+    const otherEl=document.getElementById('bie-institute-other');
+    if(instEl){
+      item.institute=(instEl.value==='__other__')?(otherEl?.value.trim()||''):instEl.value;
+    }
     const rateEl=document.getElementById('bie-rate');
     if(rateEl)item.rate=rateEl.value?parseFloat(rateEl.value):null;
     const termEl=document.getElementById('bie-term');
@@ -5142,6 +5276,7 @@ function build(){
     _ts:Date.now(),
     mode:S.mode||'par',
     budSeg:S.budSeg||'plan',
+    splitMethod:S.splitMethod||'income',
     userCats:S.userCats,
     useSeparateAccounts:S.useSeparateAccounts||false,
     notifEnabled:S.notifEnabled||false,
@@ -5153,6 +5288,10 @@ function build(){
     debts2:S.debts2,
     goals:S.goals,
     nwHist:S.nwHist||[],
+    milestonesSeen:S.milestonesSeen||[],
+    lastDataUpdateAt:S.lastDataUpdateAt||null,
+    prevDataUpdateAt:S.prevDataUpdateAt||null,
+    firstSyncAt:S.firstSyncAt||null,
     extraInc:S.extraInc||[],
     nwHistImportLog:S.nwHistImportLog||[],
     balTab:S.balTab,
@@ -5192,6 +5331,10 @@ function applyP(p){
   if(p.debts2&&Array.isArray(p.debts2))S.debts2=p.debts2;
   if(p.goals&&Array.isArray(p.goals))S.goals=p.goals;
   if(p.nwHist&&Array.isArray(p.nwHist))S.nwHist=p.nwHist;
+  if(p.milestonesSeen&&Array.isArray(p.milestonesSeen))S.milestonesSeen=p.milestonesSeen;
+  if(p.lastDataUpdateAt)S.lastDataUpdateAt=p.lastDataUpdateAt;
+  if(p.prevDataUpdateAt)S.prevDataUpdateAt=p.prevDataUpdateAt;
+  if(p.firstSyncAt)S.firstSyncAt=p.firstSyncAt;
   if(p.nwHistImportLog)S.nwHistImportLog=p.nwHistImportLog;
   if(p.extraInc&&Array.isArray(p.extraInc))S.extraInc=p.extraInc;
   if(p.balTab)S.balTab=p.balTab;
@@ -5199,6 +5342,7 @@ function applyP(p){
   if(p.onboarded!==undefined)S.onboarded=p.onboarded;
   if(p.mode)S.mode=p.mode;
   if(p.budSeg)S.budSeg=p.budSeg;
+  if(p.splitMethod)S.splitMethod=p.splitMethod;
   if(p.userCats&&p.userCats.length)S.userCats=p.userCats;
   if(p.useSeparateAccounts!==undefined)S.useSeparateAccounts=p.useSeparateAccounts;
   if(p.notifEnabled!==undefined)S.notifEnabled=p.notifEnabled;
@@ -7245,7 +7389,7 @@ function tgAent(which){
   });
 }
 function rSv(){
-  const all=['user-settings','personal-me','personal-family','personal-member','privacy','subscription','tax','categories','data','about'];
+  const all=['user-settings','personal-me','personal-family','personal-member','privacy','subscription','milestones','tax','categories','data','about'];
   const main=document.getElementById('sv-main');
   if(main)main.style.display=_sv?'none':'';
   refreshSignOutRow();
@@ -7273,6 +7417,7 @@ function rSv(){
   if(_sv==='data'){ rDataMgmt(); initSyncBanner(); }
   if(_sv==='categories') rCatManager();
   if(_sv==='tax'){ syncKYOnVisual(); showKrSuggestion(); }
+  if(_sv==='milestones') rMilestonesPage();
   setTimeout(tglMbrSector,0);
 }
 
@@ -7346,6 +7491,48 @@ function meUpdateNet(){
     netEl.value='';
   }
   saveP();
+  refreshTaxBreakdown('me');
+}
+
+// Visar/döljer och räknar fram en fullständig skattespecifikation — samma
+// cNet()-beräkning som redan används för nettolönen, bara uppdelad post för
+// post så man kan se VARFÖR nettot blev som det blev, inte bara slutsumman.
+function toggleTaxBreakdown(personId){
+  const el=document.getElementById('tax-breakdown-'+personId);
+  if(!el)return;
+  const willShow=el.style.display==='none';
+  el.style.display=willShow?'block':'none';
+  if(willShow)refreshTaxBreakdown(personId);
+}
+function refreshTaxBreakdown(personId){
+  const el=document.getElementById('tax-breakdown-'+personId);
+  if(!el||el.style.display==='none')return;
+  const grossEl=document.getElementById(personId==='me'?'p-me-gross':'mbr-gross');
+  const gross=parseFloat(grossEl?.value)||0;
+  if(!gross){el.innerHTML='<div style="font-size:12px;color:var(--t3)">Ange bruttolön f\u00f6r att se specifikationen.</div>';return;}
+  const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on'),kyOn=gb('ky-on');
+  const tax=cNet(gross,kr,psOn,kyOn,kyR);
+  const rows=[
+    ['Bruttol\u00f6n (\u00e5r)', gross*12, 1],
+    ['Kommunalskatt ('+kr+'%)', -tax.komAr, -1],
+    ['Statlig skatt (20% \u00f6ver '+fmt(ST)+')', -tax.statAr, -1],
+    ['Jobbskatteavdrag', tax.jsaAr, 1],
+    ...(psOn?[['Public service-avgift', -tax.psAr, -1]]:[]),
+    ...(kyOn?[['Kyrkoavgift ('+kyR+'%)', -tax.kyAr, -1]]:[]),
+  ];
+  el.innerHTML=`<div style="background:var(--bd2);border-radius:10px;padding:12px 14px">
+    ${rows.map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px">
+      <span style="color:var(--t2)">${label}</span>
+      <span style="color:${val<0?'var(--err)':'var(--t1)'};font-variant-numeric:tabular-nums">${val<0?'\u2212':'+'}${fmt(Math.abs(Math.round(val)))}</span>
+    </div>`).join('')}
+    <div style="height:1px;background:var(--bd);margin:6px 0"></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600">
+      <span>Netto (\u00e5r)</span><span>${fmt(Math.round(gross*12-(tax.komAr+tax.statAr-tax.jsaAr+tax.psAr+tax.kyAr)))}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-top:2px">
+      <span>Effektiv skattesats</span><span>${tax.eff.toFixed(1)}%</span>
+    </div>
+  </div>`;
 }
 function loadMeForm(){
   ['name','city','gender','occ','sector','email','phone'].forEach(f=>{
@@ -7461,7 +7648,9 @@ function renderMemberForm(){
         <div class="fl">Nettol&#xf6;n (kr/m&#xe5;n)</div>
         <input class="inp" type="number" id="mbr-net" inputmode="numeric" value="${mbrNet}" placeholder="Beräknas automatiskt" oninput="saveMbr()" style="width:100%">
       </div>
-      <div id="mbr-net-hint" style="font-size:11px;color:var(--t3);margin-bottom:10px;padding-left:2px">Ange bruttolön så beräknas netto automatiskt med dina skatteinställningar</div>
+      <div id="mbr-net-hint" style="font-size:11px;color:var(--t3);margin-bottom:6px;padding-left:2px">Ange bruttolön så beräknas netto automatiskt med dina skatteinställningar</div>
+      <button onclick="toggleTaxBreakdown('${m.id}')" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:8px">Visa skattespecifikation</button>
+      <div id="tax-breakdown-${m.id}" style="display:none;margin-top:4px"></div>
     </div></div>
     <div style="padding:0 0 16px"><button class="btn dan full" onclick="deleteMbr('${m.id}')">Ta bort ${m.name}</button></div>`;
 }
@@ -7480,6 +7669,7 @@ function mbrUpdateNet(){
     netEl.value='';
   }
   saveMbr();
+  refreshTaxBreakdown(_svMbr);
 }
 
 function saveMbr(){tglMbrSector();
@@ -7582,10 +7772,12 @@ try{loadP();}catch(e){console.error('[loadP]',e.message);}
 try{refreshNavAvatar();}catch(e){console.error('[refreshNavAvatar]',e.message);}
 try{ensureIncomeItems();}catch(e){console.error('[ensureIncomeItems]',e.message);}
 try{initSepAccToggle();}catch(e){console.error('[initSepAccToggle]',e.message);}
+try{initSplitMethodRow();}catch(e){console.error('[initSplitMethodRow]',e.message);}
 try{rOv();}catch(e){console.error('[rOv init]',e.message);}
 if(sb){
   sb.auth.onAuthStateChange((event,session)=>{
     if(session?.user){
+      const wasLoggedIn=!!sbUser;
       sbUser=session.user;
       hideWelcomeGate();
       refreshSignOutRow();
@@ -7597,7 +7789,10 @@ if(sb){
       }
       sbEnsureHousehold().then((hhId)=>{
         if(_sv==='data')rDataMgmt();
-        if(event==='SIGNED_IN'){
+        if(event==='SIGNED_IN'&&!wasLoggedIn){
+          // Supabase skickar SIGNED_IN b\u00e5de vid en riktig ny inloggning OCH vid
+          // tysta bakgrundsf\u00f6rnyelser av en redan aktiv session \u2014 visa meddelandet
+          // bara f\u00f6r den f\u00f6rsta, genuina \u00f6verg\u00e5ngen fr\u00e5n utloggad till inloggad.
           showSnack('✓ Inloggad — '+(sbUser.email||''));
         } else if(event==='INITIAL_SESSION'&&hhId){
           // Appen öppnades med en redan inloggad session (ny enhet/webbläsare,
