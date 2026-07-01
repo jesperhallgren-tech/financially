@@ -146,9 +146,9 @@ body{max-width:680px;margin:0 auto;padding-bottom:calc(120px + var(--sb));min-he
 .brow:first-child{border-top:none}
 .brow-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .brow-left{flex:1;min-width:0}
-.brow-name{font-size:14px;font-weight:400;color:var(--t1);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow-name{font-size:14px;font-weight:400;color:var(--t2);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .brow-split{font-size:11px;color:var(--t3);margin-top:2px;display:block;font-variant-numeric:tabular-nums}
-.brow-tot{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--t1)}
+.brow-tot{font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;flex-shrink:0;color:var(--t2)}
 .brow-edit{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:.5px solid var(--bd);flex-wrap:wrap}
 .brow-edit:first-child{border-top:none}
 .ksep{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:10px 0 5px;border-top:.5px solid var(--bd);margin-top:2px}
@@ -6996,7 +6996,7 @@ function renderMemberForm(){
         <div style="font-size:12px;color:var(--t3)">Kan väljas som betalare på budgetposter</div>
       </div>
       <label style="position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0">
-        <input type="checkbox" id="mbr-contrib" ${m.canContribute?'checked':''} onchange="const mf=P.family.find(x=>x.id==='${m.id}');if(mf)mf.canContribute=this.checked;saveMbr();dirty('budget')" style="opacity:0;width:0;height:0">
+        <input type="checkbox" id="mbr-contrib" ${m.canContribute?'checked':''} onchange="saveMbr()" style="opacity:0;width:0;height:0">
         <span style="position:absolute;inset:0;background:${m.canContribute?'var(--bl)':'var(--bd2)'};border-radius:14px;transition:background .2s"></span>
         <span style="position:absolute;top:3px;left:${m.canContribute?'21px':'3px'};width:22px;height:22px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
       </label>
@@ -7016,10 +7016,24 @@ function saveMbr(){tglMbrSector();
         bd=document.getElementById('mbr-dob-d');
   m.dob=(by&&bm&&bd&&by.value&&bm.value&&bd.value)?
     by.value+'-'+bm.value+'-'+bd.value:'';
+  // Spara toggle-värden som kan ha ändrats utan att trigga saveMbr direkt
+  const contrib=document.getElementById('mbr-contrib');
+  if(contrib){
+    m.canContribute=contrib.checked;
+    // Synka togglens visuella tillstånd (bakgrundsfärg + knappposition)
+    const bg=contrib.parentElement?.children[1];
+    const dot=contrib.parentElement?.children[2];
+    if(bg)bg.style.background=m.canContribute?'var(--bl)':'var(--bd2)';
+    if(dot)dot.style.left=m.canContribute?'21px':'3px';
+  }
+  const grossEl=document.getElementById('mbr-gross');
+  if(grossEl)m.gross=parseFloat(grossEl.value)||0;
+  const netEl=document.getElementById('mbr-net');
+  if(netEl)m.net=parseFloat(netEl.value)||0;
   // Uppdatera rubrik med nytt namn
   const hdr=document.getElementById('mbr-hdr');
-  if(hdr){const s=hdr.querySelector('span');if(s)s.textContent=m.name;}
-  onGross();storeP();
+  if(hdr){const s=hdr.querySelector('span');if(s)s.textContent=m.name||'Familjemedlem';}
+  onGross();storeP();dirty('ov','budget');
 }
 function deleteMbr(id){
   if(!confirm('Ta bort familjemedlem?'))return;
