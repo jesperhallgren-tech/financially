@@ -218,6 +218,7 @@ html,body{background:#1C1C1E!important}
 
 
 /* Dashboard cards */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes dashCardIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .dash-card{
   border-radius:var(--r2);
@@ -1027,7 +1028,65 @@ function snapNW(){
   S.nwHist.sort((a,b)=>a.k.localeCompare(b.k));
   if(S.nwHist.length>36)S.nwHist=S.nwHist.slice(-36);
   markUns();
+  try{checkMilestones(tA,tD,nw);}catch(e){console.warn('[checkMilestones]',e.message);}
 }
+
+// ══ Milstolpar — kopplade till riktig finansiell framgång, inte "engagemang" ══
+// Medvetet INGA streaks eller poäng som kan "förloras" — bara positiva,
+// engångsfirade steg. S.milestonesSeen håller reda på vilka som redan visats.
+const NW_MILESTONES=[10000,50000,100000,250000,500000,1000000,2000000,5000000];
+function checkMilestones(tA,tD,nw){
+  if(!S.milestonesSeen)S.milestonesSeen=[];
+  const toShow=[];
+
+  // Nettovärde-milstolpar
+  NW_MILESTONES.forEach(m=>{
+    const key='nw_'+m;
+    if(nw>=m&&!S.milestonesSeen.includes(key)){
+      toShow.push({key,title:'Milstolpe nådd! 🎉',text:'Ert nettovärde har passerat '+fmtM(m)+'.'});
+    }
+  });
+
+  // (Skuldminskning som egen milstolpe kräver historisk skulddata över tid —
+  // det finns i molnets value_history, men inte lokalt ännu. Läggs till när
+  // Transaktioner/Budget-synken byggs ut.)
+
+  // Molnsynk-streak: räknas i hela veckor sedan första lyckade synk
+  if(sbUser&&sbLastSyncAt&&S.firstSyncAt){
+    const weeks=Math.floor((Date.now()-new Date(S.firstSyncAt).getTime())/(7*24*60*60*1000));
+    [4,12,26,52].forEach(w=>{
+      const key='syncweeks_'+w;
+      if(weeks>=w&&!S.milestonesSeen.includes(key)){
+        toShow.push({key,title:'Bra jobbat! 🎉',text:w+' veckor med synkad data i molnet.'});
+      }
+    });
+  }
+
+  if(toShow.length){
+    S.milestonesSeen.push(...toShow.map(m=>m.key));
+    saveLS();
+    showMilestoneOverlay(toShow[0]); // en i taget — undvik att spamma flera overlays
+  }
+}
+
+function showMilestoneOverlay(m){
+  let el=document.getElementById('milestone-overlay');
+  if(!el){
+    el=document.createElement('div');
+    el.id='milestone-overlay';
+    el.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .2s ease-out';
+    document.body.appendChild(el);
+  }
+  el.innerHTML=`<div style="background:var(--card);border-radius:20px;padding:32px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="font-size:40px;margin-bottom:12px">🎉</div>
+    <div style="font-size:19px;font-weight:800;color:var(--t1);margin-bottom:8px">${m.title.replace(' 🎉','')}</div>
+    <div style="font-size:14px;color:var(--t2);line-height:1.5;margin-bottom:24px">${m.text}</div>
+    <button onclick="document.getElementById('milestone-overlay').remove()" class="btn pri" style="width:100%">Toppen!</button>
+  </div>`;
+  hapHeavy();
+}
+
+
 
 // ═══════════════════════════════════════════════════════════════
 // UTFALL: 6-månaders sparkline per kategori
@@ -1822,6 +1881,10 @@ function rDataMgmt(){
       </div>
     </div>
     ${sbUser&&sbHouseholdId?`<div class="gc" style="padding:13px 16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Hushåll</div>
+      <div id="hh-link-section">Laddar…</div>
+    </div>`:''}
+    ${sbUser&&sbHouseholdId?`<div class="gc" style="padding:13px 16px;margin-bottom:12px">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px">Senaste ändringar</div>
       <div id="sb-history">Laddar…</div>
     </div>`:''}
@@ -1893,7 +1956,7 @@ function rDataMgmt(){
         </button>
       </div>
     </div>`;
-  if(sbUser&&sbHouseholdId)sbLoadHistory();
+  if(sbUser&&sbHouseholdId){sbLoadHistory();sbLoadHouseholdSection();}
 }
 
 // CSV-export av alla transaktioner
@@ -4188,6 +4251,7 @@ function bieSave(){
   markUns();
   closeBalItemEditor();
   dirty('bal');
+  try{snapNW();}catch(e){console.warn('[snapNW after bieSave]',e.message);}
   hapMed();
   showSnack('\u2713 Sparat');
 }
@@ -5759,6 +5823,122 @@ async function sbLoadHistory(){
   }
 }
 
+// ══ Hushållskoppling: bjud in / gå med / lämna, samt kategorisynlighet ══
+const HH_CAT_LABELS={income:'Inkomster',expenses:'Utgifter',assets:'Tillgångar',debts:'Skulder'};
+
+async function sbLoadHouseholdSection(){
+  const el=document.getElementById('hh-link-section');
+  if(!el||!sb||!sbHouseholdId)return;
+  try{
+    const{data:members,error}=await sb.from('household_users').select('user_id,role,visibility').eq('household_id',sbHouseholdId);
+    if(error)throw error;
+    const memberCount=(members||[]).length;
+    const mine=(members||[]).find(m=>m.user_id===sbUser.id);
+    const vis=mine?.visibility||{income:true,expenses:true,assets:true,debts:true};
+
+    const visRows=Object.entries(HH_CAT_LABELS).map(([key,label])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+        <span style="font-size:13px;color:var(--t1)">${label}</span>
+        <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+          <input type="checkbox" id="hh-vis-${key}" ${vis[key]!==false?'checked':''} onchange="sbToggleVisibility('${key}',this.checked)" style="opacity:0;width:0;height:0">
+          <span style="position:absolute;inset:0;background:${vis[key]!==false?'var(--bl)':'var(--bd2)'};border-radius:12px;transition:background .2s"></span>
+          <span style="position:absolute;top:3px;left:${vis[key]!==false?'21px':'3px'};width:18px;height:18px;background:var(--t1);border-radius:50%;transition:left .2s"></span>
+        </label>
+      </div>`).join('');
+
+    el.innerHTML=`
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px">${memberCount>1?memberCount+' personer i hushållet':'Bara du i hushållet ännu'}</div>
+      ${memberCount>1?`
+      <div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:600">Vad du delar med hushållet</div>
+      ${visRows}
+      <div style="height:1px;background:var(--bd);margin:10px 0"></div>
+      `:''}
+      <button onclick="sbGenerateInvite()" class="btn sec sm" style="width:100%;margin-bottom:8px">Bjud in till hushållet</button>
+      <div id="hh-invite-result"></div>
+      ${memberCount<=1?`
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
+        <div style="flex:1;height:.5px;background:var(--bd)"></div>
+        <span style="font-size:11px;color:var(--t3)">eller</span>
+        <div style="flex:1;height:.5px;background:var(--bd)"></div>
+      </div>
+      <input id="hh-join-code" class="inp" type="text" placeholder="Kod från annan person" style="width:100%;box-sizing:border-box;margin-bottom:8px;text-transform:lowercase">
+      <button onclick="sbJoinHousehold()" class="btn pri sm" style="width:100%">Gå med i hushåll</button>
+      `:`
+      <button onclick="sbLeaveHousehold()" style="width:100%;padding:10px;background:none;border:none;color:var(--err);font-size:13px;font-weight:600;cursor:pointer">Koppla från hushållet</button>
+      `}
+    `;
+  }catch(e){
+    console.warn('[sbLoadHouseholdSection]',e.message);
+    el.innerHTML='<div style="font-size:12px;color:var(--err)">Kunde inte ladda hushållsdata.</div>';
+  }
+}
+
+async function sbToggleVisibility(key,val){
+  if(!sb||!sbUser||!sbHouseholdId)return;
+  try{
+    const{data:existing}=await sb.from('household_users').select('visibility').eq('household_id',sbHouseholdId).eq('user_id',sbUser.id).single();
+    const vis={...(existing?.visibility||{}),[key]:val};
+    const{error}=await sb.from('household_users').update({visibility:vis}).eq('household_id',sbHouseholdId).eq('user_id',sbUser.id);
+    if(error)throw error;
+    showSnack(val?'✓ '+HH_CAT_LABELS[key]+' delas nu':'✓ '+HH_CAT_LABELS[key]+' döljs nu');
+  }catch(e){
+    console.warn('[sbToggleVisibility]',e.message);
+    showSnack('Kunde inte spara: '+e.message);
+    sbLoadHouseholdSection(); // återställ växeln visuellt vid fel
+  }
+}
+
+async function sbGenerateInvite(){
+  if(!sb||!sbUser||!sbHouseholdId)return;
+  const resEl=document.getElementById('hh-invite-result');
+  try{
+    const{data,error}=await sb.from('household_invites').insert({household_id:sbHouseholdId,created_by:sbUser.id}).select('code').single();
+    if(error)throw error;
+    if(resEl)resEl.innerHTML=`<div style="background:var(--blbg);border-radius:10px;padding:12px;margin-bottom:8px;text-align:center">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Dela denna kod (giltig i 7 dagar)</div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:.1em;color:var(--bl);font-family:monospace">${data.code}</div>
+    </div>`;
+  }catch(e){
+    console.warn('[sbGenerateInvite]',e.message);
+    showSnack('Kunde inte skapa kod: '+e.message);
+  }
+}
+
+async function sbJoinHousehold(){
+  if(!sb||!sbUser)return;
+  const code=(document.getElementById('hh-join-code')?.value||'').trim().toLowerCase();
+  if(!code){showSnack('Ange en kod.');return;}
+  if(!confirm('Går med i ett nytt hushåll. Din befintliga lokala data flyttas INTE automatiskt \u2014 synka till molnet f\u00f6rst om du vill spara den. Forts\u00e4tta?'))return;
+  try{
+    const{data,error}=await sb.rpc('join_household',{p_code:code});
+    if(error)throw error;
+    sbHouseholdId=data;
+    showSnack('✓ Du är nu med i hushållet');
+    await sbPull(true);
+    sbLoadHouseholdSection();
+  }catch(e){
+    console.warn('[sbJoinHousehold]',e.message);
+    showSnack('Kunde inte gå med: '+e.message);
+  }
+}
+
+async function sbLeaveHousehold(){
+  if(!sb||!sbUser)return;
+  if(!confirm('Koppla från hushållet? Dina egna poster (inte delade) flyttas till ett nytt, eget hushåll \u2014 ingen data raderas.'))return;
+  try{
+    const{data,error}=await sb.rpc('leave_household');
+    if(error)throw error;
+    sbHouseholdId=data;
+    showSnack('✓ Frånkopplad \u2014 du har nu ett eget hushåll');
+    await sbPull(true);
+    sbLoadHouseholdSection();
+  }catch(e){
+    console.warn('[sbLeaveHousehold]',e.message);
+    showSnack('Kunde inte koppla från: '+e.message);
+  }
+}
+
+
 let _sbLoginCodeSent={};
 async function sbInlineLogin(prefix){
   prefix=prefix||'sb';
@@ -5929,6 +6109,7 @@ async function sbPush(silent){
     ]);
 
     sbLastSyncAt=new Date();
+    if(!S.firstSyncAt){S.firstSyncAt=sbLastSyncAt.toISOString();saveLS();}
     if(_sv==='data')rDataMgmt();
     if(!silent)showSnack('✓ Synkat till molnet');
   }catch(e){
@@ -6801,12 +6982,75 @@ function rOv(){
         <div style="font-size:13px;color:var(--t3);margin-top:1px">${_monthName(now_.getMonth())} ${now_.getFullYear()}</div>
       </div>
     </div>
+    ${rProfileCompleteness()}
     <div id="ov-month-summary"></div>
     ${card2}${card1}${card3}${extraCard}
     ${rConnectionsCard()}`;
 
   try{rMonthSummaryCard(document.getElementById('ov-month-summary'));}catch(e){}
   updateBudgetBadge();
+}
+
+// ══ Profilkomplettering ("hur mycket av appens nytta har hushållet låst upp") ══
+// Viktad checklista, inte bara antal ifyllda fält — vissa saker (inkomst,
+// molnsynk) spelar större roll för hur användbar appen faktiskt blir.
+function getProfileCompleteness(){
+  const items=[];
+  const gross=(P.me?.gross||0)>0||(S.budget.gem||[]).some(i=>i.id==='inc_lon_me'&&(i.amount||0)>0);
+  items.push({key:'income',label:'Ange din inkomst',weight:20,done:gross,navTab:'settings',navSub:'tax'});
+
+  const hasAsset=(S.assets2||[]).length>0;
+  items.push({key:'asset',label:'Lägg till en tillgång',weight:18,done:hasAsset,navTab:'bal',navSub:null});
+
+  const hasGoal=(S.goals||[]).some(g=>(g.target||0)>0);
+  items.push({key:'goal',label:'Sätt ett sparmål',weight:12,done:hasGoal,navTab:'goals',navSub:null});
+
+  let hasRates=false;
+  try{
+    const raw=localStorage.getItem(LS);
+    if(raw){const saved=JSON.parse(raw);hasRates=!!(parseFloat(saved.kr)||parseFloat(saved.mr));}
+  }catch(e){}
+  items.push({key:'rates',label:'Fyll i skatt & räntor',weight:12,done:hasRates,navTab:'settings',navSub:'tax'});
+
+  items.push({key:'cloud',label:'Aktivera molnsynk',weight:20,done:!!(sb&&sbUser),navTab:'settings',navSub:'data'});
+
+  const mode=getMode();
+  const needsMembers=mode!=='singel';
+  const hasMembers=(P.family||[]).length>0;
+  items.push({key:'members',label:'Lägg till andra profiler',weight:10,done:!needsMembers||hasMembers,navTab:'settings',navSub:'personal-family'});
+
+  const hasTx=Object.keys(TX||{}).some(k=>(TX[k]||[]).length>0);
+  items.push({key:'tx',label:'Registrera en transaktion',weight:8,done:hasTx,navTab:'actual',navSub:null});
+
+  const totalWeight=items.reduce((s,i)=>s+i.weight,0);
+  const doneWeight=items.filter(i=>i.done).reduce((s,i)=>s+i.weight,0);
+  const pct=totalWeight>0?Math.round(doneWeight/totalWeight*100):0;
+  const nextItem=items.find(i=>!i.done);
+
+  return{pct,items,nextItem};
+}
+
+function goToCompletenessItem(navTab,navSub){
+  nav(navTab);
+  if(navSub){_sv=navSub;rSv();}
+}
+
+function rProfileCompleteness(){
+  const{pct,nextItem}=getProfileCompleteness();
+  if(pct>=100)return''; // klart — visa inget, ingen anledning att ta plats i onödan
+  const r=22,circ=2*Math.PI*r;
+  const dash=circ*(pct/100);
+  return`<div onclick="${nextItem?`goToCompletenessItem('${nextItem.navTab}',${nextItem.navSub?`'${nextItem.navSub}'`:'null'})`:''}" style="display:flex;align-items:center;gap:14px;padding:13px 16px;background:var(--card);border-radius:var(--r2);margin-bottom:16px;cursor:pointer;-webkit-tap-highlight-color:transparent">
+    <svg width="50" height="50" viewBox="0 0 50 50" style="flex-shrink:0;transform:rotate(-90deg)">
+      <circle cx="25" cy="25" r="${r}" fill="none" stroke="var(--bd2)" stroke-width="4"/>
+      <circle cx="25" cy="25" r="${r}" fill="none" stroke="var(--bl)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${dash} ${circ}"/>
+    </svg>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600;color:var(--t1)">Din profil: ${pct}% komplett</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nextItem?'Nästa: '+nextItem.label:'Nästan klart!'}</div>
+    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`;
 }
 
 function _monthName(m){
