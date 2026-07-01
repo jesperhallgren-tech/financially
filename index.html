@@ -656,15 +656,17 @@ html,body{background:#1C1C1E!important}
 <div style="font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.4px;margin-bottom:20px;padding-top:4px">Skatt & räntor</div>
 <div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px">
   <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:12px">Skatt</div>
-  <div class="fi" style="margin-bottom:12px"><div class="fl">Kommunalskatt (%)</div><input class="inp" type="number" id="kr" step="0.01" oninput="onKR()" inputmode="decimal"></div>
+  <div class="fi" style="margin-bottom:8px"><div class="fl">Kommunalskatt (%)</div><input class="inp" type="number" id="kr" step="0.01" oninput="onKR()" inputmode="decimal"></div>
+  <div id="kr-suggest-row" style="display:none;margin-bottom:12px"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;color:var(--t2)">Public service-avg.</span><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="ps-on" onchange="onPS()" checked><span style="font-size:12px;color:var(--t3)">1 500 kr/år</span></label></div>
-  <div class="fi"><div class="fl">Kyrkoavgift (%)</div><input class="inp" type="number" id="ky-r" value="0" step="0.01" oninput="onKY()" inputmode="decimal"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;color:var(--t2)">Medlem i Svenska kyrkan</span><label style="position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0"><input type="checkbox" id="ky-on" onchange="onKYOn()" style="opacity:0;width:0;height:0"><span id="ky-on-bg" style="position:absolute;inset:0;background:var(--bd2);border-radius:14px;transition:background .2s"></span><span id="ky-on-dot" style="position:absolute;top:3px;left:3px;width:22px;height:22px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span></label></div>
+  <div class="fi" id="ky-r-row" style="display:none"><div class="fl">Kyrkoavgift (%)</div><input class="inp" type="number" id="ky-r" value="1" step="0.01" oninput="onKY()" inputmode="decimal"></div>
 </div></div>
 <div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px">
   <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:12px">Räntor</div>
   <div class="fi" style="margin-bottom:12px"><div class="fl">Bolåneränta (%/år)</div><input class="inp" type="number" id="mr" step="0.01" oninput="onMR()" inputmode="decimal"></div>
-  <div class="fi" style="margin-bottom:12px"><div class="fl">CSN Person 1 (%/år)</div><input class="inp" type="number" id="jcr" step="0.01" oninput="onJCR()" inputmode="decimal"></div>
-  <div class="fi"><div class="fl">CSN Person 2 (%/år)</div><input class="inp" type="number" id="ncr" step="0.01" oninput="onNCR()" inputmode="decimal"></div>
+  <div class="fi"><div class="fl">CSN-ränta (%/år)</div><input class="inp" type="number" id="jcr" step="0.01" oninput="onJCR()" inputmode="decimal" placeholder="2.135"></div>
+  <div style="font-size:11px;color:var(--t3);margin-top:6px;padding-left:2px">Samma nationella ränta gäller alla låntagare (2,135% för 2026)</div>
 </div></div>
 </div>
 
@@ -821,6 +823,32 @@ function bustC(){_cCache=null;_cKey='';}
 function gc(d){const s=(d||'').toLowerCase();for(const[,m]of Object.entries(CM)){if(m.k?.some(k=>s.includes(k)))return m.t;}return'ovrigt';}
 const fmt=n=>{const s=Math.abs(Math.round(n)).toLocaleString('sv-SE');return(n<0?'\u2212':'')+s+'\u202fkr'};
 const srcClr={manual:['var(--t3)',''],bank:['var(--bl)',''],avanza:['var(--ok)',''],nordnet:['#AF52DE','']};
+// Kommunalskatt 2026 (kommun + region, ungefärliga värden) för de ~35 största
+// kommunerna — används bara för att FÖRESLÅ ett startvärde utifrån bostadsort,
+// aldrig för att tyst skriva över ett värde användaren redan angett. Källa:
+// offentliga skattejämförelser 2026 (SCB:s riksgenomsnitt är 32,38%; enskilda
+// kommuner kan skilja någon tiondels procentenhet — bekräfta alltid mot din
+// egen skattsedel för exakt värde).
+const KOMMUN_TAX_2026={
+  'stockholm':30.4,'göteborg':32.6,'malmö':32.4,'uppsala':32.9,'linköping':31.8,
+  'örebro':33.2,'västerås':31.2,'helsingborg':31.4,'jönköping':33.0,'norrköping':33.3,
+  'umeå':34.1,'lund':32.4,'huddinge':31.9,'borås':32.8,'nacka':30.3,
+  'eskilstuna':32.2,'gävle':33.8,'halmstad':32.4,'sundsvall':33.9,'södertälje':32.5,
+  'karlstad':33.0,'botkyrka':32.5,'växjö':32.2,'haninge':32.3,'kristianstad':32.5,
+  'kungsbacka':32.1,'solna':29.8,'luleå':33.8,'järfälla':31.3,'sollentuna':30.0,
+  'täby':29.6,'skellefteå':34.4,'kalmar':33.0,'mölndal':31.9,'karlskrona':32.4,
+  'varberg':31.7,'norrtälje':32.5,'östersund':34.1,'trollhättan':33.1,'falun':33.1,
+  'nyköping':32.5,'uddevalla':33.6,'tyresö':31.8,
+};
+function estimateKommunTax(city){
+  if(!city)return null;
+  const key=city.trim().toLowerCase();
+  if(KOMMUN_TAX_2026[key]!=null)return KOMMUN_TAX_2026[key];
+  // Enkel delsträngsmatchning för t.ex. "Stockholm, Södermalm" eller felstavningar med extra text
+  const match=Object.keys(KOMMUN_TAX_2026).find(k=>key.includes(k));
+  return match?KOMMUN_TAX_2026[match]:null;
+}
+
 const SPARANDE_SUBCATS=[
   {id:'konto',lbl:'Sparkonto & likvida medel'},
   {id:'investering',lbl:'Investeringar'},
@@ -4125,6 +4153,31 @@ function rBalItemEditor(){
     </div>
   </div>`;
 
+  if(type==='d'&&item.cat==='bolan'){
+    html+=`<div class="gt" style="margin:0 0 8px">L\u00e5nedetaljer</div>
+    <div style="margin-bottom:10px">
+      <div class="bs-who-label" style="margin-bottom:6px">Bank / institut</div>
+      <input class="inp" id="bie-institute" value="${(item.institute||'').replace(/"/g,'&quot;')}" placeholder="T.ex. SEB, Swedbank, Handelsbanken" style="width:100%">
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="bs-who-label" style="margin-bottom:6px">R\u00e4ntetyp</div>
+      <div class="bs-split-row">
+        <button class="bs-split-btn ${item.rateType!=='fast'?'on':''}" onclick="bieSetRateType('rorlig')">R\u00f6rlig</button>
+        <button class="bs-split-btn ${item.rateType==='fast'?'on':''}" onclick="bieSetRateType('fast')">Fast</button>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div class="bs-who-label" style="margin-bottom:6px">R\u00e4nta (%/\u00e5r)</div>
+      <input class="inp" id="bie-rate" type="number" step="0.01" inputmode="decimal" value="${item.rate??''}" placeholder="T.ex. 3.5 \u2014 tomt = anv\u00e4nder ${g('mr')||'ej angiven'}% som schablon" style="width:100%">
+    </div>
+    ${item.rateType==='fast'?`<div style="margin-bottom:14px">
+      <div class="bs-who-label" style="margin-bottom:6px">Bindningstid</div>
+      <select class="sel" id="bie-term" style="width:100%">
+        ${[1,2,3,4,5].map(y=>`<option value="${y}"${item.termYears===y?' selected':''}>${y} \u00e5r</option>`).join('')}
+      </select>
+    </div>`:''}`;
+  }
+
   if(isShared){
     if(contributors.length>2){
       html+=`<div style="margin-bottom:14px">
@@ -4219,6 +4272,16 @@ function bieSetCat(newCat){
   rBalItemEditor();
 }
 
+function bieSetRateType(t){
+  const{itemId}=_balEditCtx;
+  const item=S.debts2.find(i=>i.id===itemId);
+  if(!item)return;
+  item.rateType=t;
+  if(t==='fast'&&!item.termYears)item.termYears=3;
+  hapLight();
+  rBalItemEditor();
+}
+
 function bieSetWho(who){
   const{type,itemId}=_balEditCtx;
   const arr=type==='a'?S.assets2:S.debts2;
@@ -4266,6 +4329,14 @@ function bieSave(){
   }
   const subcatSel=document.getElementById('bie-subcat');
   if(subcatSel)item.subcat=subcatSel.value;
+  if(type==='d'&&item.cat==='bolan'){
+    const instEl=document.getElementById('bie-institute');
+    if(instEl)item.institute=instEl.value.trim();
+    const rateEl=document.getElementById('bie-rate');
+    if(rateEl)item.rate=rateEl.value?parseFloat(rateEl.value):null;
+    const termEl=document.getElementById('bie-term');
+    if(termEl)item.termYears=parseInt(termEl.value)||null;
+  }
   const pctSlider=document.getElementById('bie-pct');
   if(pctSlider){
     const pct=parseInt(pctSlider.value)/100;
@@ -5076,7 +5147,7 @@ function build(){
     notifEnabled:S.notifEnabled||false,
     lastMonthSummary:S.lastMonthSummary||null,
     TM,
-    kr:g('kr'),kyr:g('ky-r'),psOn:gb('ps-on'),mr:g('mr'),jcr:g('jcr'),ncr:g('ncr'),
+    kr:g('kr'),kyr:g('ky-r'),kyOn:gb('ky-on'),psOn:gb('ps-on'),mr:g('mr'),jcr:g('jcr'),
     budget:S.budget,
     assets2:S.assets2,
     debts2:S.debts2,
@@ -5098,7 +5169,9 @@ function applyP(p){
   migrateData(p);
   if(p.TM){TM=p.TM;apTUI(TM);}
   const sv=(id,v)=>{const e=document.getElementById(id);if(e&&v!==undefined)e.value=v;};
-  sv('kr',p.kr);sv('ky-r',p.kyr);sv('mr',p.mr);sv('jcr',p.jcr);sv('ncr',p.ncr);
+  sv('kr',p.kr);sv('ky-r',p.kyr);sv('mr',p.mr);sv('jcr',p.jcr);
+  const kyOnEl=document.getElementById('ky-on');if(kyOnEl&&p.kyOn!==undefined)kyOnEl.checked=p.kyOn;
+  syncKYOnVisual();
   const psEl=document.getElementById('ps-on');if(psEl&&p.psOn!==undefined)psEl.checked=p.psOn;
   if(p.budget){
     const b=p.budget;
@@ -5141,11 +5214,42 @@ function onGross(){
 // Skatt & räntor-fälten (Kommunalskatt, Bolåneränta, Kyrkoavgift, CSN-räntor, Public service)
 // hade tidigare inga handlers definierade trots oninput/onchange-koppling i markupen —
 // värdena skrevs aldrig till state och försvann vid sparning/reload.
-function onKR(){sc();}
+// Föreslår kommunalskatt utifrån bostadsort (Min profil) — fyller ALDRIG i
+// tyst, bara en banner man själv väljer att använda. Visas bara om fältet
+// är tomt, så en redan medvetet ifylld siffra aldrig ifrågasätts.
+function showKrSuggestion(){
+  const row=document.getElementById('kr-suggest-row');
+  if(!row)return;
+  const krEl=document.getElementById('kr');
+  const alreadySet=krEl&&krEl.value;
+  const est=estimateKommunTax(P.me?.city);
+  if(alreadySet||est==null){row.style.display='none';row.innerHTML='';return;}
+  row.style.display='block';
+  row.innerHTML=`<div style="background:var(--blbg);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px">
+    <div style="flex:1;min-width:0;font-size:12px;color:var(--t2)">Baserat på din ort (${P.me.city}): ungefär <b>${est}%</b> (2026, riktvärde)</div>
+    <button onclick="document.getElementById('kr').value='${est}';onKR();document.getElementById('kr-suggest-row').style.display='none'" class="btn pri sm" style="flex-shrink:0">Använd</button>
+  </div>`;
+}
+function onKR(){sc();showKrSuggestion();}
 function onMR(){sc();}
 function onKY(){sc();}
 function onJCR(){sc();}
-function onNCR(){sc();}
+function onKYOn(){
+  const on=!!document.getElementById('ky-on')?.checked;
+  const row=document.getElementById('ky-r-row');
+  if(row)row.style.display=on?'':'none';
+  syncKYOnVisual();
+  sc();
+}
+function syncKYOnVisual(){
+  const on=!!document.getElementById('ky-on')?.checked;
+  const bg=document.getElementById('ky-on-bg');
+  const dot=document.getElementById('ky-on-dot');
+  if(bg)bg.style.background=on?'var(--bl)':'var(--bd2)';
+  if(dot)dot.style.left=on?'21px':'3px';
+  const row=document.getElementById('ky-r-row');
+  if(row)row.style.display=on?'':'none';
+}
 function onPS(){sc();}
 function compInc(){
   const contributors=getContributors();
@@ -5155,9 +5259,9 @@ function compInc(){
       _inc[c.id]={gross:c.gross||0,net:manualVal,tax:null};
     });
   } else {
-    const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on');
+    const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on'),kyOn=gb('ky-on');
     contributors.forEach((c,i)=>{
-      const tax=cNet(c.gross||0,kr,psOn,true,kyR);
+      const tax=cNet(c.gross||0,kr,psOn,kyOn,kyR);
       _inc[c.id]={gross:c.gross||0,net:tax.nm,tax};
     });
   }
@@ -5165,8 +5269,19 @@ function compInc(){
 function cGA(ai){const p=PBB;let r;if(ai<=.75*p)r=ai;else if(ai<=2.72*p)r=.156*p+.22*(ai-.75*p);else if(ai<=6.25*p)r=.77*p;else if(ai<=7.88*p)r=.77*p-.1*(ai-6.25*p);else r=.293*p;return Math.ceil(r/100)*100;}
 function cJSA(ai,kr){const k=kr/100,p=PBB;let c;if(ai<=.91*p)c=.91*ai*k;else if(ai<=3.24*p)c=(.2832*p+.3294*(ai-.91*p))*k;else if(ai<=8.08*p)c=(.16*ai-.1*p)*k;else c=(.16*8.08*p-.1*p)*k;return Math.max(0,c);}
 function cNet(gm,kr,psOn,kyOn,kyR){const ag=gm*12,pf=ag*.07,tx=ag-pf,ga=cGA(tx),besk=Math.max(0,tx-ga),kom=besk*(kr/100),stat=Math.max(0,tx-ST)*.2,jsa=cJSA(ag,kr),ps=psOn?Math.min(besk*.01,1500):0,ky=kyOn?besk*(kyR/100):0,tot=Math.max(0,kom+stat-jsa-pf)+ps+ky;return{nm:Math.round((ag-tot)/12),komAr:Math.round(kom),statAr:Math.round(stat),jsaAr:Math.round(jsa),psAr:Math.round(ps),kyAr:Math.round(ky),eff:tot/ag*100};}
-function getMb(){return Math.abs((S.debts.gemensamma.items.find(i=>i.id==='d0')||{amount:0}).amount);}
-function cA(item){if(item.csnInfo)return item.amount||0;if(!item.computed)return item.amount||0;if(item.computed==='mortgage')return-(getMb()*(parseFloat(g('mr'))||0)/100/12);return 0;}
+function getMb(){return (S.debts2||[]).filter(d=>d.cat==='bolan').reduce((s,d)=>s+Math.abs(d.amount||0),0);}
+// Räknar total månatlig ränteko: per lån om det har en egen ränta satt,
+// annars den globala schablonräntan (mr) som reserv — så en användare som
+// bara lagt in ett bolån utan detaljer fortfarande får en rimlig uppskattning.
+function getMortgageMonthlyInterest(){
+  const loans=(S.debts2||[]).filter(d=>d.cat==='bolan');
+  const fallbackRate=parseFloat(g('mr'))||0;
+  return loans.reduce((sum,loan)=>{
+    const rate=(loan.rate!=null&&loan.rate!=='')?parseFloat(loan.rate)||0:fallbackRate;
+    return sum+Math.abs(loan.amount||0)*rate/100/12;
+  },0);
+}
+function cA(item){if(item.csnInfo)return item.amount||0;if(!item.computed)return item.amount||0;if(item.computed==='mortgage')return-getMortgageMonthlyInterest();return 0;}
 const S={onboarded:false,onbStep:0,mode:'par',budSeg:'plan',
   userCats:[
     {id:'sparande',label:'Sparande',           ic:'coin',  order:0},
@@ -7157,6 +7272,7 @@ function rSv(){
   if(_sv==='personal-member') renderMemberForm();
   if(_sv==='data'){ rDataMgmt(); initSyncBanner(); }
   if(_sv==='categories') rCatManager();
+  if(_sv==='tax'){ syncKYOnVisual(); showKrSuggestion(); }
   setTimeout(tglMbrSector,0);
 }
 
@@ -7223,8 +7339,8 @@ function meUpdateNet(){
   if(!grossEl||!netEl)return;
   const gross=parseFloat(grossEl.value)||0;
   if(gross>0){
-    const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on');
-    const tax=cNet(gross,kr,psOn,true,kyR);
+    const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on'),kyOn=gb('ky-on');
+    const tax=cNet(gross,kr,psOn,kyOn,kyR);
     netEl.value=tax.nm;
   } else {
     netEl.value='';
@@ -7357,8 +7473,8 @@ function mbrUpdateNet(){
   if(!grossEl||!netEl)return;
   const gross=parseFloat(grossEl.value)||0;
   if(gross>0){
-    const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on');
-    const tax=cNet(gross,kr,psOn,true,kyR);
+    const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on'),kyOn=gb('ky-on');
+    const tax=cNet(gross,kr,psOn,kyOn,kyR);
     netEl.value=tax.nm;
   } else {
     netEl.value='';
