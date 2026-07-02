@@ -6479,7 +6479,7 @@ async function sbPush(silent){
     // familjemedlem använder sitt eget lokala ID, precis som tillgångar etc.
     const memberRows=[{id:'me',household_id:sbHouseholdId,name:P.me?.name||'',role:'jag',dob:P.me?.dob||null,gender:P.me?.gender||null,occupation:P.me?.occ||null,photo:P.me?.photo||null,meta:{city:P.me?.city,sector:P.me?.sector,email:P.me?.email,phone:P.me?.phone,gross:P.me?.gross,net:P.me?.net}}];
     (P.family||[]).forEach(m=>{
-      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:null,photo:m.photo||null,meta:{email:m.email,phone:m.phone,canContribute:!!m.canContribute,gross:m.gross,net:m.net}});
+      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:m.occ||null,photo:m.photo||null,meta:{email:m.email,phone:m.phone,canContribute:!!m.canContribute,gross:m.gross,net:m.net,sector:m.sector}});
     });
     const{error:eMem}=await sb.from('members').upsert(memberRows,{onConflict:'id'});
     if(eMem)throw eMem;
@@ -6542,7 +6542,7 @@ async function sbPull(silent){
     if(members){
       const me=members.find(m=>m.id==='me');
       if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0,net:me.meta?.net||0};
-      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0,net:m.meta?.net||0}));
+      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',occ:m.occupation||'',sector:m.meta?.sector||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0,net:m.meta?.net||0}));
     }
     const hhSettings=settingsRows&&settingsRows[0];
     if(hhSettings){
@@ -6570,10 +6570,17 @@ async function sbPull(silent){
           ...(r.meta?.type?{type:r.meta.type}:{}),...(r.meta?.term?{term:r.meta.term}:{})}));
       if(pulledGem.length){
         const defGem=S.budget.gem;
-        S.budget.gem=pulledGem.map(s=>{
+        // Slår ihop moln-data med lokalt state istället för att ersätta det
+        // rakt av — annars kan en hämtning som hinner före en väntande
+        // uppladdning (t.ex. direkt efter att en ny inc_lon_<id>-post skapats
+        // lokalt) tysta radera den innan den hunnit synkas upp.
+        const merged={};
+        defGem.forEach(it=>{merged[it.id]=it;});
+        pulledGem.forEach(s=>{
           const d=defGem.find(d=>d.id===s.id);
-          return d?{...s,locked:d.locked,computed:d.computed,payerLocked:d.payerLocked,csnInfo:d.csnInfo}:s;
+          merged[s.id]=d?{...s,locked:d.locked,computed:d.computed,payerLocked:d.payerLocked,csnInfo:d.csnInfo}:s;
         });
+        S.budget.gem=Object.values(merged);
       }
       const pulledSav=budgetItems.filter(r=>r.list==='sav').sort((a,b)=>(a.order_idx||0)-(b.order_idx||0))
         .map(r=>({id:r.id,label:r.label,amount:r.amount,split:r.split||'L'}));
