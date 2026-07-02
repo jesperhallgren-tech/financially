@@ -890,7 +890,7 @@ const MORTGAGE_LENDERS=[
   'Länsförsäkringar Bank','SBAB','ICA Banken','Skandiabanken','Sparbanken',
   'Landshypotek Bank','Stabelo','Hypoteket','Avanza','Nordnet',
 ];
-const srcBadge=src=>{const[c]=srcClr[src]||srcClr.manual;return `<span style="font-size:10px;color:${c};font-weight:600">${{manual:'Manuell',bank:'Bank',avanza:'Avanza',nordnet:'Nordnet',annat:'K\u00e4lla'}[src]||'Manuell'}</span>`;};
+const srcBadge=(src,size=10)=>{const[c]=srcClr[src]||srcClr.manual;return `<span style="font-size:${size}px;color:${c};font-weight:600">${{manual:'Manuell',bank:'Bank',avanza:'Avanza',nordnet:'Nordnet',annat:'K\u00e4lla'}[src]||'Manuell'}</span>`;};
 const PBB=59200,ST=643000,DF='hushallsbudget_data.json',LS='hb_v4';
 
 const DATA_V=8;
@@ -2020,7 +2020,7 @@ function rDataMgmt(){
         </div>`:''}
         ${sbUser&&sbHouseholdId?`<div style="display:flex;gap:8px;margin-bottom:8px">
           <button onclick="sbPush()" class="btn pri sm" style="flex:1">⬆ Synka till molnet</button>
-          <button onclick="sbPull()" class="btn sec sm" style="flex:1">⬇ Hämta från molnet</button>
+          <button onclick="sbManualPull()" class="btn sec sm" style="flex:1">⬇ Hämta från molnet</button>
         </div>`:sbUser?`
         <div style="font-size:12px;color:var(--err);margin-bottom:10px">Kunde inte skapa/hitta ditt hushåll${sbHouseholdError?(': '+sbHouseholdError):''}.</div>
         <button onclick="sbRetryHousehold()" class="btn sec sm" style="width:100%;margin-bottom:8px">Försök igen</button>
@@ -3206,31 +3206,31 @@ function runGlobalSearch(query){
   section('Transaktioner',results.tx.sort((a,b)=>(b.date||'').localeCompare(a.date||'')),(t,bd)=>
     `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;${bd?'border-top:.5px solid var(--bd3)':''}">
       <div style="flex:1;min-width:0">
-        <div style="font-size:14px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||'\u2013'}</div>
-        <div style="font-size:12px;color:var(--t3)">${t.date||''} \u00b7 ${getCatLabel(t.cat)||''}</div>
+        <div style="font-size:13px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc||'\u2013'}</div>
+        <div style="font-size:11px;color:var(--t3)">${t.date||''} \u00b7 ${getCatLabel(t.cat)||''}</div>
       </div>
-      <span style="font-size:14px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums;flex-shrink:0">${fmt(Math.abs(t.amount||0))}</span>
+      <span style="font-size:13px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums;flex-shrink:0">${fmt(Math.abs(t.amount||0))}</span>
     </div>`
   );
 
   section('Budgetposter',results.budget,(item,bd)=>
     `<div onclick="closeGlobalSearch();navTo('budget');setBudSeg('plan')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;${bd?'border-top:.5px solid var(--bd3)':''}">
-      <div style="flex:1;min-width:0;font-size:14px;color:var(--t1)">${item.label}</div>
-      <span style="font-size:14px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums;flex-shrink:0">${fmt(Math.abs(item.amount||0))}</span>
+      <div style="flex:1;min-width:0;font-size:13px;color:var(--t1)">${item.label}</div>
+      <span style="font-size:13px;font-weight:500;color:var(--t1);font-variant-numeric:tabular-nums;flex-shrink:0">${fmt(Math.abs(item.amount||0))}</span>
     </div>`
   );
 
   section('Tillg\u00e5ngar',results.assets,(item,bd)=>
     `<div onclick="closeGlobalSearch();navTo('bal')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;${bd?'border-top:.5px solid var(--bd3)':''}">
-      <div style="flex:1;min-width:0;font-size:14px;color:var(--t1)">${item.label}</div>
-      <span style="font-size:14px;font-weight:600;color:var(--ok);font-variant-numeric:tabular-nums;flex-shrink:0">${fmt(Math.abs(item.amount||0))}</span>
+      <div style="flex:1;min-width:0;font-size:13px;color:var(--t1)">${item.label}</div>
+      <span style="font-size:13px;font-weight:500;color:var(--ok);font-variant-numeric:tabular-nums;flex-shrink:0">${fmt(Math.abs(item.amount||0))}</span>
     </div>`
   );
 
   section('Skulder',results.debts,(item,bd)=>
     `<div onclick="closeGlobalSearch();navTo('bal')" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;${bd?'border-top:.5px solid var(--bd3)':''}">
-      <div style="flex:1;min-width:0;font-size:14px;color:var(--t1)">${item.label}</div>
-      <span style="font-size:14px;font-weight:600;color:var(--err);font-variant-numeric:tabular-nums;flex-shrink:0">\u2212${fmt(Math.abs(item.amount||0))}</span>
+      <div style="flex:1;min-width:0;font-size:13px;color:var(--t1)">${item.label}</div>
+      <span style="font-size:13px;font-weight:500;color:var(--err);font-variant-numeric:tabular-nums;flex-shrink:0">\u2212${fmt(Math.abs(item.amount||0))}</span>
     </div>`
   );
 
@@ -3911,6 +3911,28 @@ function filterGemByPlan(items){
       return shares.filter(s=>Math.abs(s.amount)>0.01).length>1;
     }
     // Filtrerat p\u00e5 en specifik person: visa om personen bidrar n\u00e5got till posten
+    const personShare=shares.find(s=>s.personId===_planFilter);
+    return personShare&&Math.abs(personShare.amount)>0.01;
+  });
+}
+
+// Samma filter, fast f\u00f6r inkomstposter \u2014 en egen funktion eftersom L\u00f6n-poster
+// (inc_lon_<id>) \u00e4r odelat kopplade till EXAKT en person via sitt id, och aldrig
+// har n\u00e5got shares[]-f\u00e4lt satt. Skickar man en s\u00e5dan post genom resolveShares()
+// hamnar den i den generella legacy-split-fallbacken och delas proportionellt
+// efter nettoinkomst mellan ALLA bidragsgivare \u2014 fel f\u00f6r en post som ju
+// uttryckligen \u00e4r en specifik persons egen l\u00f6n.
+function filterIncomeByPlan(items){
+  if(_planFilter==='alla'||isSingel())return items;
+  return items.filter(item=>{
+    if(item.id.startsWith('inc_lon_')){
+      return item.id==='inc_lon_'+_planFilter;
+    }
+    const a=Math.abs(item.amount)||1;
+    const shares=resolveShares(item,a);
+    if(_planFilter==='gemensamt'){
+      return shares.filter(s=>Math.abs(s.amount)>0.01).length>1;
+    }
     const personShare=shares.find(s=>s.personId===_planFilter);
     return personShare&&Math.abs(personShare.amount)>0.01;
   });
@@ -4779,7 +4801,7 @@ function cleanupDemoSparandeItem(){
 // inkomster), alltid synliga, samma m\u00f6nster som Utgifter/Tillg\u00e5ngar & skulder ══
 function rIncomeSection(targetEl){
   if(!targetEl)return;
-  const items=(S.budget.gem||[]).filter(i=>i.cat==='inkomst').slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  const items=filterIncomeByPlan((S.budget.gem||[]).filter(i=>i.cat==='inkomst')).slice().sort((a,b)=>(a.order||0)-(b.order||0));
 
   const INC_GROUPS=[
     {id:'lon',label:'L\u00f6n',ic:'coin',match:i=>i.id.startsWith('inc_lon_')},
@@ -5723,12 +5745,13 @@ function rSparandeBricka(){
       </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 35px">
         <div style="display:flex;align-items:center;gap:6px">
           <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:1px;display:flex;gap:5px;flex-wrap:wrap">
-              ${srcBadge(item.src)}${sub?`<span>${sub}</span>`:''}
+            <div style="font-size:13px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px">
+              <div style="opacity:.85">${srcBadge(item.src,11)}</div>
+              ${sub?`<div style="margin-top:1px">${sub}</div>`:''}
             </div>
           </div>
-          <span style="font-size:14px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(Math.round(Math.abs(item.amount||0)))}</span>
+          <span style="font-size:13px;font-weight:500;color:var(--t1);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(Math.round(Math.abs(item.amount||0)))}</span>
         </div>
       </div></div></div>`;
   };
@@ -5841,7 +5864,7 @@ function _rBudPlan(ct){
     }
 
     // Disponibel inkomst — inkomster minus utgifter (samma totaler som korten nedan)
-    var incItemsForDisp=(S.budget.gem||[]).filter(function(i){return i.cat==='inkomst';});
+    var incItemsForDisp=filterIncomeByPlan((S.budget.gem||[]).filter(function(i){return i.cat==='inkomst';}));
     var totalIncForDisp=incItemsForDisp.filter(function(item){return item.amount&&Math.abs(item.amount)>=1;}).reduce(function(s,i){return s+(i.amount||0);},0);
     var gemForDisp=(S.budget.gem&&S.budget.gem.length)?S.budget.gem:[].concat(S.budget.cos||[],S.budget.exp||[]);
     gemForDisp=gemForDisp.filter(function(i){return i.cat!=='inkomst';});
@@ -6637,6 +6660,25 @@ async function sbPush(silent){
   }
 }
 
+// Slår ihop molndata med lokalt state istället för att ersätta det rakt av —
+// annars kan en hämtning som hinner före en väntande uppladdning (t.ex.
+// direkt efter att en ny tillgång/skuld/mål skapats lokalt) tysta radera
+// den innan den hunnit synkas upp. Samma princip som redan används för
+// budgetposter (S.budget.gem) i sbPull() nedan.
+function mergeCloudList(localArr,cloudRows,mapFn){
+  const merged={};
+  (localArr||[]).forEach(it=>{merged[it.id]=it;});
+  (cloudRows||[]).forEach(row=>{const item=mapFn(row);merged[item.id]=item;});
+  return Object.values(merged);
+}
+// Manuell "Hämta från molnet"-knapp — pushar eventuell väntande lokal
+// ändring FÖRST, av samma anledning som vid appstart: annars kan en
+// nyligen borttagen post (vars radering ännu inte hunnit synkas upp)
+// råka "återuppstå" genom sammanslagningen i sbPull().
+async function sbManualPull(){
+  try{await sbPush(true);}catch(e){console.warn('[sbManualPull push]',e.message);}
+  await sbPull();
+}
 async function sbPull(silent){
   if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
   try{
@@ -6652,9 +6694,9 @@ async function sbPull(silent){
     ]);
     if(e1||e2||e3||e4||e5||e6||e7)throw(e1||e2||e3||e4||e5||e6||e7);
 
-    if(assets)S.assets2=assets.map(a=>({id:a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
-    if(debts)S.debts2=debts.map(d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
-    if(goals)S.goals=goals.map(g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
+    if(assets)S.assets2=mergeCloudList(S.assets2,assets,a=>({id:a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
+    if(debts)S.debts2=mergeCloudList(S.debts2,debts,d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
+    if(goals)S.goals=mergeCloudList(S.goals,goals,g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
     if(members){
       const me=members.find(m=>m.id==='me');
       if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0,net:me.meta?.net||0,kyOn:!!me.meta?.kyOn,kyR:me.meta?.kyR??1,netOverride:!!me.meta?.netOverride};
@@ -7249,12 +7291,13 @@ function rBal(){
               </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 35px">
               <div style="display:flex;align-items:center;gap:6px">
                 <div style="flex:1;min-width:0">
-                  <div style="font-size:14px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
-                  <div style="font-size:11px;color:var(--t3);margin-top:1px;display:flex;gap:5px;flex-wrap:wrap">
-                    ${srcBadge(item.src)}${sub?`<span>${sub}</span>`:''}
+                  <div style="font-size:13px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
+                  <div style="font-size:11px;color:var(--t3);margin-top:1px">
+                    <div style="opacity:.85">${srcBadge(item.src,11)}</div>
+                    ${sub?`<div style="margin-top:1px">${sub}</div>`:''}
                   </div>
                 </div>
-                <span style="font-size:14px;font-weight:600;color:var(--t1);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(Math.round(type==='d'?-total2:total2))}</span>
+                <span style="font-size:13px;font-weight:500;color:var(--t1);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(Math.round(type==='d'?-total2:total2))}</span>
                 <span style="width:18px;flex-shrink:0"></span>
               </div>
             </div></div></div>`;
