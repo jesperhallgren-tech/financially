@@ -5436,9 +5436,9 @@ function showKrSuggestion(){
     <button onclick="document.getElementById('kr').value='${est}';onKR();document.getElementById('kr-suggest-row').style.display='none'" class="btn pri sm" style="flex-shrink:0">Använd</button>
   </div>`;
 }
-function onKR(){sc();showKrSuggestion();}
+function onKR(){sc();showKrSuggestion();recalcAllNetIncomes();}
 function onMR(){sc();}
-function onKY(){sc();}
+function onKY(){sc();recalcAllNetIncomes();}
 function onJCR(){sc();}
 function onKYOn(){
   const on=!!document.getElementById('ky-on')?.checked;
@@ -5446,6 +5446,7 @@ function onKYOn(){
   if(row)row.style.display=on?'':'none';
   syncKYOnVisual();
   sc();
+  recalcAllNetIncomes();
 }
 function syncKYOnVisual(){
   const on=!!document.getElementById('ky-on')?.checked;
@@ -5456,7 +5457,35 @@ function syncKYOnVisual(){
   const row=document.getElementById('ky-r-row');
   if(row)row.style.display=on?'':'none';
 }
-function onPS(){sc();}
+function onPS(){sc();recalcAllNetIncomes();}
+// Räknar om och skriver tillbaka nettolön för alla (huvudanvändare +
+// familjemedlemmar) till deras inc_lon_<id>-budgetposter. Behövs eftersom
+// nettot annars bara räknas om i det ögonblicket bruttolönen skrivs in
+// (meUpdateNet/mbrUpdateNet) — ändrar man en skatteinställning EFTER att
+// bruttolönen redan fyllts i (t.ex. sätter på Kyrkoavgift i efterhand)
+// stod den gamla, för höga nettosumman annars kvar orörd.
+function recalcAllNetIncomes(){
+  if(TM==='manual')return;
+  const kr=getKR(),kyR=parseFloat(g('ky-r'))||0,psOn=gb('ps-on'),kyOn=gb('ky-on');
+  if(!S.budget.gem)S.budget.gem=[];
+  if(P.me&&P.me.gross>0){
+    const tax=cNet(P.me.gross,kr,psOn,kyOn,kyR);
+    P.me.net=tax.nm;
+    const lonItem=S.budget.gem.find(i=>i.id==='inc_lon_me');
+    if(lonItem)lonItem.amount=tax.nm;
+    const netEl=document.getElementById('p-me-net');if(netEl)netEl.value=tax.nm;
+  }
+  (P.family||[]).forEach(m=>{
+    if(m.gross>0){
+      const tax=cNet(m.gross,kr,psOn,kyOn,kyR);
+      m.net=tax.nm;
+      const lonItem=S.budget.gem.find(i=>i.id==='inc_lon_'+m.id);
+      if(lonItem)lonItem.amount=tax.nm;
+      if(_svMbr===m.id){const netEl=document.getElementById('mbr-net');if(netEl)netEl.value=tax.nm;}
+    }
+  });
+  storeP();saveLS();
+}
 function compInc(){
   const contributors=getContributors();
   if(TM==='manual'){
@@ -6557,7 +6586,6 @@ async function sbPull(silent){
       if(hhSettings.use_separate_accounts!==null)S.useSeparateAccounts=!!hhSettings.use_separate_accounts;
       if(hhSettings.notif_enabled!==null)S.notifEnabled=!!hhSettings.notif_enabled;
       if(hhSettings.user_cats&&hhSettings.user_cats.length)S.userCats=hhSettings.user_cats;
-      compInc();
     }
     if(budgetItems){
       // Samma återförening mot kodens defaults som applyP() gör vid lokal
@@ -6603,6 +6631,7 @@ async function sbPull(silent){
       TX=rebuiltTX;
     }
 
+    compInc();recalcAllNetIncomes();
     markUns();
     clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
     try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
