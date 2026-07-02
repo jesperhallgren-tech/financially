@@ -611,7 +611,7 @@ html,body{background:#1C1C1E!important}
 <!-- ══ SUB-PAGES ══════════════════════════════════════════════ -->
 <div id="sv-personal-me" style="display:none">
 <div style="font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.4px;margin-bottom:4px;padding-top:4px">Mina uppgifter</div>
-<div style="font-size:13px;color:var(--t3);margin-bottom:20px">Profil och personuppgifter</div><div class="gc" style="padding:14px 16px;margin-bottom:8px;text-align:center"><div class="avatar-upload" onclick="pickPhoto('me',setMePhoto)"><svg id="me-photo-ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><img id="me-photo" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"></div><div class="avatar-lbl">Tryck f&#xf6;r att v&#xe4;lja bild</div></div><div class="gt">Profil</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Namn</div><input class="inp" type="text" id="p-me-name" placeholder="Ditt namn" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Bostadsort</div><input class="inp" type="text" id="p-me-city" placeholder="Stockholm" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Personuppgifter</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">K&#xf6;n</div><select class="sel" id="p-me-gender" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="man">Man</option><option value="kvinna">Kvinna</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">Syssels&#xe4;ttning</div><select class="sel" id="p-me-occ" onchange="saveP();tglSector('me')" style="width:100%"><option value="">Ej angett</option><option value="anstalld">Anst&#xe4;lld</option><option value="egenforetagare">Egenf&#xf6;retagare</option><option value="student">Student</option><option value="foraldraledig">F&#xf6;r&#xe4;ldraledig</option><option value="pensionar">Pension&#xe4;r</option><option value="arbetssokande">Arbetss&#xf6;kande</option><option value="annat">Annat</option></select></div><div id="p-me-sector-row" class="fi" style="margin-bottom:10px;display:none"><div class="fl">Sektor / inriktning</div><select class="sel" id="p-me-sector" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="teknik_it">Teknik &amp; IT</option><option value="finans">Finans &amp; ekonomi</option><option value="halsa_vard">Hälsa &amp; vård</option><option value="utbildning">Utbildning &amp; forskning</option><option value="handel">Handel &amp; e-handel</option><option value="bygg_fastighet">Bygg &amp; fastighet</option><option value="media">Media &amp; kommunikation</option><option value="juridik_hr">Juridik &amp; HR</option><option value="offentlig">Offentlig förvaltning</option><option value="industri">Industri &amp; tillverkning</option><option value="kultur">Kultur &amp; kreativ</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">F&#xf6;delsedatum</div><div style="display:flex;gap:6px"><select class="sel" id="p-me-dob-y" onchange="saveP()" style="flex:2;min-width:0"><option value="">År</option><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option></select><select class="sel" id="p-me-dob-m" onchange="saveP()" style="flex:3;min-width:0"><option value="">Mån</option><option value="01">Januari</option><option value="02">Februari</option><option value="03">Mars</option><option value="04">April</option><option value="05">Maj</option><option value="06">Juni</option><option value="07">Juli</option><option value="08">Augusti</option><option value="09">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">December</option></select><select class="sel" id="p-me-dob-d" onchange="saveP()" style="flex:1.5;min-width:0"><option value="">Dag</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div></div></div></div><div class="gt">Kontakt</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">E-post</div><input class="inp" type="email" id="p-me-email" placeholder="din@epost.se" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Telefon</div><input class="inp" type="tel" id="p-me-phone" placeholder="+46 70 000 00 00" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Inkomst</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Bruttolön (kr/mån)</div><input class="inp" type="number" id="p-me-gross" inputmode="numeric" placeholder="0" oninput="meUpdateNet()" style="width:100%"></div><div class="fi" style="margin-bottom:4px"><div class="fl">Nettolön (kr/mån)</div><input class="inp" type="number" id="p-me-net" inputmode="numeric" placeholder="Beräknas automatiskt" oninput="saveP()" style="width:100%"></div><div style="font-size:11px;color:var(--t3);margin-bottom:6px;padding-left:2px">Bruttolön → netto beräknas med dina skatteinställningar</div><div class="fi" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between"><div><div class="fl" style="margin-bottom:1px">Medlem i Svenska kyrkan</div><div style="font-size:12px;color:var(--t3)">Påverkar din nettolön (kyrkoavgift)</div></div><label style="position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0"><input type="checkbox" id="p-me-ky-on" onchange="onMeKYOn()" style="opacity:0;width:0;height:0"><span id="p-me-ky-on-bg" style="position:absolute;inset:0;background:var(--bd2);border-radius:14px;transition:background .2s"></span><span id="p-me-ky-on-dot" style="position:absolute;top:3px;left:3px;width:22px;height:22px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span></label></div><div id="p-me-ky-r-row" class="fi" style="margin-bottom:10px;display:none"><div class="fl">Kyrkoavgift (%)</div><input class="inp" type="number" id="p-me-ky-r" value="1" step="0.01" inputmode="decimal" oninput="meUpdateNet()"></div><button onclick="toggleTaxBreakdown('me')" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:8px">Visa skattespecifikation</button><div id="tax-breakdown-me" style="display:none;margin-top:4px"></div></div></div></div>
+<div style="font-size:13px;color:var(--t3);margin-bottom:20px">Profil och personuppgifter</div><div class="gc" style="padding:14px 16px;margin-bottom:8px;text-align:center"><div class="avatar-upload" onclick="pickPhoto('me',setMePhoto)"><svg id="me-photo-ic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><img id="me-photo" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%"></div><div class="avatar-lbl">Tryck f&#xf6;r att v&#xe4;lja bild</div></div><div class="gt">Profil</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Namn</div><input class="inp" type="text" id="p-me-name" placeholder="Ditt namn" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Bostadsort</div><input class="inp" type="text" id="p-me-city" placeholder="Stockholm" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Personuppgifter</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">K&#xf6;n</div><select class="sel" id="p-me-gender" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="man">Man</option><option value="kvinna">Kvinna</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">Syssels&#xe4;ttning</div><select class="sel" id="p-me-occ" onchange="saveP();tglSector('me')" style="width:100%"><option value="">Ej angett</option><option value="anstalld">Anst&#xe4;lld</option><option value="egenforetagare">Egenf&#xf6;retagare</option><option value="student">Student</option><option value="foraldraledig">F&#xf6;r&#xe4;ldraledig</option><option value="pensionar">Pension&#xe4;r</option><option value="arbetssokande">Arbetss&#xf6;kande</option><option value="annat">Annat</option></select></div><div id="p-me-sector-row" class="fi" style="margin-bottom:10px;display:none"><div class="fl">Sektor / inriktning</div><select class="sel" id="p-me-sector" onchange="saveP()" style="width:100%"><option value="">Ej angett</option><option value="teknik_it">Teknik &amp; IT</option><option value="finans">Finans &amp; ekonomi</option><option value="halsa_vard">Hälsa &amp; vård</option><option value="utbildning">Utbildning &amp; forskning</option><option value="handel">Handel &amp; e-handel</option><option value="bygg_fastighet">Bygg &amp; fastighet</option><option value="media">Media &amp; kommunikation</option><option value="juridik_hr">Juridik &amp; HR</option><option value="offentlig">Offentlig förvaltning</option><option value="industri">Industri &amp; tillverkning</option><option value="kultur">Kultur &amp; kreativ</option><option value="annat">Annat</option></select></div><div class="fi" style="margin-bottom:10px"><div class="fl">F&#xf6;delsedatum</div><div style="display:flex;gap:6px"><select class="sel" id="p-me-dob-y" onchange="saveP()" style="flex:2;min-width:0"><option value="">År</option><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option><option value="2020">2020</option><option value="2019">2019</option><option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option><option value="1940">1940</option><option value="1939">1939</option><option value="1938">1938</option><option value="1937">1937</option><option value="1936">1936</option><option value="1935">1935</option><option value="1934">1934</option><option value="1933">1933</option><option value="1932">1932</option><option value="1931">1931</option><option value="1930">1930</option></select><select class="sel" id="p-me-dob-m" onchange="saveP()" style="flex:3;min-width:0"><option value="">Mån</option><option value="01">Januari</option><option value="02">Februari</option><option value="03">Mars</option><option value="04">April</option><option value="05">Maj</option><option value="06">Juni</option><option value="07">Juli</option><option value="08">Augusti</option><option value="09">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">December</option></select><select class="sel" id="p-me-dob-d" onchange="saveP()" style="flex:1.5;min-width:0"><option value="">Dag</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select></div></div></div></div><div class="gt">Kontakt</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">E-post</div><input class="inp" type="email" id="p-me-email" placeholder="din@epost.se" onchange="saveP()" style="width:100%"></div><div class="fi" style="margin-bottom:10px"><div class="fl">Telefon</div><input class="inp" type="tel" id="p-me-phone" placeholder="+46 70 000 00 00" onchange="saveP()" style="width:100%"></div></div></div><div class="gt">Inkomst</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px"><div class="fi" style="margin-bottom:10px"><div class="fl">Bruttolön (kr/mån)</div><input class="inp" type="number" id="p-me-gross" inputmode="numeric" placeholder="0" oninput="meUpdateNet()" style="width:100%"></div><div class="fi" style="margin-bottom:4px"><div class="fl">Nettolön (kr/mån)</div><input class="inp" type="number" id="p-me-net" inputmode="numeric" placeholder="Beräknas automatiskt" oninput="saveP()" readonly style="width:100%;opacity:.75"></div><button id="p-me-net-ov-link" onclick="toggleMeNetOverride()" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:6px">Ange annat netto manuellt</button><div style="font-size:11px;color:var(--t3);margin-bottom:6px;padding-left:2px">Bruttolön → netto beräknas med dina skatteinställningar</div><div class="fi" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between"><div><div class="fl" style="margin-bottom:1px">Medlem i Svenska kyrkan</div><div style="font-size:12px;color:var(--t3)">Påverkar din nettolön (kyrkoavgift)</div></div><label style="position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0"><input type="checkbox" id="p-me-ky-on" onchange="onMeKYOn()" style="opacity:0;width:0;height:0"><span id="p-me-ky-on-bg" style="position:absolute;inset:0;background:var(--bd2);border-radius:14px;transition:background .2s"></span><span id="p-me-ky-on-dot" style="position:absolute;top:3px;left:3px;width:22px;height:22px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span></label></div><div id="p-me-ky-r-row" class="fi" style="margin-bottom:10px;display:none"><div class="fl">Kyrkoavgift (%)</div><input class="inp" type="number" id="p-me-ky-r" value="1" step="0.01" inputmode="decimal" oninput="meUpdateNet()"></div><button onclick="toggleTaxBreakdown('me')" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:8px">Visa skattespecifikation</button><div id="tax-breakdown-me" style="display:none;margin-top:4px"></div></div></div></div>
 
 
 <div id="sv-personal-family" style="display:none">
@@ -1059,7 +1059,7 @@ function totalNet(){return Object.values(_inc).reduce((s,p)=>s+(p.net||0),0);}
 function totalGross(){return Object.values(_inc).reduce((s,p)=>s+(p.gross||0),0);}
 let TX={};
 let _sv=null,_svMbr=null;
-let P={me:{name:"",city:"",gender:"",occ:"",sector:"",dob:"",email:"",phone:"",gross:0,kyOn:false,kyR:1},family:[]};
+let P={me:{name:"",city:"",gender:"",occ:"",sector:"",dob:"",email:"",phone:"",gross:0,kyOn:false,kyR:1,netOverride:false},family:[]};
 const CO={},MO={},EM={},DD={},CE={},MSO={in:true},BCO={sav:false,cos:false,exp:false,inkomst:false},OVC={};
 let _csv=null,_csvRawLines=null,_csvNeedsAI=false,_cc='total',_cR=null,_rcT=null,_svT=null,_saving=false;
 let _cCache=null,_cKey='';
@@ -5475,7 +5475,7 @@ function recalcAllNetIncomes(){
   if(TM==='manual')return;
   const kr=getKR(),psOn=gb('ps-on');
   if(!S.budget.gem)S.budget.gem=[];
-  if(P.me&&P.me.gross>0){
+  if(P.me&&P.me.gross>0&&!P.me.netOverride){
     const tax=cNet(P.me.gross,kr,psOn,!!P.me.kyOn,P.me.kyR??1);
     P.me.net=tax.nm;
     const lonItem=S.budget.gem.find(i=>i.id==='inc_lon_me');
@@ -5483,7 +5483,7 @@ function recalcAllNetIncomes(){
     const netEl=document.getElementById('p-me-net');if(netEl)netEl.value=tax.nm;
   }
   (P.family||[]).forEach(m=>{
-    if(m.gross>0){
+    if(m.gross>0&&!m.netOverride){
       const tax=cNet(m.gross,kr,psOn,!!m.kyOn,m.kyR??1);
       m.net=tax.nm;
       const lonItem=S.budget.gem.find(i=>i.id==='inc_lon_'+m.id);
@@ -6514,9 +6514,9 @@ async function sbPush(silent){
     // Profiler (huvudanvändare + familjemedlemmar) — "me" har ett fast
     // stabilt ID eftersom hushållet bara har en huvudanvändare; varje
     // familjemedlem använder sitt eget lokala ID, precis som tillgångar etc.
-    const memberRows=[{id:'me',household_id:sbHouseholdId,name:P.me?.name||'',role:'jag',dob:P.me?.dob||null,gender:P.me?.gender||null,occupation:P.me?.occ||null,photo:P.me?.photo||null,meta:{city:P.me?.city,sector:P.me?.sector,email:P.me?.email,phone:P.me?.phone,gross:P.me?.gross,net:P.me?.net,kyOn:!!P.me?.kyOn,kyR:P.me?.kyR}}];
+    const memberRows=[{id:'me',household_id:sbHouseholdId,name:P.me?.name||'',role:'jag',dob:P.me?.dob||null,gender:P.me?.gender||null,occupation:P.me?.occ||null,photo:P.me?.photo||null,meta:{city:P.me?.city,sector:P.me?.sector,email:P.me?.email,phone:P.me?.phone,gross:P.me?.gross,net:P.me?.net,kyOn:!!P.me?.kyOn,kyR:P.me?.kyR,netOverride:!!P.me?.netOverride}}];
     (P.family||[]).forEach(m=>{
-      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:m.occ||null,photo:m.photo||null,meta:{email:m.email,phone:m.phone,canContribute:!!m.canContribute,gross:m.gross,net:m.net,sector:m.sector,kyOn:!!m.kyOn,kyR:m.kyR}});
+      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:m.occ||null,photo:m.photo||null,meta:{email:m.email,phone:m.phone,canContribute:!!m.canContribute,gross:m.gross,net:m.net,sector:m.sector,kyOn:!!m.kyOn,kyR:m.kyR,netOverride:!!m.netOverride}});
     });
     const{error:eMem}=await sb.from('members').upsert(memberRows,{onConflict:'id'});
     if(eMem)throw eMem;
@@ -6578,8 +6578,8 @@ async function sbPull(silent){
     if(goals)S.goals=goals.map(g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
     if(members){
       const me=members.find(m=>m.id==='me');
-      if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0,net:me.meta?.net||0,kyOn:!!me.meta?.kyOn,kyR:me.meta?.kyR??1};
-      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',occ:m.occupation||'',sector:m.meta?.sector||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0,net:m.meta?.net||0,kyOn:!!m.meta?.kyOn,kyR:m.meta?.kyR??1}));
+      if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0,net:me.meta?.net||0,kyOn:!!me.meta?.kyOn,kyR:me.meta?.kyR??1,netOverride:!!me.meta?.netOverride};
+      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',occ:m.occupation||'',sector:m.meta?.sector||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0,net:m.meta?.net||0,kyOn:!!m.meta?.kyOn,kyR:m.meta?.kyR??1,netOverride:!!m.meta?.netOverride}));
     }
     const hhSettings=settingsRows&&settingsRows[0];
     if(hhSettings){
@@ -7694,21 +7694,43 @@ function saveP(){
   }
   onGross();storeP();saveLS();refreshSvProfileRow();refreshNavAvatar();dirty('ov','budget');
 }
-// Ber\u00e4knar netto fr\u00e5n brutto \u2014 samma m\u00f6nster som mbrUpdateNet() f\u00f6r familjemedlemmar.
+// Beräknar netto från brutto — samma mönster som mbrUpdateNet() för
+// familjemedlemmar. Skriver INTE över fältet om användaren valt att ange
+// ett annat netto manuellt (P.me.netOverride) — annars skulle en manuellt
+// inskriven siffra (t.ex. den riktiga lönebeskedet) tystas ner så fort
+// bruttolön eller en skatteinställning ändras igen.
 function meUpdateNet(){
   const grossEl=document.getElementById('p-me-gross');
   const netEl=document.getElementById('p-me-net');
   if(!grossEl||!netEl)return;
   const gross=parseFloat(grossEl.value)||0;
-  if(gross>0){
-    const kr=getKR(),kyR=parseFloat(g('p-me-ky-r'))||1,psOn=gb('ps-on'),kyOn=!!document.getElementById('p-me-ky-on')?.checked;
-    const tax=cNet(gross,kr,psOn,kyOn,kyR);
-    netEl.value=tax.nm;
-  } else {
-    netEl.value='';
+  if(!P.me.netOverride){
+    if(gross>0){
+      const kr=getKR(),kyR=parseFloat(g('p-me-ky-r'))||1,psOn=gb('ps-on'),kyOn=!!document.getElementById('p-me-ky-on')?.checked;
+      const tax=cNet(gross,kr,psOn,kyOn,kyR);
+      netEl.value=tax.nm;
+    } else {
+      netEl.value='';
+    }
   }
   saveP();
   refreshTaxBreakdown('me');
+}
+// Slår av/på manuell override av nettolönen. Av (standard): fältet är låst
+// och visar alltid det beräknade värdet. På: fältet blir redigerbart och
+// behåller vad man skriver in tills man växlar tillbaka.
+function toggleMeNetOverride(){
+  P.me.netOverride=!P.me.netOverride;
+  const netEl=document.getElementById('p-me-net');
+  const link=document.getElementById('p-me-net-ov-link');
+  if(netEl){
+    netEl.readOnly=!P.me.netOverride;
+    netEl.style.opacity=P.me.netOverride?'1':'.75';
+  }
+  if(link)link.textContent=P.me.netOverride?'Använd beräknat netto':'Ange annat netto manuellt';
+  storeP();
+  if(!P.me.netOverride){meUpdateNet();}
+  else{netEl?.focus();}
 }
 
 // Visar/döljer och räknar fram en fullständig skattespecifikation — samma
@@ -7736,6 +7758,7 @@ function refreshTaxBreakdown(personId){
     ['Kommunalskatt ('+kr+'%)', -tax.komAr/12, -1],
     ['Statlig skatt (20% \u00f6ver '+fmt(ST)+'/\u00e5r)', -tax.statAr/12, -1],
     ['Jobbskatteavdrag', tax.jsaAr/12, 1],
+    ['Allm\u00e4n pensionsavgift (avr\u00e4knas)', gross*.07, 1],
     ...(psOn?[['Public service-avgift', -tax.psAr/12, -1]]:[]),
     ...(kyOn?[['Kyrkoavgift ('+kyR+'%)', -tax.kyAr/12, -1]]:[]),
   ];
@@ -7746,7 +7769,7 @@ function refreshTaxBreakdown(personId){
     </div>`).join('')}
     <div style="height:1px;background:var(--bd);margin:6px 0"></div>
     <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600">
-      <span>Netto (m\u00e5n)</span><span>${fmt(Math.round(gross-(tax.komAr/12+tax.statAr/12-tax.jsaAr/12+tax.psAr/12+tax.kyAr/12)))}</span>
+      <span>Netto (m\u00e5n)</span><span>${fmt(tax.nm)}</span>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-top:2px">
       <span>Effektiv skattesats</span><span>${tax.eff.toFixed(1)}%</span>
@@ -7777,6 +7800,12 @@ function loadMeForm(){
   }
   const kyREl=document.getElementById('p-me-ky-r');
   if(kyREl)kyREl.value=P.me.kyR??1;
+  const netOvLink=document.getElementById('p-me-net-ov-link');
+  if(netEl){
+    netEl.readOnly=!P.me.netOverride;
+    netEl.style.opacity=P.me.netOverride?'1':'.75';
+  }
+  if(netOvLink)netOvLink.textContent=P.me.netOverride?'Använd beräknat netto':'Ange annat netto manuellt';
   // Ladda profilbild
   if(P.me.photo){
     const img=document.getElementById('me-photo');
@@ -7831,7 +7860,7 @@ function renderFamilyList(){
 }
 function addMember(){
   const id='f'+(Date.now()%100000);
-  P.family.push({id,name:'Ny person',role:'annan',gender:'',dob:'',email:'',phone:'',kyOn:false,kyR:1});
+  P.family.push({id,name:'Ny person',role:'annan',gender:'',dob:'',email:'',phone:'',kyOn:false,kyR:1,netOverride:false});
   storeP();
   _svMbr=id;_sv='personal-member';rSv();
 }
@@ -7887,8 +7916,9 @@ function renderMemberForm(){
       </div>
       <div class="fi" style="margin-bottom:4px">
         <div class="fl">Nettol&#xf6;n (kr/m&#xe5;n)</div>
-        <input class="inp" type="number" id="mbr-net" inputmode="numeric" value="${mbrNet}" placeholder="Beräknas automatiskt" oninput="saveMbr()" style="width:100%">
+        <input class="inp" type="number" id="mbr-net" inputmode="numeric" value="${mbrNet}" placeholder="Beräknas automatiskt" oninput="saveMbr()" ${m.netOverride?'':'readonly'} style="width:100%;${m.netOverride?'':'opacity:.75'}">
       </div>
+      <button id="mbr-net-ov-link" onclick="toggleMbrNetOverride()" style="background:none;border:none;color:var(--bl);font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-bottom:4px">${m.netOverride?'Använd beräknat netto':'Ange annat netto manuellt'}</button>
       <div id="mbr-net-hint" style="font-size:11px;color:var(--t3);margin-bottom:6px;padding-left:2px">Ange bruttolön så beräknas netto automatiskt med dina skatteinställningar</div>
       <div class="fi" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
         <div>
@@ -7913,20 +7943,41 @@ function renderMemberForm(){
 // Beräknar netto från brutto för en familjemedlem — kommunalskatt och public
 // service är delade hushållsinställningar, men kyrkoavgift är personens egen
 // (medlemskap i Svenska kyrkan varierar mellan personer).
+// Beräknar netto från brutto för en familjemedlem — kommunalskatt och public
+// service är delade hushållsinställningar, men kyrkoavgift är personens egen
+// (medlemskap i Svenska kyrkan varierar mellan personer). Skriver INTE över
+// fältet om nettot är manuellt override:at (se toggleMbrNetOverride).
 function mbrUpdateNet(){
   const grossEl=document.getElementById('mbr-gross');
   const netEl=document.getElementById('mbr-net');
   if(!grossEl||!netEl)return;
   const gross=parseFloat(grossEl.value)||0;
-  if(gross>0){
-    const kr=getKR(),kyR=parseFloat(g('mbr-ky-r'))||1,psOn=gb('ps-on'),kyOn=!!document.getElementById('mbr-ky-on')?.checked;
-    const tax=cNet(gross,kr,psOn,kyOn,kyR);
-    netEl.value=tax.nm;
-  } else {
-    netEl.value='';
+  const m=P.family.find(x=>x.id===_svMbr);
+  if(!m?.netOverride){
+    if(gross>0){
+      const kr=getKR(),kyR=parseFloat(g('mbr-ky-r'))||1,psOn=gb('ps-on'),kyOn=!!document.getElementById('mbr-ky-on')?.checked;
+      const tax=cNet(gross,kr,psOn,kyOn,kyR);
+      netEl.value=tax.nm;
+    } else {
+      netEl.value='';
+    }
   }
   saveMbr();
   refreshTaxBreakdown(_svMbr);
+}
+function toggleMbrNetOverride(){
+  const m=P.family.find(x=>x.id===_svMbr);if(!m)return;
+  m.netOverride=!m.netOverride;
+  const netEl=document.getElementById('mbr-net');
+  const link=document.getElementById('mbr-net-ov-link');
+  if(netEl){
+    netEl.readOnly=!m.netOverride;
+    netEl.style.opacity=m.netOverride?'1':'.75';
+  }
+  if(link)link.textContent=m.netOverride?'Använd beräknat netto':'Ange annat netto manuellt';
+  storeP();
+  if(!m.netOverride){mbrUpdateNet();}
+  else{netEl?.focus();}
 }
 
 function saveMbr(){tglMbrSector();
