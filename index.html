@@ -5509,8 +5509,45 @@ function compInc(){
   }
 }
 function cGA(ai){const p=PBB;let r;if(ai<=.75*p)r=ai;else if(ai<=2.72*p)r=.156*p+.22*(ai-.75*p);else if(ai<=6.25*p)r=.77*p;else if(ai<=7.88*p)r=.77*p-.1*(ai-6.25*p);else r=.293*p;return Math.ceil(r/100)*100;}
-function cJSA(ai,kr){const k=kr/100,p=PBB;let c;if(ai<=.91*p)c=.91*ai*k;else if(ai<=3.24*p)c=(.2832*p+.3294*(ai-.91*p))*k;else if(ai<=8.08*p)c=(.16*ai-.1*p)*k;else c=(.16*8.08*p-.1*p)*k;return Math.max(0,c);}
-function cNet(gm,kr,psOn,kyOn,kyR){const ag=gm*12,pf=ag*.07,tx=ag-pf,ga=cGA(tx),besk=Math.max(0,tx-ga),kom=besk*(kr/100),stat=Math.max(0,tx-ST)*.2,jsa=cJSA(ag,kr),ps=psOn?Math.min(besk*.01,1500):0,ky=kyOn?besk*(kyR/100):0,tot=Math.max(0,kom+stat-jsa-pf)+ps+ky;return{nm:Math.round((ag-tot)/12),komAr:Math.round(kom),statAr:Math.round(stat),jsaAr:Math.round(jsa),psAr:Math.round(ps),kyAr:Math.round(ky),eff:tot/ag*100};}
+// Jobbskatteavdrag 2026 — tas fram på "fastställd förvärvsinkomst" (ffi = bruttolön
+// minus allmän pensionsavgift). Fr.o.m. 2026 är avtrappningen vid höga inkomster
+// borttagen: avdraget ökar i tre skikt och PLATÅAR sedan (max ca 4 366–4 388 kr/mån
+// beroende på kommunalskattesats) istället för att minska igen som tidigare år.
+function cJSA(ffi,kr){
+  const k=kr/100,p=PBB;
+  const t1=.91*p,t2=3.24*p,t3=8.08*p;
+  const max2=.916*t1+.32*(t2-t1);
+  const max3=max2+.2413*(t3-t2);
+  let c;
+  if(ffi<=t1)c=.916*ffi*k;
+  else if(ffi<=t2)c=(.916*t1+.32*(ffi-t1))*k;
+  else if(ffi<=t3)c=(max2+.2413*(ffi-t2))*k;
+  else c=max3*k;
+  return Math.max(0,c);
+}
+// Skattereduktion för förvärvsinkomster — separat från jobbskatteavdraget.
+// Max 1 500 kr/år, infasas mellan 40 000 och 240 000 kr i beskattningsbar
+// förvärvsinkomst (0,75% av det som överstiger 40 000 kr).
+function cRedForv(besk){
+  if(besk<=40000)return 0;
+  if(besk<=240000)return .0075*(besk-40000);
+  return 1500;
+}
+function cNet(gm,kr,psOn,kyOn,kyR){
+  const ag=gm*12,pf=ag*.07,tx=ag-pf;
+  // Kommunalskatt/statlig skatt/public service/kyrkoavgift beräknas på
+  // bruttolön minus grundavdrag — INTE minus allmän pensionsavgift.
+  // Pensionsavgiften dras visserligen av lönen, men krediteras sedan
+  // tillbaka fullt ut via en egen skattereduktion, så den påverkar
+  // aldrig nettolönen (visas ändå som en informationsrad, "netto 0").
+  const ga=cGA(ag),besk=Math.max(0,ag-ga),kom=besk*(kr/100),
+    stat=Math.max(0,besk-ST)*.2,jsa=cJSA(tx,kr),rf=cRedForv(besk),
+    ps=psOn?Math.min(besk*.01,1184):0,ky=kyOn?besk*(kyR/100):0,
+    tot=Math.max(0,kom+stat-jsa-rf)+ps+ky;
+  return{nm:Math.round((ag-tot)/12),komAr:Math.round(kom),statAr:Math.round(stat),
+    jsaAr:Math.round(jsa),rfAr:Math.round(rf),psAr:Math.round(ps),kyAr:Math.round(ky),
+    pfAr:Math.round(pf),eff:tot/ag*100};
+}
 function getMb(){return (S.debts2||[]).filter(d=>d.cat==='bolan').reduce((s,d)=>s+Math.abs(d.amount||0),0);}
 // Räknar total månatlig ränteko: per lån om det har en egen ränta satt,
 // annars den globala schablonräntan (mr) som reserv — så en användare som
@@ -7757,8 +7794,9 @@ function refreshTaxBreakdown(personId){
     ['Bruttol\u00f6n', gross, 1],
     ['Kommunalskatt ('+kr+'%)', -tax.komAr/12, -1],
     ['Statlig skatt (20% \u00f6ver '+fmt(ST)+'/\u00e5r)', -tax.statAr/12, -1],
+    ['Allm\u00e4n pensionsavgift, netto', 0, 1],
     ['Jobbskatteavdrag', tax.jsaAr/12, 1],
-    ['Allm\u00e4n pensionsavgift (avr\u00e4knas)', gross*.07, 1],
+    ['Skattereduktion f\u00f6rv\u00e4rvsinkomst', tax.rfAr/12, 1],
     ...(psOn?[['Public service-avgift', -tax.psAr/12, -1]]:[]),
     ...(kyOn?[['Kyrkoavgift ('+kyR+'%)', -tax.kyAr/12, -1]]:[]),
   ];
