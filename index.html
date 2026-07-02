@@ -7795,14 +7795,14 @@ function renderMemberForm(){
   const lonItem=(S.budget.gem||[]).find(i=>i.id==='inc_lon_'+m.id);
   const mbrNet=lonItem?Math.abs(lonItem.amount||0):0;
   const mbrGross=m.gross||0;
-  const sectorOpts=`<option value="">Ej angett</option><option value="teknik_it">Teknik &amp; IT</option><option value="finans">Finans &amp; ekonomi</option><option value="halsa_vard">Hälsa &amp; vård</option><option value="utbildning">Utbildning &amp; forskning</option><option value="handel">Handel &amp; e-handel</option><option value="bygg_fastighet">Bygg &amp; fastighet</option><option value="media">Media &amp; kommunikation</option><option value="juridik_hr">Juridik &amp; HR</option><option value="offentlig">Offentlig förvaltning</option><option value="industri">Industri &amp; tillverkning</option><option value="kultur">Kultur &amp; kreativ</option><option value="annat">Annat</option>`;
+  const sectorOpts=[['',' Ej angett'],['teknik_it','Teknik & IT'],['finans','Finans & ekonomi'],['halsa_vard','Hälsa & vård'],['utbildning','Utbildning & forskning'],['handel','Handel & e-handel'],['bygg_fastighet','Bygg & fastighet'],['media','Media & kommunikation'],['juridik_hr','Juridik & HR'],['offentlig','Offentlig förvaltning'],['industri','Industri & tillverkning'],['kultur','Kultur & kreativ'],['annat','Annat']];
   frmEl.innerHTML=photoHtml+
     `<div class="gt">Identitet</div><div class="gc" style="margin-bottom:12px"><div style="padding:14px 16px 4px">
 <div class="fi" style="margin-bottom:10px"><div class="fl">Namn</div>${mkInp('mbr-name','text',m.name,'Namn')}</div>
     <div class="fi" style="margin-bottom:10px"><div class="fl">Relation</div>${mkSel('mbr-role',m.role,rOpts)}</div>
     <div class="fi" style="margin-bottom:10px"><div class="fl">K&#xf6;n</div>${mkSel('mbr-gender',m.gender,gOpts)}</div>
     <div class="fi" style="margin-bottom:10px"><div class="fl">Syssels&#xe4;ttning</div>${mkSel('mbr-occ',m.occ||'',occOpts)}</div>
-    <div id="mbr-sector-row" class="fi" style="margin-bottom:10px;display:${showSector?'':'none'}"><div class="fl">Sektor / inriktning</div><select class="sel" id="mbr-sector" onchange="saveMbr()" style="width:100%">${sectorOpts}</select></div>
+    <div id="mbr-sector-row" class="fi" style="margin-bottom:10px;display:${showSector?'':'none'}"><div class="fl">Sektor / inriktning</div>${mkSel('mbr-sector',m.sector||'',sectorOpts)}</div>
     <div class="fi" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div class="fl" style="margin-bottom:1px">Bidrar till gemensam ekonomi</div>
