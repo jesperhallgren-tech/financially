@@ -136,13 +136,13 @@ body{max-width:680px;margin:0 auto;padding-bottom:calc(120px + var(--sb));min-he
 
 .fi{display:flex;flex-direction:column;gap:4px}
 .fl{font-size:12px;color:var(--t2);font-weight:500;padding-left:1px}
-.inp{padding:10px 13px;font-size:15px;border:.5px solid var(--bd);border-radius:var(--r);background:var(--inp-bg,#2C2C2E);color:var(--t1);width:100%;-webkit-appearance:none;outline:none}
+.inp{padding:10px 13px;font-size:16px;border:.5px solid var(--bd);border-radius:var(--r);background:var(--inp-bg,#2C2C2E);color:var(--t1);width:100%;-webkit-appearance:none;outline:none}
 .inp:focus{border-color:var(--bl)}
-.inp.sm{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--inp-bg,#2C2C2E)}
+.inp.sm{font-size:16px;padding:8px 10px;border-radius:8px;background:var(--inp-bg,#2C2C2E)}
 .inp.ri{text-align:right}
-.sel{padding:10px 13px;font-size:15px;border:.5px solid var(--bd);border-radius:var(--r);background:var(--inp-bg,#2C2C2E);color:var(--t1);width:100%;-webkit-appearance:none;outline:none}
-.sel.sm{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--inp-bg,#2C2C2E)}
-.brow{display:flex;align-items:center;padding:10px 14px 10px 28px;border-top:.5px solid var(--bd3);gap:10px}
+.sel{padding:10px 13px;font-size:16px;border:.5px solid var(--bd);border-radius:var(--r);background:var(--inp-bg,#2C2C2E);color:var(--t1);width:100%;-webkit-appearance:none;outline:none}
+.sel.sm{font-size:16px;padding:8px 10px;border-radius:8px;background:var(--inp-bg,#2C2C2E)}
+.brow{display:flex;align-items:center;padding:10px 14px 10px 35px;border-top:.5px solid var(--bd3);gap:7px}
 .brow:first-child{border-top:none}
 .brow-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .brow-left{flex:1;min-width:0}
@@ -396,7 +396,7 @@ html,body{background:#1C1C1E!important}
 .bs-reset-btn{font-size:12px;color:var(--bl);background:none;border:none;cursor:pointer;padding:0;margin-top:6px;text-align:left}
 
 .bs-add-row{display:flex;gap:8px;padding:4px 16px 8px;max-width:480px;margin:0 auto}
-.bs-add-input{flex:1;background:var(--card);border:1px dashed var(--bd);border-radius:var(--r2);padding:12px 14px;color:var(--t1);font-size:14px;outline:none}
+.bs-add-input{flex:1;background:var(--card);border:1px dashed var(--bd);border-radius:var(--r2);padding:12px 14px;color:var(--t1);font-size:16px;outline:none}
 .bs-add-btn{background:var(--bd2);color:var(--t1);border:none;border-radius:var(--r2);padding:0 16px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0}
 
 .bs-summary-card{margin:20px 16px 0;background:var(--okbg);border-radius:var(--r2);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;max-width:448px;margin-left:auto;margin-right:auto}
@@ -481,14 +481,14 @@ html,body{background:#1C1C1E!important}
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500">Belopp (kr)</div>
         <input id="fab-amt" type="number" inputmode="decimal" placeholder="0" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></div>
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500">Datum</div>
-        <input id="fab-date" type="date" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+        <input id="fab-date" type="date" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     </div>
     <div style="margin-bottom:12px"><div style="font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500">Beskrivning</div>
-      <input id="fab-desc" type="text" placeholder="T.ex. ICA Maxi" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+      <input id="fab-desc" type="text" placeholder="T.ex. ICA Maxi" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500">Taggar (valfritt)</div>
-      <input id="fab-tags" type="text" placeholder="#mat #kontor" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+      <input id="fab-tags" type="text" placeholder="#mat #kontor" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     <div style="margin-bottom:16px"><div style="font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500">Kategori</div>
-      <select id="fab-cat" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></select></div>
+      <select id="fab-cat" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></select></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
       <input type="checkbox" id="fab-rec" style="width:16px;height:16px;accent-color:var(--bl)">
       <label for="fab-rec" style="font-size:13px;color:var(--t2)">Återkommande (månadsvis)</label>
@@ -510,16 +510,16 @@ html,body{background:#1C1C1E!important}
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Belopp (kr)</div>
         <input id="etx-amt" type="number" inputmode="decimal" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Datum</div>
-        <input id="etx-date" type="date" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+        <input id="etx-date" type="date" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     </div>
     <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Beskrivning</div>
-      <input id="etx-desc" type="text" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+      <input id="etx-desc" type="text" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Anteckning</div>
-      <input id="etx-note" type="text" placeholder="Valfri kommentar..." style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+      <input id="etx-note" type="text" placeholder="Valfri kommentar..." style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Taggar</div>
-      <input id="etx-tags" type="text" placeholder="#mat #kontor" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box"></div>
+      <input id="etx-tags" type="text" placeholder="#mat #kontor" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     <div style="margin-bottom:14px"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Kategori</div>
-      <select id="etx-cat" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:15px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></select></div>
+      <select id="etx-cat" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></select></div>
     <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
       <button onclick="deleteEditTx()" style="background:var(--errbg);color:var(--err);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer">Radera</button>
       <button onclick="saveEditTx()" style="background:var(--bl);color:var(--t1);border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer">Spara</button>
@@ -894,7 +894,7 @@ const MORTGAGE_LENDERS=[
 const srcBadge=src=>{const[c]=srcClr[src]||srcClr.manual;return `<span style="font-size:10px;color:${c};font-weight:600">${{manual:'Manuell',bank:'Bank',avanza:'Avanza',nordnet:'Nordnet',annat:'K\u00e4lla'}[src]||'Manuell'}</span>`;};
 const PBB=59200,ST=643000,DF='hushallsbudget_data.json',LS='hb_v4';
 
-const DATA_V=7;
+const DATA_V=8;
 function migrateData(p){
   const v=p.v||1;
   if(v<2){if(!p.goals)p.goals=[];if(!p.nwHist)p.nwHist=[];}
@@ -1012,6 +1012,32 @@ function migrateData(p){
           item.cat='sparande';
         }
       });
+    }
+  }
+  if(v<8){
+    // v7\u2192v8: TX kunde tidigare hamna i tv\u00e5 oförenliga format \u2014 dels det kanoniska
+    // platta TX["\u00c5\u00c5\u00c5\u00c5-MM"]=[...] som Utfall/export/s\u00f6k alltid l\u00e4st fr\u00e5n, dels ett
+    // felaktigt n\u00e4stlat TX[\u00e5r][m\u00e5nad]=[...] som "+"-knappen (saveFAB) och redigera/
+    // radera-flödena av misstag skrev till. Poster i det n\u00e4stlade formatet visades
+    // aldrig i Utfall och riskerade att tystna bort helt. R\u00e4ddar dem h\u00e4r in i det
+    // korrekta formatet, en g\u00e5ng, innan koden som skapade dem \u00e4r fixad.
+    if(p.TX){
+      const rescued={};
+      Object.keys(p.TX).forEach(key=>{
+        if(/^-?\d+$/.test(key)){
+          // Nyckeln \u00e4r ett rent \u00e5rtal \u2014 v\u00e4rdet \u00e4r allts\u00e5 ett n\u00e4stlat m\u00e5nad-objekt,
+          // inte den kanoniska arrayen.
+          const yearObj=p.TX[key]||{};
+          Object.keys(yearObj).forEach(moKey=>{
+            const arr=yearObj[moKey];
+            if(!Array.isArray(arr)||!arr.length)return;
+            const flatKey=`${key}-${String(parseInt(moKey)+1).padStart(2,'0')}`;
+            rescued[flatKey]=[...(rescued[flatKey]||p.TX[flatKey]||[]),...arr];
+          });
+          delete p.TX[key];
+        }
+      });
+      Object.keys(rescued).forEach(k=>{p.TX[k]=rescued[k];});
     }
   }
   p.v=DATA_V;return p;
@@ -1291,15 +1317,12 @@ function saveFAB(){
   const tx={id:'m'+Date.now().toString(36),desc,amount:-Math.abs(amt),
     date:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,
     cat:catT,source:'manual',excluded:false};
-  if(!TX[d.getFullYear()])TX[d.getFullYear()]={};
-  if(!TX[d.getFullYear()][d.getMonth()])TX[d.getFullYear()][d.getMonth()]=[];
-  const fabRec=document.getElementById('fab-rec')?.checked||false;
-  if(fabRec)tx.recurring=true;
-  TX[d.getFullYear()][d.getMonth()].push(tx);
   const fabTagsRaw=document.getElementById('fab-tags')?.value||'';
   const fabTags=parseTags(fabTagsRaw);
   if(fabTags.length)tx.tags=fabTags;
   if(document.getElementById('fab-rec')?.checked)tx.recurring=true;
+  const y=d.getFullYear(),m=d.getMonth();
+  sTX(y,m,[...gTX(y,m),tx]);
   markUns();dirty('actual','ov');hapMed();
   closeFAB();
   // Reset fields
@@ -1592,21 +1615,34 @@ function updateBudgetBadge(){
 // ═══ Veckoöversikt ═══════════════════════════════════════════
 
 
+// Hittar vilken flat "YYYY-MM"-nyckel en transaktion ligger under, oavsett
+// vilken vy den öppnades från — krävs eftersom TX[key] alltid är en platt
+// array (aldrig ett nästlat år→månad-objekt) i den kanoniska lagringsformen.
+function findTxKey(id){
+  for(const key of Object.keys(TX)){
+    if((TX[key]||[]).some(t=>t.id===id))return key;
+  }
+  return null;
+}
+
+function delTx(id){
+  const key=findTxKey(id);
+  if(!key)return;
+  const[y,mo]=key.split('-').map(Number);
+  sTX(y,mo-1,gTX(y,mo-1).filter(t=>t.id!==id));
+}
+
 function delTxWithUndo(id, mid){
   // Find the tx first for undo
-  let bk=null,bkY=null,bkM=null;
-  for(const yr in TX){for(const mo in TX[yr]){
-    const t=(TX[yr][mo]||[]).find(x=>x.id===id);
-    if(t){bk={...t};bkY=parseInt(yr);bkM=parseInt(mo);break;}
-  }if(bk)break;}
-  delTx(id,mid||null);
+  const key=findTxKey(id);
+  const bk=key?(TX[key]||[]).find(t=>t.id===id):null;
+  delTx(id);
   hapErr();
   dirty('actual','ov');
   if(bk){
     showSnack('Borttagen','Ångra',()=>{
-      if(!TX[bkY])TX[bkY]={};
-      if(!TX[bkY][bkM])TX[bkY][bkM]=[];
-      TX[bkY][bkM].push(bk);
+      const[y,mo]=key.split('-').map(Number);
+      sTX(y,mo-1,[...gTX(y,mo-1),bk]);
       markUns();dirty('actual','ov');
     });
   }
@@ -1652,19 +1688,15 @@ function updateGoalSlider(id, val){
 
 
 function openEditTx(id){
-  let foundTx=null,foundY=null,foundM=null;
-  for(const yr in TX){for(const mo in TX[yr]){
-    const t=(TX[yr][mo]||[]).find(x=>x.id===id);
-    if(t){foundTx=t;foundY=parseInt(yr);foundM=parseInt(mo);break;}
-  }if(foundTx)break;}
+  const key=findTxKey(id);
+  const foundTx=key?(TX[key]||[]).find(t=>t.id===id):null;
   if(!foundTx)return;
   hapLight();
   const sheet=document.getElementById('edit-tx-sheet');
   const inner=document.getElementById('edit-tx-inner');
   if(!sheet||!inner)return;
   document.getElementById('etx-id').value=foundTx.id;
-  document.getElementById('etx-y').value=foundY;
-  document.getElementById('etx-m').value=foundM;
+  document.getElementById('etx-y').value=key;
   document.getElementById('etx-desc').value=foundTx.desc||'';
   document.getElementById('etx-amt').value=Math.abs(foundTx.amount||0);
   document.getElementById('etx-date').value=foundTx.date||'';
@@ -1694,34 +1726,36 @@ function closeEditTx(){
 
 function saveEditTx(){
   const id=document.getElementById('etx-id').value;
-  const y=parseInt(document.getElementById('etx-y').value);
-  const m=parseInt(document.getElementById('etx-m').value);
+  const key=document.getElementById('etx-y').value;
   const desc=(document.getElementById('etx-desc').value||'').trim();
   const amt=parseFloat(document.getElementById('etx-amt').value)||0;
   const date=document.getElementById('etx-date').value;
   const cat=document.getElementById('etx-cat').value;
-  if(!TX[y]||!TX[y][m])return;
-  const idx=TX[y][m].findIndex(t=>t.id===id);
+  if(!key||!TX[key])return;
+  const idx=TX[key].findIndex(t=>t.id===id);
   if(idx<0)return;
   const etxTagsEl=document.getElementById('etx-tags');const etxTags=etxTagsEl?parseTags(etxTagsEl.value):[];
   const etxNote=(document.getElementById('etx-note')?.value||'').trim();
-  TX[y][m][idx]={...TX[y][m][idx],desc,amount:-Math.abs(amt),date,cat,tags:etxTags,note:etxNote};
+  const[y,mo]=key.split('-').map(Number);
+  const updated=[...TX[key]];
+  updated[idx]={...updated[idx],desc,amount:-Math.abs(amt),date,cat,tags:etxTags,note:etxNote};
+  sTX(y,mo-1,updated);
   markUns();hapMed();dirty('actual','ov');
   closeEditTx();
 }
 
 function deleteEditTx(){
   const id=document.getElementById('etx-id').value;
-  const y=parseInt(document.getElementById('etx-y').value);
-  const m=parseInt(document.getElementById('etx-m').value);
-  if(!TX[y]||!TX[y][m])return;
-  const bk={...(TX[y][m].find(t=>t.id===id)||{})};
-  TX[y][m]=TX[y][m].filter(t=>t.id!==id);
+  const key=document.getElementById('etx-y').value;
+  if(!key||!TX[key])return;
+  const bk={...(TX[key].find(t=>t.id===id)||{})};
+  const[y,mo]=key.split('-').map(Number);
+  sTX(y,mo-1,TX[key].filter(t=>t.id!==id));
   markUns();hapErr();dirty('actual','ov');
   closeEditTx();
   if(bk.id)showSnack('Transaktion borttagen','Ångra',()=>{
-    if(!TX[y])TX[y]={};if(!TX[y][m])TX[y][m]=[];
-    TX[y][m].push(bk);markUns();dirty('actual','ov');
+    sTX(y,mo-1,[...gTX(y,mo-1),bk]);
+    markUns();dirty('actual','ov');
   });
 }
 
@@ -1753,10 +1787,10 @@ async function aiCategorize(){
     
     let updated=0;
     json.forEach(({id,cat})=>{
-      for(const yr in TX){for(const mo in TX[yr]){
-        const idx=(TX[yr][mo]||[]).findIndex(t=>t.id===id);
-        if(idx>=0){TX[yr][mo][idx].cat=cat;updated++;}
-      }}
+      const key=findTxKey(id);
+      if(!key)return;
+      const idx=TX[key].findIndex(t=>t.id===id);
+      if(idx>=0){TX[key][idx].cat=cat;updated++;}
     });
     markUns();refreshUtfall();
     showSnack(`✓ ${updated} transaktioner kategoriserade`);
@@ -2093,11 +2127,11 @@ function rDataMgmt(){
 function exportCSVAll(){
   const rows=[];
   rows.push('Datum;Beskrivning;Belopp;Kategori;Taggar;Anteckning;Källa');
-  for(const yr in TX){for(const mk in TX[yr]){
-    (TX[yr][mk]||[]).forEach(t=>{
+  Object.keys(TX).forEach(key=>{
+    (TX[key]||[]).forEach(t=>{
       rows.push(`${t.date};"${(t.desc||'').replace(/"/g,'""')}";${t.amount};${t.cat||''};${(t.tags||[]).join(' ')};${(t.note||'').replace(/"/g,'""')};${t.source||''}`);
     });
-  }}
+  });
   const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -2283,7 +2317,7 @@ function rCardGem(items, targetEl){
         return a&&Math.abs(a)>=1; // bara registrerade poster visas, oavsett om de \u00e4r l\u00e5sta
       });
       if(!activeItems.length){
-        rows=`<div style="padding:10px 14px 10px 28px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();startBudgetSetup('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
+        rows=`<div style="padding:10px 14px 10px 35px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();startBudgetSetup('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
       } else {
       activeItems.forEach(item=>{
         const a=cA(item);
@@ -3098,7 +3132,7 @@ function openGlobalSearch(){
       <div style="display:flex;align-items:center;gap:10px;padding:calc(var(--st)+14px) max(18px,calc((100vw - 680px) / 2 + 18px)) 10px">
         <div style="flex:1;display:flex;align-items:center;background:var(--inp-bg);border-radius:10px;padding:9px 12px;gap:8px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="gsearch-input" type="text" placeholder="S\u00f6k transaktioner, budget, tillg\u00e5ngar..." oninput="runGlobalSearch(this.value)" style="flex:1;border:none;background:none;outline:none;font-size:15px;color:var(--t1)">
+          <input id="gsearch-input" type="text" placeholder="S\u00f6k transaktioner, budget, tillg\u00e5ngar..." oninput="runGlobalSearch(this.value)" style="flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--t1)">
         </div>
         <button onclick="closeGlobalSearch()" style="background:none;border:none;color:var(--bl);font-size:15px;font-weight:500;cursor:pointer;padding:4px 0;flex-shrink:0">Avbryt</button>
       </div>
@@ -4773,7 +4807,7 @@ function rIncomeSection(targetEl){
     if(isOpen){
       const activeItems=gItems.filter(item=>item.amount&&Math.abs(item.amount)>=1);
       if(!activeItems.length){
-        inner=`<div style="padding:10px 14px 10px 28px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();openAddGemItem('inkomst','${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
+        inner=`<div style="padding:10px 14px 10px 35px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();openAddGemItem('inkomst','${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
       } else {
         activeItems.forEach(item=>{
           const totHtml=`<span class="brow-tot" style="${item.amount?'color:var(--ok)':'color:var(--t3);font-weight:400'}">${item.amount?'+'+fmt(item.amount):'Ej satt'}</span>`;
@@ -5577,7 +5611,7 @@ function rSparandeBricka(){
     return `<div class="brow-swipe"><div class="brow-swipe-actions">
         <button class="brow-swipe-edit" onclick="openBalItemEditor('a','${item.id}')">${UI.ed}</button>
         <button class="brow-swipe-del" onclick="confirmDeleteBalItem('a','${item.id}')">${UI.tr}</button>
-      </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 28px">
+      </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 35px">
         <div style="display:flex;align-items:center;gap:6px">
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
@@ -5757,7 +5791,7 @@ function _rBudUtfall(ct){
     '</div>'+
     '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;overflow:hidden">'+
     '<select class="sel sm" id="acy" onchange="buildMonthBand();_renderUtfallContent()" style="flex:0 0 64px;min-width:0;width:64px"></select>'+
-    '<input id="act-search" type="text" placeholder="S\u00f6k..." oninput="_renderUtfallContent()" style="flex:1;min-width:0;width:0;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;font-size:14px;color:var(--t1);-webkit-appearance:none">'+
+    '<input id="act-search" type="text" placeholder="S\u00f6k..." oninput="_renderUtfallContent()" style="flex:1;min-width:0;width:0;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;font-size:16px;color:var(--t1);-webkit-appearance:none">'+
     '<button onclick="cycleSortAct()" id="act-sort-btn" style="flex:0 0 auto;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--t2);font-size:12px;font-weight:600">\u2193D</button>'+
     '<button onclick="aiCategorize()" style="flex:0 0 auto;background:var(--blbg);border:none;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--bl);font-size:13px;font-weight:600">\u2736</button>'+
     '<select id="acs" style="display:none"><option value="date-desc">Datum \u2193</option><option value="date-asc">Datum \u2191</option><option value="amt-desc">Belopp \u2193</option><option value="amt-asc">Belopp \u2191</option></select></div>'+
@@ -6398,17 +6432,74 @@ async function sbPush(silent){
     delG=goalIds.length?delG.not('id','in','('+goalIds.map(id=>`"${id}"`).join(',')+')'):delG;
     await delG;
 
+    // Budgetposter — Inkomster & utgifter (gem[]) samt Sparande-fördelningen
+    // (sav[]), i samma tabell särskiljda av kolumnen 'list'.
+    const gemItems=(S.budget.gem||[]).map((it,i)=>({
+      id:it.id,household_id:sbHouseholdId,list:'gem',cat:it.cat||null,label:it.label||'',
+      amount:it.amount===undefined?null:it.amount,split:it.split||'D',order_idx:it.order??i,
+      meta:{locked:it.locked,computed:it.computed,payerLocked:it.payerLocked,csnInfo:it.csnInfo,
+        shares:it.shares,subcat:it.subcat,institute:it.institute,rate:it.rate,type:it.type,term:it.term}
+    }));
+    const savItems=(S.budget.sav||[]).map((it,i)=>({
+      id:it.id,household_id:sbHouseholdId,list:'sav',cat:null,label:it.label||'',
+      amount:it.amount===undefined?null:it.amount,split:it.split||'L',order_idx:i,meta:{}
+    }));
+    const budgetRows=[...gemItems,...savItems];
+    const budgetIds=budgetRows.map(r=>r.id);
+    if(budgetRows.length){
+      const{error}=await sb.from('budget_items').upsert(budgetRows,{onConflict:'id'});
+      if(error)throw error;
+    }
+    let delB=sb.from('budget_items').delete().eq('household_id',sbHouseholdId);
+    delB=budgetIds.length?delB.not('id','in','('+budgetIds.map(id=>`"${id}"`).join(',')+')'):delB;
+    await delB;
+
+    // Transaktioner — TX-objektet är plant nyckel-baserat (TX["ÅÅÅÅ-MM"]=[...]),
+    // plattas ut till enskilda rader; datumet räcker för att sortera/filtrera
+    // senare, ingen anledning att spara ÅÅÅÅ-MM-nyckeln separat.
+    const txRows=[];
+    Object.keys(TX).forEach(key=>{
+      (TX[key]||[]).forEach(t=>{
+        txRows.push({id:t.id,household_id:sbHouseholdId,date:t.date,description:t.desc||'',
+          amount:t.amount||0,cat:t.cat||null,source:t.source||'manual',excluded:!!t.excluded,
+          recurring:!!t.recurring,tags:t.tags||[],note:t.note||null,meta:{}});
+      });
+    });
+    const txIds=txRows.map(r=>r.id);
+    if(txRows.length){
+      const{error}=await sb.from('transactions').upsert(txRows,{onConflict:'id'});
+      if(error)throw error;
+    }
+    let delT=sb.from('transactions').delete().eq('household_id',sbHouseholdId);
+    delT=txIds.length?delT.not('id','in','('+txIds.map(id=>`"${id}"`).join(',')+')'):delT;
+    await delT;
+
     // Profiler (huvudanvändare + familjemedlemmar) — "me" har ett fast
     // stabilt ID eftersom hushållet bara har en huvudanvändare; varje
     // familjemedlem använder sitt eget lokala ID, precis som tillgångar etc.
-    const memberRows=[{id:'me',household_id:sbHouseholdId,name:P.me?.name||'',role:'jag',dob:P.me?.dob||null,gender:P.me?.gender||null,occupation:P.me?.occ||null,photo:P.me?.photo||null,meta:{city:P.me?.city,sector:P.me?.sector,email:P.me?.email,phone:P.me?.phone,gross:P.me?.gross}}];
+    const memberRows=[{id:'me',household_id:sbHouseholdId,name:P.me?.name||'',role:'jag',dob:P.me?.dob||null,gender:P.me?.gender||null,occupation:P.me?.occ||null,photo:P.me?.photo||null,meta:{city:P.me?.city,sector:P.me?.sector,email:P.me?.email,phone:P.me?.phone,gross:P.me?.gross,net:P.me?.net}}];
     (P.family||[]).forEach(m=>{
-      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:null,photo:m.photo||null,meta:{email:m.email,phone:m.phone,canContribute:!!m.canContribute,gross:m.gross}});
+      memberRows.push({id:m.id,household_id:sbHouseholdId,name:m.name||'',role:m.role||null,dob:m.dob||null,gender:m.gender||null,occupation:null,photo:m.photo||null,meta:{email:m.email,phone:m.phone,canContribute:!!m.canContribute,gross:m.gross,net:m.net}});
     });
     const{error:eMem}=await sb.from('members').upsert(memberRows,{onConflict:'id'});
     if(eMem)throw eMem;
     const memberIds=memberRows.map(m=>m.id);
     await sb.from('members').delete().eq('household_id',sbHouseholdId).not('id','in','('+memberIds.map(id=>`"${id}"`).join(',')+')');
+
+    // Hushållsinställningar — en rad per hushåll (skattesatser, hushållsläge,
+    // fördelningsmetod, notiser, egna kategorier). Läses direkt från DOM:en
+    // precis som build() gör, eftersom dessa fält aldrig speglas i S{}.
+    const settingsRow={
+      household_id:sbHouseholdId,
+      kr:parseFloat(g('kr'))||null,kyr:parseFloat(g('ky-r'))||null,
+      ky_on:gb('ky-on'),ps_on:gb('ps-on'),
+      mr:parseFloat(g('mr'))||null,jcr:parseFloat(g('jcr'))||null,
+      mode:S.mode||'par',split_method:S.splitMethod||'income',
+      use_separate_accounts:!!S.useSeparateAccounts,notif_enabled:!!S.notifEnabled,
+      user_cats:S.userCats||[]
+    };
+    const{error:eSet}=await sb.from('household_settings').upsert(settingsRow,{onConflict:'household_id'});
+    if(eSet)throw eSet;
 
     // Tre separata tidsserier, så de kan plottas var för sig senare
     // (inte bara nettovärdet som tidigare).
@@ -6434,21 +6525,74 @@ async function sbPull(silent){
   if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
   try{
     if(!silent)showSnack('Hämtar från molnet…');
-    const[{data:assets,error:e1},{data:debts,error:e2},{data:goals,error:e3},{data:members,error:e4}]=await Promise.all([
+    const[{data:assets,error:e1},{data:debts,error:e2},{data:goals,error:e3},{data:members,error:e4},{data:budgetItems,error:e5},{data:txRows,error:e6},{data:settingsRows,error:e7}]=await Promise.all([
       sb.from('assets').select('*').eq('household_id',sbHouseholdId),
       sb.from('debts').select('*').eq('household_id',sbHouseholdId),
       sb.from('goals').select('*').eq('household_id',sbHouseholdId),
       sb.from('members').select('*').eq('household_id',sbHouseholdId),
+      sb.from('budget_items').select('*').eq('household_id',sbHouseholdId),
+      sb.from('transactions').select('*').eq('household_id',sbHouseholdId),
+      sb.from('household_settings').select('*').eq('household_id',sbHouseholdId),
     ]);
-    if(e1||e2||e3||e4)throw(e1||e2||e3||e4);
+    if(e1||e2||e3||e4||e5||e6||e7)throw(e1||e2||e3||e4||e5||e6||e7);
 
     if(assets)S.assets2=assets.map(a=>({id:a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
     if(debts)S.debts2=debts.map(d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
     if(goals)S.goals=goals.map(g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
     if(members){
       const me=members.find(m=>m.id==='me');
-      if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0};
-      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0}));
+      if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0,net:me.meta?.net||0};
+      P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0,net:m.meta?.net||0}));
+    }
+    const hhSettings=settingsRows&&settingsRows[0];
+    if(hhSettings){
+      const sv=(id,v)=>{const e=document.getElementById(id);if(e&&v!==null&&v!==undefined)e.value=v;};
+      sv('kr',hhSettings.kr);sv('ky-r',hhSettings.kyr);sv('mr',hhSettings.mr);sv('jcr',hhSettings.jcr);
+      const kyOnEl=document.getElementById('ky-on');if(kyOnEl&&hhSettings.ky_on!==null)kyOnEl.checked=hhSettings.ky_on;
+      syncKYOnVisual();
+      const psEl=document.getElementById('ps-on');if(psEl&&hhSettings.ps_on!==null)psEl.checked=hhSettings.ps_on;
+      if(hhSettings.mode)S.mode=hhSettings.mode;
+      if(hhSettings.split_method)S.splitMethod=hhSettings.split_method;
+      if(hhSettings.use_separate_accounts!==null)S.useSeparateAccounts=!!hhSettings.use_separate_accounts;
+      if(hhSettings.notif_enabled!==null)S.notifEnabled=!!hhSettings.notif_enabled;
+      if(hhSettings.user_cats&&hhSettings.user_cats.length)S.userCats=hhSettings.user_cats;
+      compInc();
+    }
+    if(budgetItems){
+      // Samma återförening mot kodens defaults som applyP() gör vid lokal
+      // återställning — locked/computed ska ALLTID komma från koden, aldrig
+      // från sparad data (annars kan t.ex. Bolåneränta-postens beräknings-
+      // koppling tystna bort om den råkat sparas fel en gång).
+      const pulledGem=budgetItems.filter(r=>r.list==='gem').sort((a,b)=>(a.order_idx||0)-(b.order_idx||0))
+        .map(r=>({id:r.id,label:r.label,amount:r.amount,cat:r.cat,split:r.split||'D',order:r.order_idx||0,
+          ...(r.meta?.shares?{shares:r.meta.shares}:{}),...(r.meta?.subcat?{subcat:r.meta.subcat}:{}),
+          ...(r.meta?.institute?{institute:r.meta.institute}:{}),...(r.meta?.rate!=null?{rate:r.meta.rate}:{}),
+          ...(r.meta?.type?{type:r.meta.type}:{}),...(r.meta?.term?{term:r.meta.term}:{})}));
+      if(pulledGem.length){
+        const defGem=S.budget.gem;
+        S.budget.gem=pulledGem.map(s=>{
+          const d=defGem.find(d=>d.id===s.id);
+          return d?{...s,locked:d.locked,computed:d.computed,payerLocked:d.payerLocked,csnInfo:d.csnInfo}:s;
+        });
+      }
+      const pulledSav=budgetItems.filter(r=>r.list==='sav').sort((a,b)=>(a.order_idx||0)-(b.order_idx||0))
+        .map(r=>({id:r.id,label:r.label,amount:r.amount,split:r.split||'L'}));
+      if(pulledSav.length)S.budget.sav=mBA(pulledSav,S.budget.sav);
+    }
+    if(txRows){
+      const rebuiltTX={};
+      txRows.forEach(r=>{
+        const key=(r.date||'').slice(0,7); // "ÅÅÅÅ-MM-DD" → "ÅÅÅÅ-MM"
+        if(!key)return;
+        if(!rebuiltTX[key])rebuiltTX[key]=[];
+        const tx={id:r.id,desc:r.description||'',amount:r.amount||0,date:r.date,cat:r.cat||'ovrigt',
+          source:r.source||'manual',excluded:!!r.excluded};
+        if(r.recurring)tx.recurring=true;
+        if(r.tags&&r.tags.length)tx.tags=r.tags;
+        if(r.note)tx.note=r.note;
+        rebuiltTX[key].push(tx);
+      });
+      TX=rebuiltTX;
     }
 
     markUns();
@@ -6456,7 +6600,7 @@ async function sbPull(silent){
     try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
     try{storeP();}catch(e){}
     sbLastSyncAt=new Date();
-    dirty('ov','bal','goals');
+    dirty('ov','bal','goals','budget','actual');
     refreshNavAvatar();
     if(document.getElementById('family-list'))renderFamilyList();
     if(_sv==='data')rDataMgmt();
@@ -6981,7 +7125,7 @@ function rBal(){
             return `<div class="brow-swipe"${bdr?' style="border-top:.5px solid var(--bd)"':''}><div class="brow-swipe-actions">
                 <button class="brow-swipe-edit" onclick="openBalItemEditor('${type}','${item.id}')">${UI.ed}</button>
                 <button class="brow-swipe-del" onclick="confirmDeleteBalItem('${type}','${item.id}')">${UI.tr}</button>
-              </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 28px">
+              </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 35px">
               <div style="display:flex;align-items:center;gap:6px">
                 <div style="flex:1;min-width:0">
                   <div style="font-size:14px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
@@ -7023,7 +7167,7 @@ function rBal(){
             <button onclick="event.stopPropagation();addBalItem('${type}','${cat.id}')" style="background:none;color:var(--bl);border:none;font-size:13px;font-weight:600;cursor:pointer;padding:4px">+ L\u00e4gg till</button>
           </div>`;
         } else {
-          rows+=`<div style="padding:10px 14px 10px 28px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="addBalItem('${type}','${cat.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
+          rows+=`<div style="padding:10px 14px 10px 35px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="addBalItem('${type}','${cat.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
         }
       }
     });
