@@ -2285,7 +2285,7 @@ function gemCat(item){
 function rCardGem(items, targetEl){
   const jN=p1Name(),nN=p2Name();
   const SLM2=getSLM();
-  const grandTotal=items.reduce((s,i)=>s+Math.abs(cA(i)),0);
+  const grandTotal=items.reduce((s,i)=>s+Math.abs(personAmt(i)),0);
   // Group items by macro-category
   const groups={};
   const GEM_GROUPS=GEM_GROUPS_fn();
