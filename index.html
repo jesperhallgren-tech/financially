@@ -476,7 +476,7 @@ html,body{background:#1C1C1E!important}
   <div onclick="closeFAB()" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>
   <div id="fab-inner" style="position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;padding:16px 18px calc(24px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);max-height:80vh;overflow-y:auto">
     <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 18px"></div>
-    <div style="font-size:17px;font-weight:700;margin-bottom:16px">Ny transaktion</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px">Ny transaktion</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:5px;font-weight:500">Belopp (kr)</div>
         <input id="fab-amt" type="number" inputmode="decimal" placeholder="0" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></div>
@@ -504,7 +504,7 @@ html,body{background:#1C1C1E!important}
   <div onclick="closeEditTx()" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>
   <div id="edit-tx-inner" style="position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;padding:16px 18px calc(24px + var(--sb));transform:translateY(100%);transition:transform .3s cubic-bezier(.32,0,.67,0);max-height:80vh;overflow-y:auto">
     <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 16px"></div>
-    <div style="font-size:17px;font-weight:700;margin-bottom:14px">Redigera transaktion</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:14px">Redigera transaktion</div>
     <input type="hidden" id="etx-id"><input type="hidden" id="etx-y"><input type="hidden" id="etx-m">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Belopp (kr)</div>
@@ -585,11 +585,6 @@ html,body{background:#1C1C1E!important}
       <span id="notif-toggle-bg" style="position:absolute;inset:0;background:${S.notifEnabled?'var(--bl)':'var(--bd2)'};border-radius:14px;transition:background .2s"></span>
       <span id="notif-toggle-dot" style="position:absolute;top:3px;left:${S.notifEnabled?'21px':'3px'};width:22px;height:22px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
     </label>
-  </div>
-  <div style="border-top:.5px solid var(--bd3);display:flex;align-items:center;gap:14px;padding:12px 16px">
-    <div style="width:32px;height:32px;border-radius:9px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bl)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L12.5 19.5"/></svg></div>
-    <div style="flex:1;min-width:0"><div style="font-size:16px;color:var(--t1)">Kopplingar</div><div style="font-size:12px;color:var(--t3);margin-top:1px">Synkronisering</div></div>
-    <button id="dsb" class="ds idle" onclick="dbClick()" style="padding:5px 10px;font-size:12px;border-radius:8px;flex-shrink:0"><span id="dsi">&#x2601;</span> <span id="dsl">Synka</span></button>
   </div>
   <div onclick="_sv='data';rSv()" style="border-top:.5px solid var(--bd3);display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent">
     <div style="width:32px;height:32px;border-radius:9px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--bl)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
@@ -813,6 +808,7 @@ const CM={
   c7:  {t:'barn',      ic:'baby',  cl:'#FF375F',  bg:'rgba(255,55,95,.12)', k:['barnförsäkring','paketas','barnbidrag']},
   c10: {t:'barn',      ic:'baby',  cl:'#FF375F',  bg:'rgba(255,55,95,.12)', k:['nanny','barnvakt','nina poppins','dagis','förskola']},
   c_bk:{t:'barn',      ic:'baby',  cl:'#FF375F',  bg:'rgba(255,55,95,.12)', k:['barnkläder','leksakar','babyshop','kidsbrandstore']},
+  e5:  {t:'barn',      ic:'baby',  cl:'#FF375F',  bg:'rgba(255,55,95,.12)', k:['fritids','simskola','fotbollsskola','ridskola','barnaktivitet']},
   // ── Hälsa & sjukvård ───────────────────────────
   c_med:{t:'halsa',    ic:'shield',cl:'var(--ok)', bg:'var(--okbg)', k:['läkare','tandläkare','apotek','apotea','kronans','hjartat','recept','vårdcentral']},
   c_gym:{t:'halsa',    ic:'star',  cl:'var(--ok)', bg:'var(--okbg)', k:['sats','friskis','träning','gym','yoga']},
@@ -1382,7 +1378,16 @@ function rAllocDonut(){
   const groups={boende:0,konto:0,investering:0,pension:0,annat:0};
   const labels={boende:'Boende',konto:'Konto & likvida',investering:'Aktier & fonder',pension:'Pension',annat:'Övrigt'};
   const colors={boende:'#3A5FE0',konto:'#19A3A0',investering:'#5E5CE6',pension:'#2E5BBA',annat:'var(--t3)'};
-  assets.forEach(a=>{const cat=a.cat||'annat';if(groups[cat]!==undefined)groups[cat]+=Math.abs(a.amount||0);else groups.annat+=Math.abs(a.amount||0);});
+  // Respekterar Alla/Jesper/Natalie-filtret (_balFilter) precis som resten av
+  // sidan — annars visar diagrammet alltid HELA hushållets fördelning även
+  // när man filtrerat till en enskild person, vilket ger missvisande procent.
+  const filterPersonAmt=a=>{
+    if(_balFilter==='alla')return Math.abs(a.amount||0);
+    const shares=resolveAssetShares(a);
+    const s=shares.find(x=>x.personId===_balFilter);
+    return s?Math.abs(s.amount):0;
+  };
+  assets.forEach(a=>{const cat=a.cat||'annat';const amt=filterPersonAmt(a);if(!amt)return;if(groups[cat]!==undefined)groups[cat]+=amt;else groups.annat+=amt;});
   const total=Object.values(groups).reduce((s,v)=>s+v,0);
   if(!total){el.innerHTML='';return;}
   const R=52,r=32,cx=64,cy=64;let angle=-Math.PI/2,segments='',legendHtml='';
@@ -2004,9 +2009,6 @@ function rDataMgmt(){
     </div>`;
   }).join(''):`<div style="font-size:13px;color:var(--t3);padding:8px 0">Ingen importhistorik ännu</div>`;
   
-  // Last Drive sync
-  const lastSync=S._lastDriveSync?new Date(S._lastDriveSync).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'}):'Aldrig';
-  
   el.innerHTML=`
     <div id="sync-banner"></div>
     <div class="gc" style="padding:0;margin-bottom:12px">
@@ -2053,16 +2055,6 @@ function rDataMgmt(){
       <div id="sb-history">Laddar…</div>
     </div>`:''}
     <div class="gc" style="padding:0;margin-bottom:12px">
-      <div style="padding:13px 16px;border-bottom:.5px solid var(--bd)">
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">Drive-synkronisering</div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:10px">
-          <span>Senast sparad</span><span>${lastSync}</span>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="saveDrive(true)" class="btn pri sm" style="flex:1">⬆ Spara till Drive</button>
-          <button onclick="loadDrive(true)" class="btn sec sm" style="flex:1">⬇ Ladda från Drive</button>
-        </div>
-      </div>
       <div style="padding:13px 16px">
         <div style="font-size:13px;font-weight:600;margin-bottom:8px">Exportera data</div>
         <div style="display:flex;gap:8px">
@@ -4331,9 +4323,10 @@ function rBalItemEditor(){
   const p1=contributors[0]?.name||p1Name();
   const p2=contributors[1]?.name||p2Name();
   const amt=Math.abs(item.amount||0);
+  const isNewItem=!item.label;
 
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <span style="font-size:16px;font-weight:700">Redigera post</span>
+    <span style="font-size:16px;font-weight:700">${isNewItem?'Lägg till post':'Redigera post'}</span>
     <button onclick="closeBalItemEditor()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:22px;line-height:1">&times;</button>
   </div>`;
 
@@ -5724,13 +5717,23 @@ function tBC(cid,cat){BCO[cat]=!BCO[cat];const e=document.getElementById(cid),c=
 function rSparandeBricka(){
   const items=(S.assets2||[]).filter(i=>i.cat==='sparande');
   const subcatDefs=SPARANDE_SUBCATS;
-  const total=items.reduce((s,i)=>s+Math.abs(i.amount||0),0);
+  // Respekterar samma Alla/Jesper/Natalie-filter (_goalFilter) som redan
+  // syns \u00f6verst p\u00e5 den h\u00e4r sidan (rGoalFilterBar) — annars visar den h\u00e4r
+  // brickan alltid HELA hush\u00e5llets sparande \u00e4ven n\u00e4r man filtrerat till en
+  // enskild person, samma bugg som redan hittats och fixats p\u00e5 andra sidor.
+  const personSavAmt=item=>{
+    if(_goalFilter==='alla')return Math.abs(item.amount||0);
+    const shares=resolveAssetShares(item);
+    const s=shares.find(x=>x.personId===_goalFilter);
+    return s?Math.abs(s.amount):0;
+  };
+  const total=items.reduce((s,i)=>s+personSavAmt(i),0);
   const cid='cb-sparande-bricka',open=!!BCO[cid];
 
   // ── Donut: f\u00f6rdelning per underkategori (Sparkonto & likvida medel / Investeringar / Pensionssparande) ──
   const donutColors={konto:'#3A5FE0',investering:'#19A3A0',pension:'#5E5CE6'};
-  const subTotals=subcatDefs.map(s=>({...s,val:items.filter(i=>i.subcat===s.id).reduce((sum,i)=>sum+Math.abs(i.amount||0),0)}));
-  const noSubVal=items.filter(i=>!i.subcat).reduce((s,i)=>s+Math.abs(i.amount||0),0);
+  const subTotals=subcatDefs.map(s=>({...s,val:items.filter(i=>i.subcat===s.id).reduce((sum,i)=>sum+personSavAmt(i),0)}));
+  const noSubVal=items.filter(i=>!i.subcat).reduce((s,i)=>s+personSavAmt(i),0);
   if(noSubVal>0)subTotals.push({id:'ovrigt',lbl:'Annat sparande',val:noSubVal});
   const entries=subTotals.filter(s=>s.val>0);
 
@@ -5792,21 +5795,21 @@ function rSparandeBricka(){
               ${sub?`<div style="margin-top:1px">${sub}</div>`:''}
             </div>
           </div>
-          <span style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(Math.round(Math.abs(item.amount||0)))}</span>
+          <span style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(Math.round(personSavAmt(item)))}</span>
         </div>
       </div></div></div>`;
   };
 
   let rows='';
   subcatDefs.forEach((sub,si)=>{
-    const subItems=items.filter(i=>i.subcat===sub.id);
+    const subItems=items.filter(i=>i.subcat===sub.id&&personSavAmt(i)>0);
     if(!subItems.length)return;
     rows+=`<div style="padding:8px 14px 6px;${si>0?'border-top:.5px solid var(--bd3)':''}">
       <span style="font-size:11px;font-weight:600;color:var(--t3);letter-spacing:.2px">${sub.lbl}</span>
     </div>`;
     subItems.forEach(item=>{rows+=rowHtml(item);});
   });
-  const noSub=items.filter(i=>!i.subcat);
+  const noSub=items.filter(i=>!i.subcat&&personSavAmt(i)>0);
   noSub.forEach(item=>{rows+=rowHtml(item);});
 
   // ── Illustrativ platsh\u00e5llare \u2014 framtida allokeringsvyer (tillg\u00e5ngsslag/risk/geografi/sektor).
@@ -6745,7 +6748,12 @@ function mergeCloudList(localArr,cloudRows,mapFn){
 // nyligen borttagen post (vars radering ännu inte hunnit synkas upp)
 // råka "återuppstå" genom sammanslagningen i sbPull().
 async function sbManualPull(){
-  try{await sbPush(true);}catch(e){console.warn('[sbManualPull push]',e.message);}
+  // Samma skydd som vid inloggning: pusha bara f\u00f6rst om den h\u00e4r enheten
+  // synkat f\u00f6rr \u2014 annars riskerar man att skriva \u00f6ver riktig molndata med
+  // den h\u00e4r enhetens of\u00f6rdda standardv\u00e4rden f\u00f6r budgetposter.
+  if(S.firstSyncAt){
+    try{await sbPush(true);}catch(e){console.warn('[sbManualPull push]',e.message);}
+  }
   await sbPull();
 }
 async function sbPull(silent){
@@ -6867,6 +6875,7 @@ async function sbPull(silent){
   compInc();recalcAllNetIncomes();
   markUns();
   clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
+  if(!S.firstSyncAt)S.firstSyncAt=new Date().toISOString();
   try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
   try{storeP();}catch(e){}
   sbLastSyncAt=new Date();
@@ -7663,7 +7672,7 @@ function rOv(){
   const goalLine=hasGoals
     ? `${activeGoals.length} aktiva mål &nbsp;·&nbsp; ${goalPct}% nått totalt`
     : 'Inga mål inlagda ännu';
-  const nearestName=nearestGoal?.name||'–';
+  const nearestName=nearestGoal?.label||'–';
   const nearestPct=nearestGoal&&nearestGoal.target>0?Math.min(100,Math.round((nearestGoal.current||0)/nearestGoal.target*100)):0;
   const card3=`<div class="dash-card" onclick="navTo('goals')" style="animation-delay:.14s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
@@ -8281,12 +8290,7 @@ function tglSector(pfx){
 }
 function initSyncBanner(){
   const el=document.getElementById('sync-banner');
-  if(!IN_CLAUDE){
-    if(el)el.innerHTML='<div class="noti info" style="margin-bottom:10px">K\u00f6rs frist\u00e5ende \u2014 Drive kr\u00e4ver Claude.ai. Anv\u00e4nd <strong>Spara JSON-fil</strong> f\u00f6r att synka mellan enheter.</div>';
-    setDS('local','Lokalt');
-  }else{
-    if(el)el.innerHTML='<div class="noti ok" style="margin-bottom:10px">\u2713 Claude.ai aktiv \u2014 Drive-synk \u00e4r tillg\u00e4nglig</div>';
-  }
+  if(el)el.innerHTML='';
 }
 // ── TEMA ────────────────────────────────────────────────────────
 let _theme='auto';
@@ -8337,18 +8341,23 @@ if(sb){
           showSnack('✓ Inloggad — '+(sbUser.email||''));
         }
         if((isFreshSignIn||event==='INITIAL_SESSION')&&hhId){
-          // B\u00e5de en genuint ny inloggning OCH en \u00e5terkommande session f\u00f6rs\u00f6ker
-          // synka: push:ar EVENTUELL osynkad lokal \u00e4ndring F\u00d6RST (t.ex. om en
-          // debounced uppladdning aldrig hann k\u00f6ra innan appen st\u00e4ngdes f\u00f6rra
-          // g\u00e5ngen), h\u00e4mtar sedan senaste (nu ikappsynkade) data. Det h\u00e4r var
-          // TIDIGARE begr\u00e4nsat till bara \u00e5terkommande sessioner, av r\u00e4dsla f\u00f6r
-          // att skriva \u00f6ver en ny anv\u00e4ndares f\u00e4rska onboarding-data \u2014 men b\u00e5de
-          // push och pull \u00e4r nu s\u00e4kra att k\u00f6ra alltid (aldrig destruktiva, bara
-          // sammanslagning), s\u00e5 samma \u00e5terst\u00e4llning kan g\u00e4lla en \u00e5terv\u00e4ndande
-          // anv\u00e4ndare vars lokala lagring av n\u00e5gon anledning blivit tom (t.ex.
-          // en cache-rensning) \u2014 exakt scenariot som tidigare tvingade en
-          // manuell \u00e5terst\u00e4llning.
-          try{await sbPush(true);}catch(e){console.warn('[sbAutoPushBeforePull]',e.message);}
+          // VIKTIGT: push:ar bara F\u00d6RST om den h\u00e4r ENHETEN redan synkat minst en
+          // g\u00e5ng tidigare (S.firstSyncAt satt) \u2014 annars \u00e4r lokalt state bara
+          // S.budget.gem/sav:s hopkodade standardposter (samma fasta ID:n som
+          // 'c0','c1' p\u00e5 ALLA enheter, alltid n\u00e4rvarande \u00e4ven helt of\u00f6rdda) och
+          // ALDRIG tomma p\u00e5 samma s\u00e4tt som tillg\u00e5ngar/skulder/m\u00e5l \u2014 s\u00e5 den
+          // tidigare "b\u00e5da \u00e4r alltid s\u00e4kra"-logiken stämde inte f\u00f6r just den
+          // listan. Att pusha en HELT NY enhets f\u00e4rska nollor f\u00f6rst hade tystat
+          // skrivit \u00f6ver riktig, redan synkad data i molnet INNAN h\u00e4mtningen ens
+          // hunnit l\u00e4sa tillbaka den \u2014 exakt det som orsakade att data \"inte
+          // f\u00f6ljde med\" till en ny enhet (den blev inte kvar, den skrevs \u00f6ver).
+          // En enhet som ALDRIG synkat f\u00f6rr h\u00e4mtar d\u00e4rf\u00f6r bara, aldrig pushar
+          // f\u00f6rst \u2014 f\u00f6rst EFTER den f\u00f6rsta lyckade h\u00e4mtningen (d\u00e5 lokalt state
+          // \u00e4r sammanslaget med molnets riktiga data) \u00e4r det s\u00e4kert att b\u00f6rja
+          // pusha vid vanlig redigering igen.
+          if(S.firstSyncAt){
+            try{await sbPush(true);}catch(e){console.warn('[sbAutoPushBeforePull]',e.message);}
+          }
           try{await sbPull(true);}catch(e){console.warn('[sbAutoPull]',e.message);}
         }
         // Onboarding-beslutet tas EFTER f\u00f6rs\u00f6ket att h\u00e4mta molndata ovan, inte
