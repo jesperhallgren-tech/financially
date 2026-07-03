@@ -4130,14 +4130,14 @@ function rGemItemEditor(){
 
   html+=`<div style="margin-bottom:14px">
     <div class="bs-who-label" style="margin-bottom:6px">Namn</div>
-    <input class="inp" id="gie-label" value="${(item.label||'').replace(/"/g,'&quot;')}" style="width:100%" ${item.locked?'disabled':''}>
+    <input class="inp" id="gie-label" value="${(item.label||'').replace(/"/g,'&quot;')}" oninput="gieSyncField('label',this.value)" style="width:100%" ${item.locked?'disabled':''}>
   </div>`;
 
   html+=`<div style="margin-bottom:14px">
     <div class="bs-who-label" style="margin-bottom:6px">Belopp</div>
     ${item.computed
       ? `<div class="bs-amount-wrap" style="background:var(--bd2)"><span style="flex:1;color:var(--t2);font-size:17px;font-weight:600">${fmt(amt)}</span><span class="bs-amount-suffix">kr / m\u00e5n \u00b7 ber\u00e4knas automatiskt</span></div>`
-      : `<div class="bs-amount-wrap"><input class="bs-amount-input" id="gie-amount" type="number" inputmode="decimal" value="${amt||''}" placeholder="0"><span class="bs-amount-suffix">kr / m\u00e5n</span></div>`
+      : `<div class="bs-amount-wrap"><input class="bs-amount-input" id="gie-amount" type="number" inputmode="decimal" value="${amt||''}" oninput="gieSyncField('amount',parseFloat(this.value)||0)" placeholder="0"><span class="bs-amount-suffix">kr / m\u00e5n</span></div>`
     }
   </div>`;
 
@@ -4199,6 +4199,13 @@ function rGemItemEditor(){
   el.innerHTML=html;
 }
 
+// Samma id\u00e9 som bieSyncField() f\u00f6r tillg\u00e5ngar/skulder \u2014 synkar f\u00e4ltets
+// v\u00e4rde till posten levande, s\u00e5 en omritning (\u00e4gare/f\u00f6rdelningstyp) inte
+// tystar bort det man just skrivit i Namn/Belopp.
+function gieSyncField(field,value){
+  const item=(S.budget.gem||[]).find(i=>i.id===_gemEditCtx?.itemId);
+  if(item)item[field]=value;
+}
 function gieSetWho(who){
   const item=(S.budget.gem||[]).find(i=>i.id===_gemEditCtx.itemId);
   if(!item)return;
@@ -4332,7 +4339,7 @@ function rBalItemEditor(){
 
   html+=`<div style="margin-bottom:14px">
     <div class="bs-who-label" style="margin-bottom:6px">Namn</div>
-    <input class="inp" id="bie-label" value="${(item.label||'').replace(/"/g,'&quot;')}" style="width:100%">
+    <input class="inp" id="bie-label" value="${(item.label||'').replace(/"/g,'&quot;')}" oninput="bieSyncField('label',this.value)" style="width:100%">
   </div>`;
 
   const catOptsList=type==='a'?BAL_ASSET_CATS:BAL_DEBT_CATS;
@@ -4345,7 +4352,7 @@ function rBalItemEditor(){
 
   html+=`<div style="margin-bottom:14px">
     <div class="bs-who-label" style="margin-bottom:6px">Belopp</div>
-    <div class="bs-amount-wrap"><input class="bs-amount-input" id="bie-amount" type="number" inputmode="decimal" value="${amt||''}" placeholder="0"><span class="bs-amount-suffix">kr</span></div>
+    <div class="bs-amount-wrap"><input class="bs-amount-input" id="bie-amount" type="number" inputmode="decimal" value="${amt||''}" oninput="bieSyncField('amount',parseFloat(this.value)||0)" placeholder="0"><span class="bs-amount-suffix">kr</span></div>
   </div>`;
 
   if(type==='a'&&item.cat==='sparande'){
@@ -4375,7 +4382,7 @@ function rBalItemEditor(){
         ${MORTGAGE_LENDERS.map(l=>`<option value="${l}"${item.institute===l?' selected':''}>${l}</option>`).join('')}
         <option value="__other__"${isOtherLender?' selected':''}>Annan bank</option>
       </select>
-      <input class="inp" id="bie-institute-other" value="${isOtherLender?item.institute.replace(/"/g,'&quot;'):''}" placeholder="Ange bankens namn" style="width:100%;margin-top:8px;display:${isOtherLender?'block':'none'}">
+      <input class="inp" id="bie-institute-other" value="${isOtherLender?item.institute.replace(/"/g,'&quot;'):''}" placeholder="Ange bankens namn" oninput="bieSyncField('institute',this.value)" style="width:100%;margin-top:8px;display:${isOtherLender?'block':'none'}">
     </div>
     <div style="margin-bottom:10px">
       <div class="bs-who-label" style="margin-bottom:6px">R\u00e4ntetyp</div>
@@ -4475,6 +4482,17 @@ function rBoendeFields(item,itemId){
   </div>`;
 }
 
+// Synkar ett f\u00e4lts v\u00e4rde till posten LEVANDE, medan man skriver \u2014 annars
+// f\u00f6rsvinner det man just skrivit in s\u00e5 fort n\u00e5gon annan v\u00e4ljare (\u00e4gare/
+// kategori/r\u00e4ntetyp) triggar en omritning av hela formul\u00e4ret, eftersom
+// f\u00e4lten annars bara l\u00e4ses av vid en separat spara-knapp.
+function bieSyncField(field,value){
+  const{type,itemId}=_balEditCtx||{};
+  if(!type||!itemId)return;
+  const arr=type==='a'?S.assets2:S.debts2;
+  const item=arr.find(i=>i.id===itemId);
+  if(item)item[field]=value;
+}
 function bieSetCat(newCat){
   const{type,itemId}=_balEditCtx;
   const arr=type==='a'?S.assets2:S.debts2;
@@ -6590,7 +6608,7 @@ async function sbPush(silent){
   try{
     const debtIds=(S.debts2||[]).map(d=>d.id);
     if((S.debts2||[]).length){
-      const rows=S.debts2.map(d=>({id:d.id,household_id:sbHouseholdId,category:d.cat||'annat',label:d.label||'',value:Math.abs(d.amount||0),meta:{src:d.src,own:d.own,sJ:d.sJ,sN:d.sN}}));
+      const rows=S.debts2.map(d=>({id:d.id,household_id:sbHouseholdId,category:d.cat||'annat',label:d.label||'',value:Math.abs(d.amount||0),meta:{src:d.src,own:d.own,sJ:d.sJ,sN:d.sN,rate:d.rate,institute:d.institute,type:d.type,term:d.term}}));
       const{error}=await sb.from('debts').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
@@ -6759,7 +6777,7 @@ async function sbPull(silent){
   }catch(e){console.warn('[sbPull apply assets]',e.message);errors.push('Tillgångar (tillämpa): '+e.message);}
 
   try{
-    if(debts)S.debts2=mergeCloudList(S.debts2,debts,d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
+    if(debts)S.debts2=mergeCloudList(S.debts2,debts,d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5,...(d.meta?.rate!=null?{rate:d.meta.rate}:{}),...(d.meta?.institute?{institute:d.meta.institute}:{}),...(d.meta?.type?{type:d.meta.type}:{}),...(d.meta?.term?{term:d.meta.term}:{})}));
   }catch(e){console.warn('[sbPull apply debts]',e.message);errors.push('Skulder (tillämpa): '+e.message);}
 
   try{
