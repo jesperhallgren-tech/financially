@@ -635,7 +635,7 @@ html,body{background:#1C1C1E!important}
   <div id="sep-acc-row" style="border-top:.5px solid var(--bd3);display:none;align-items:center;gap:14px;padding:12px 16px">
     <div style="flex:1;min-width:0">
       <div style="font-size:16px;color:var(--t1)">Separata + gemensamt konto</div>
-      <div style="font-size:12px;color:var(--t3);margin-top:1px">Visa \u00f6verf\u00f6ring till gemensamt konto i Budget</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:1px">Visa överföring till gemensamt konto i Budget</div>
     </div>
     <label style="position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0">
       <input type="checkbox" id="sep-acc-toggle" onchange="toggleSeparateAccounts(this.checked)" style="opacity:0;width:0;height:0">
@@ -644,8 +644,8 @@ html,body{background:#1C1C1E!important}
     </label>
   </div>
   <div id="split-method-row" style="border-top:.5px solid var(--bd3);display:none;padding:12px 16px">
-    <div style="font-size:16px;color:var(--t1);margin-bottom:2px">Standardf\u00f6rdelning f\u00f6r delade kostnader</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Anv\u00e4nds som f\u00f6rslag n\u00e4r ni delar en kostnad \u2014 kan alltid \u00e4ndras per post</div>
+    <div style="font-size:16px;color:var(--t1);margin-bottom:2px">Standardfördelning för delade kostnader</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Används som förslag när ni delar en kostnad — kan alltid ändras per post</div>
     <div style="display:flex;gap:8px">
       <button onclick="setSplitMethod('income')" id="split-method-income" style="flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--bd);background:var(--bd2);font-size:13px;font-weight:500;cursor:pointer;color:var(--t2)">Efter inkomst</button>
       <button onclick="setSplitMethod('equal')" id="split-method-equal" style="flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--bd);background:var(--bd2);font-size:13px;font-weight:500;cursor:pointer;color:var(--t2)">Lika (50/50)</button>
@@ -782,7 +782,7 @@ const CP={
   pen:`<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>`,
   chevup:`<polyline points="18 15 12 9 6 15"/>`,
   chevdown:`<polyline points="6 9 12 15 18 9"/>`,
-  info:`<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>`,
+  info:`<circle cx="10" cy="10" r="9"/><line x1="10" y1="13.6" x2="10" y2="10"/><line x1="10" y1="6.4" x2="10.01" y2="6.4"/>`,
 };
 const catI=(n,s,c)=>{const p=CP[n]||CP.star||'<circle cx="10" cy="10" r="6"/>';return si(p,s||20,c||'currentColor');};
 // Kategori-meta: muttade, harmoniserade färger
@@ -2781,6 +2781,12 @@ function calcTransferSummary(){
   [...gem,...sav].forEach(item=>{
     const a=Math.abs(cA(item));
     if(!a)return;
+    // Enskilt ägda poster (satt via ägar-väljaren till EN specifik person,
+    // kodas som en shares[]-lista med exakt en post) är inte gemensamma och
+    // ska inte räknas med här — en sådan kostnad går aldrig via det
+    // gemensamma kontot, så den ska varken syns i eller påverka vad någon
+    // behöver överföra dit.
+    if(item.shares&&item.shares.length===1)return;
     const shares=resolveShares(item,a);
     shares.forEach(s=>{
       if(totals[s.personId]===undefined)totals[s.personId]=0;
@@ -3122,7 +3128,7 @@ function openGlobalSearch(){
     sheet.id='gsearch-sheet';
     sheet.style.cssText='position:fixed;inset:0;z-index:600;background:var(--bg);display:none;flex-direction:column';
     sheet.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;padding:calc(var(--st)+14px) max(18px,calc((100vw - 680px) / 2 + 18px)) 10px">
+      <div style="display:flex;align-items:center;gap:10px;padding:calc(var(--st)+14px) 16px 10px">
         <div style="flex:1;display:flex;align-items:center;background:var(--inp-bg);border-radius:10px;padding:9px 12px;gap:8px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input id="gsearch-input" type="text" placeholder="S\u00f6k transaktioner, budget, tillg\u00e5ngar..." oninput="runGlobalSearch(this.value)" style="flex:1;border:none;background:none;outline:none;font-size:16px;color:var(--t1)">
@@ -3333,7 +3339,7 @@ function initSepAccToggle(){
   if(dot)dot.style.left=on?'21px':'3px';
 }
 
-// Standardf\u00f6rdelning f\u00f6r delade kostnader: efter inkomst (default, matchar
+// Standardfördelning för delade kostnader: efter inkomst (default, matchar
 // tidigare hårdkodat beteende) eller lika 50/50. Sparas p\u00e5 hush\u00e5llsniv\u00e5.
 function setSplitMethod(method){
   S.splitMethod=method;
@@ -4971,7 +4977,7 @@ if(document.readyState!=='loading')initBrowSwipe();
 
 function dirty(...tabs){if(tabs.includes(_act))requestAnimationFrame(()=>{try{compInc();renderTab(_act);}catch(e){console.warn('[dirty]',e.message);}});}
 function renderTab(id){
-  if(id==='settings'){_sv=_sv||null;rSv();return;}switch(id){case'ov':rOv();break;case'budget':rBudget();break;case'actual':/* merged into budget tab */break;case'bal':rBal();setTimeout(()=>{rAllocDonut();},50);break;case'goals':rGoals();break;}}
+  if(id==='settings'){_sv=_sv||null;rSv();return;}switch(id){case'ov':rOv();break;case'budget':rBudget();break;case'actual':/* merged into budget tab */break;case'bal':rBal();rAllocDonut();break;case'goals':rGoals();break;}}
 function saveLS(){try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}sbScheduleAutoSync();}
 
 // ── Automatisk molnsynk ───────────────────────────────────────
@@ -8360,18 +8366,14 @@ if(sb){
           }
           try{await sbPull(true);}catch(e){console.warn('[sbAutoPull]',e.message);}
         }
-        // Onboarding-beslutet tas EFTER f\u00f6rs\u00f6ket att h\u00e4mta molndata ovan, inte
-        // innan \u2014 annars kan en \u00e5terv\u00e4ndande anv\u00e4ndare med tom lokal lagring
-        // f\u00e5 se onboarding-fl\u00f6det trots att deras riktiga data redan hunnit
-        // komma tillbaka fr\u00e5n molnet.
-        if(!S.onboarded){
-          const hasRealData=(S.assets2&&S.assets2.length)||(S.debts2&&S.debts2.length)||(S.goals&&S.goals.length)||(S.budget.gem||[]).some(i=>i.amount&&Math.abs(i.amount)>0)||Object.keys(TX).length;
-          if(hasRealData){
-            S.onboarded=true;saveLS();
-          } else {
-            try{ showOnboarding(0); }catch(e){console.warn('[showOnboarding post-login]',e.message);}
-          }
-        }
+        // OBS: onboarding-fl\u00f6det \u00e4r medvetet avst\u00e4ngt i hela appen just nu
+        // (se checkOnboarding(), en no-op tills appen \u00e4r releaseklar) \u2014 s\u00e5
+        // det triggas INTE h\u00e4rifr\u00e5n l\u00e4ngre heller, f\u00f6r konsekvens. Tidigare
+        // fanns ett anrop till showOnboarding() h\u00e4r f\u00f6r att skydda mot att en
+        // \u00e5terv\u00e4ndande anv\u00e4ndare med tom lokal lagring skulle tappa sin
+        // profil helt \u2014 men det kringgick av misstag den avst\u00e4ngningen och
+        // kunde visa onboarding \u00e4ven f\u00f6r en anv\u00e4ndare med massor av riktig,
+        // redan synkad data (t.ex. vid f\u00f6rsta inloggningen i en ny webbl\u00e4sare).
       }).catch(e=>console.warn('[sbEnsureHousehold]',e.message));
     } else if(event==='SIGNED_OUT'){
       sbUser=null;sbHouseholdId=null;
