@@ -3657,10 +3657,20 @@ function bsSetSharePct(itemId,pct){
   if(contributors.length<2)return;
   const total=Math.abs(cA(item)||0);
   const meAmt=Math.round(total*pct/100);
-  item.shares=[
-    {personId:contributors[0].id,mode:'fixed',fixedAmount:meAmt},
-    {personId:contributors[1].id,mode:'fixed',fixedAmount:total-meAmt}
-  ];
+  // Samma sp\u00e4rr som i gieUpdatePctLive(): skapar bara en fast \u00f6verstyrning
+  // om procenten faktiskt avviker fr\u00e5n standardf\u00f6rdelningen \u2014 annars kan
+  // en post permanent l\u00e5sas fast (och sluta f\u00f6lja med om l\u00f6nen \u00e4ndras
+  // senare) bara av att man r\u00f6r vid regl\u00e5get under budgetguiden, utan att
+  // faktiskt mena att \u00e4ndra n\u00e5got.
+  const defaultPct=getGlobalDefaultPct();
+  if(Math.abs(pct-defaultPct)<=1){
+    item.shares=null;
+  } else {
+    item.shares=[
+      {personId:contributors[0].id,mode:'fixed',fixedAmount:meAmt},
+      {personId:contributors[1].id,mode:'fixed',fixedAmount:total-meAmt}
+    ];
+  }
   rBudgetSetupStep();
 }
 
@@ -4239,18 +4249,21 @@ function gieUpdatePctLive(val){
   const p2Amt=amt-p1Amt;
   const p1=contributors[0]?.name||p1Name(),p2=contributors[1]?.name||p2Name();
   document.getElementById('gie-pct-amounts').innerHTML=`<span>${p1}: ${fmt(p1Amt)}</span><span>${p2}: ${fmt(p2Amt)}</span>`;
-  // VIKTIGT: reglaget uppdaterade tidigare bara F\u00f6RHANDSVISNINGEN ovan, utan
-  // att n\u00e5gonsin faktiskt spara den nya f\u00f6rdelningen till posten \u2014 drog man
-  // i reglaget och tryckte Spara l\u00e5g den gamla f\u00f6rdelningen (t.ex. "fast")
-  // kvar helt of\u00f6r\u00e4ndrad, vilket gjorde det se ut som att l\u00e4get inte gick att
-  // \u00e4ndra alls. Skriver nu \u00e4ven till item.shares direkt, i samma tv\u00e5-fasta-
-  // belopp-format som "Avviker fr\u00e5n standardf\u00f6rdelningen"-l\u00e4sningen redan
-  // f\u00f6rv\u00e4ntar sig vid \u00e5teröppning.
+  // Skriver bara en FAST \u00f6verstyrning om procenten faktiskt skiljer sig fr\u00e5n
+  // vad standardf\u00f6rdelningen redan skulle ge (\u00b11%-tolerans f\u00f6r regl\u00e5gets egen
+  // avrundning) \u2014 annars r\u00e4cker det att bara N\u00c5 vid regl\u00e5get (utan att
+  // egentligen \u00e4ndra n\u00e5got) f\u00f6r att posten permanent l\u00e5ses fast och slutar
+  // f\u00f6lja med om l\u00f6nen \u00e4ndras senare, helt i onödan.
   if(contributors.length>=2){
-    item.shares=[
-      {personId:contributors[0].id,mode:'fixed',fixedAmount:p1Amt},
-      {personId:contributors[1].id,mode:'fixed',fixedAmount:p2Amt},
-    ];
+    const defaultPct=getGlobalDefaultPct();
+    if(Math.abs(pct-defaultPct)<=1){
+      item.shares=null;
+    } else {
+      item.shares=[
+        {personId:contributors[0].id,mode:'fixed',fixedAmount:p1Amt},
+        {personId:contributors[1].id,mode:'fixed',fixedAmount:p2Amt},
+      ];
+    }
   }
 }
 
@@ -4280,11 +4293,21 @@ function gieSave(){
     const amt=Math.abs(cA(item)||0);
     const contributors=getContributors();
     if(contributors.length>=2){
-      const meAmt=Math.round(amt*pct/100);
-      item.shares=[
-        {personId:contributors[0].id,mode:'fixed',fixedAmount:meAmt},
-        {personId:contributors[1].id,mode:'fixed',fixedAmount:amt-meAmt}
-      ];
+      // VIKTIGT: skriver bara en FAST \u00f6verstyrning om procenten faktiskt
+      // avviker fr\u00e5n standardf\u00f6rdelningen \u2014 annars konverteras posten
+      // permanent till "fast" bara av att man \u00f6ppnar den och trycker Spara
+      // (t.ex. f\u00f6r att bara \u00e4ndra namnet), eftersom regl\u00e5get alltid finns
+      // med ett v\u00e4rde redo att l\u00e4sas h\u00e4r, oavsett om man n\u00e5gonsin r\u00f6rt det.
+      const defaultPct=getGlobalDefaultPct();
+      if(Math.abs(pct-defaultPct)<=1){
+        item.shares=null;
+      } else {
+        const meAmt=Math.round(amt*pct/100);
+        item.shares=[
+          {personId:contributors[0].id,mode:'fixed',fixedAmount:meAmt},
+          {personId:contributors[1].id,mode:'fixed',fixedAmount:amt-meAmt}
+        ];
+      }
     }
   }
   markUns();
