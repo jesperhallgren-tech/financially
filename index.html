@@ -6732,27 +6732,49 @@ async function sbManualPull(){
 }
 async function sbPull(silent){
   if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
-  try{
-    if(!silent)showSnack('Hämtar från molnet…');
-    const[{data:assets,error:e1},{data:debts,error:e2},{data:goals,error:e3},{data:members,error:e4},{data:budgetItems,error:e5},{data:txRows,error:e6},{data:settingsRows,error:e7}]=await Promise.all([
-      sb.from('assets').select('*').eq('household_id',sbHouseholdId),
-      sb.from('debts').select('*').eq('household_id',sbHouseholdId),
-      sb.from('goals').select('*').eq('household_id',sbHouseholdId),
-      sb.from('members').select('*').eq('household_id',sbHouseholdId),
-      sb.from('budget_items').select('*').eq('household_id',sbHouseholdId),
-      sb.from('transactions').select('*').eq('household_id',sbHouseholdId),
-      sb.from('household_settings').select('*').eq('household_id',sbHouseholdId),
-    ]);
-    if(e1||e2||e3||e4||e5||e6||e7)throw(e1||e2||e3||e4||e5||e6||e7);
+  if(!silent)showSnack('Hämtar från molnet…');
+  const errors=[];
 
+  // Varje tabell hämtas och tillämpas i sin egen try/catch — annars kan ETT
+  // fel (t.ex. samma typ av schemaproblem som drabbade budget_items) stoppa
+  // ALLT, även data från tabeller som skulle ha hämtats helt utan problem.
+  async function fetchTable(name){
+    try{
+      const{data,error}=await sb.from(name).select('*').eq('household_id',sbHouseholdId);
+      if(error)throw error;
+      return data;
+    }catch(e){
+      console.warn('[sbPull '+name+']',e.message);
+      errors.push(name+': '+e.message);
+      return null;
+    }
+  }
+  const[assets,debts,goals,members,budgetItems,txRows,settingsRows]=await Promise.all([
+    fetchTable('assets'),fetchTable('debts'),fetchTable('goals'),fetchTable('members'),
+    fetchTable('budget_items'),fetchTable('transactions'),fetchTable('household_settings'),
+  ]);
+
+  try{
     if(assets)S.assets2=mergeCloudList(S.assets2,assets,a=>({id:a.id,label:a.label,amount:a.value,cat:a.category,...(a.subcategory?{subcat:a.subcategory}:{}),src:a.meta?.src||'manual',own:a.meta?.own||'shared',sJ:a.meta?.sJ??.5,sN:a.meta?.sN??.5}));
+  }catch(e){console.warn('[sbPull apply assets]',e.message);errors.push('Tillgångar (tillämpa): '+e.message);}
+
+  try{
     if(debts)S.debts2=mergeCloudList(S.debts2,debts,d=>({id:d.id,label:d.label,amount:d.value,cat:d.category,src:d.meta?.src||'manual',own:d.meta?.own||'shared',sJ:d.meta?.sJ??.5,sN:d.meta?.sN??.5}));
+  }catch(e){console.warn('[sbPull apply debts]',e.message);errors.push('Skulder (tillämpa): '+e.message);}
+
+  try{
     if(goals)S.goals=mergeCloudList(S.goals,goals,g=>({id:g.id,label:g.label,target:g.target_amount,current:g.current_amount,monthly:g.monthly_contrib,type:g.meta?.type,owner:g.meta?.owner||'shared',returnRate:.05,horizon:36,linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false}));
+  }catch(e){console.warn('[sbPull apply goals]',e.message);errors.push('Mål (tillämpa): '+e.message);}
+
+  try{
     if(members){
       const me=members.find(m=>m.id==='me');
       if(me)P.me={...P.me,name:me.name||'',dob:me.dob||'',gender:me.gender||'',occ:me.occupation||'',photo:me.photo||null,city:me.meta?.city||'',sector:me.meta?.sector||'',email:me.meta?.email||'',phone:me.meta?.phone||'',gross:me.meta?.gross||0,net:me.meta?.net||0,kyOn:!!me.meta?.kyOn,kyR:me.meta?.kyR??1,netOverride:!!me.meta?.netOverride};
       P.family=members.filter(m=>m.id!=='me').map(m=>({id:m.id,name:m.name||'',role:m.role||'annan',dob:m.dob||'',gender:m.gender||'',occ:m.occupation||'',sector:m.meta?.sector||'',photo:m.photo||null,email:m.meta?.email||'',phone:m.meta?.phone||'',canContribute:!!m.meta?.canContribute,gross:m.meta?.gross||0,net:m.meta?.net||0,kyOn:!!m.meta?.kyOn,kyR:m.meta?.kyR??1,netOverride:!!m.meta?.netOverride}));
     }
+  }catch(e){console.warn('[sbPull apply members]',e.message);errors.push('Profiler (tillämpa): '+e.message);}
+
+  try{
     const hhSettings=settingsRows&&settingsRows[0];
     if(hhSettings){
       const sv=(id,v)=>{const e=document.getElementById(id);if(e&&v!==null&&v!==undefined)e.value=v;};
@@ -6764,6 +6786,9 @@ async function sbPull(silent){
       if(hhSettings.notif_enabled!==null)S.notifEnabled=!!hhSettings.notif_enabled;
       if(hhSettings.user_cats&&hhSettings.user_cats.length)S.userCats=hhSettings.user_cats;
     }
+  }catch(e){console.warn('[sbPull apply household_settings]',e.message);errors.push('Inställningar (tillämpa): '+e.message);}
+
+  try{
     if(budgetItems){
       // Samma återförening mot kodens defaults som applyP() gör vid lokal
       // återställning — locked/computed ska ALLTID komma från koden, aldrig
@@ -6792,36 +6817,50 @@ async function sbPull(silent){
         .map(r=>({id:r.id,label:r.label,amount:r.amount,split:r.split||'L'}));
       if(pulledSav.length)S.budget.sav=mBA(pulledSav,S.budget.sav);
     }
+  }catch(e){console.warn('[sbPull apply budget_items]',e.message);errors.push('Budgetposter (tillämpa): '+e.message);}
+
+  try{
     if(txRows){
-      const rebuiltTX={};
-      txRows.forEach(r=>{
-        const key=(r.date||'').slice(0,7); // "ÅÅÅÅ-MM-DD" → "ÅÅÅÅ-MM"
-        if(!key)return;
-        if(!rebuiltTX[key])rebuiltTX[key]=[];
+      // Slår ihop med lokala transaktioner istället för att ersätta TX rakt
+      // av — annars kan ett tomt/misslyckat svar tysta radera alla lokala
+      // transaktioner. Samma princip som redan används för övriga listor.
+      const cloudTx=txRows.map(r=>{
         const tx={id:r.id,desc:r.description||'',amount:r.amount||0,date:r.date,cat:r.cat||'ovrigt',
           source:r.source||'manual',excluded:!!r.excluded};
         if(r.recurring)tx.recurring=true;
         if(r.tags&&r.tags.length)tx.tags=r.tags;
         if(r.note)tx.note=r.note;
+        return tx;
+      });
+      const localTx=[];
+      Object.values(TX).forEach(arr=>localTx.push(...(arr||[])));
+      const mergedTx=mergeCloudList(localTx,cloudTx,t=>t);
+      const rebuiltTX={};
+      mergedTx.forEach(tx=>{
+        const key=(tx.date||'').slice(0,7); // "ÅÅÅÅ-MM-DD" → "ÅÅÅÅ-MM"
+        if(!key)return;
+        if(!rebuiltTX[key])rebuiltTX[key]=[];
         rebuiltTX[key].push(tx);
       });
       TX=rebuiltTX;
     }
+  }catch(e){console.warn('[sbPull apply transactions]',e.message);errors.push('Transaktioner (tillämpa): '+e.message);}
 
-    compInc();recalcAllNetIncomes();
-    markUns();
-    clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
-    try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
-    try{storeP();}catch(e){}
-    sbLastSyncAt=new Date();
-    dirty('ov','bal','goals','budget','actual');
-    refreshNavAvatar();
-    if(document.getElementById('family-list'))renderFamilyList();
-    if(_sv==='data')rDataMgmt();
-    if(!silent)showSnack('✓ Hämtat från molnet');
-  }catch(e){
-    console.warn('[sbPull]',e.message);
-    if(!silent)showSnack('Hämtning misslyckades: '+e.message);
+  compInc();recalcAllNetIncomes();
+  markUns();
+  clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
+  try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
+  try{storeP();}catch(e){}
+  sbLastSyncAt=new Date();
+  dirty('ov','bal','goals','budget','actual');
+  refreshNavAvatar();
+  if(document.getElementById('family-list'))renderFamilyList();
+  if(_sv==='data')rDataMgmt();
+  if(errors.length){
+    if(!silent)showSnack('Hämtning delvis misslyckad: '+errors.join(' · '));
+    console.warn('[sbPull] sammanfattning av fel:',errors);
+  }else if(!silent){
+    showSnack('✓ Hämtat från molnet');
   }
 }
 
@@ -8270,30 +8309,41 @@ if(sb){
       sbUser=session.user;
       hideWelcomeGate();
       refreshSignOutRow();
-      if(!S.onboarded){
-        // Inloggad, men hushållet har aldrig slutfört onboarding — kör den nu,
-        // som första steget EFTER inloggning (istället för innan/parallellt,
-        // vilket tidigare kunde missas helt för helt nya besökare).
-        try{ showOnboarding(0); }catch(e){console.warn('[showOnboarding post-login]',e.message);}
-      }
-      sbEnsureHousehold().then((hhId)=>{
+      const isFreshSignIn=event==='SIGNED_IN'&&!wasLoggedIn;
+      sbEnsureHousehold().then(async(hhId)=>{
         if(_sv==='data')rDataMgmt();
-        if(event==='SIGNED_IN'&&!wasLoggedIn){
+        if(isFreshSignIn){
           // Supabase skickar SIGNED_IN b\u00e5de vid en riktig ny inloggning OCH vid
           // tysta bakgrundsf\u00f6rnyelser av en redan aktiv session \u2014 visa meddelandet
           // bara f\u00f6r den f\u00f6rsta, genuina \u00f6verg\u00e5ngen fr\u00e5n utloggad till inloggad.
           showSnack('✓ Inloggad — '+(sbUser.email||''));
-        } else if(event==='INITIAL_SESSION'&&hhId){
-          // Appen öppnades med en redan inloggad session (ny enhet/webbläsare,
-          // eller samma enhet en ny dag). Push:ar EVENTUELL osynkad lokal
-          // ändring FÖRST (t.ex. om en debounced uppladdning aldrig hann köra
-          // innan appen stängdes förra gången) — annars kan den automatiska
-          // hämtningen som följer skriva över en färsk lokal ändring med
-          // gammal molndata. Hämtar sedan senaste (nu ikappsynkade) data.
-          (async()=>{
-            try{await sbPush(true);}catch(e){console.warn('[sbAutoPushBeforePull]',e.message);}
-            try{await sbPull(true);}catch(e){console.warn('[sbAutoPull]',e.message);}
-          })();
+        }
+        if((isFreshSignIn||event==='INITIAL_SESSION')&&hhId){
+          // B\u00e5de en genuint ny inloggning OCH en \u00e5terkommande session f\u00f6rs\u00f6ker
+          // synka: push:ar EVENTUELL osynkad lokal \u00e4ndring F\u00d6RST (t.ex. om en
+          // debounced uppladdning aldrig hann k\u00f6ra innan appen st\u00e4ngdes f\u00f6rra
+          // g\u00e5ngen), h\u00e4mtar sedan senaste (nu ikappsynkade) data. Det h\u00e4r var
+          // TIDIGARE begr\u00e4nsat till bara \u00e5terkommande sessioner, av r\u00e4dsla f\u00f6r
+          // att skriva \u00f6ver en ny anv\u00e4ndares f\u00e4rska onboarding-data \u2014 men b\u00e5de
+          // push och pull \u00e4r nu s\u00e4kra att k\u00f6ra alltid (aldrig destruktiva, bara
+          // sammanslagning), s\u00e5 samma \u00e5terst\u00e4llning kan g\u00e4lla en \u00e5terv\u00e4ndande
+          // anv\u00e4ndare vars lokala lagring av n\u00e5gon anledning blivit tom (t.ex.
+          // en cache-rensning) \u2014 exakt scenariot som tidigare tvingade en
+          // manuell \u00e5terst\u00e4llning.
+          try{await sbPush(true);}catch(e){console.warn('[sbAutoPushBeforePull]',e.message);}
+          try{await sbPull(true);}catch(e){console.warn('[sbAutoPull]',e.message);}
+        }
+        // Onboarding-beslutet tas EFTER f\u00f6rs\u00f6ket att h\u00e4mta molndata ovan, inte
+        // innan \u2014 annars kan en \u00e5terv\u00e4ndande anv\u00e4ndare med tom lokal lagring
+        // f\u00e5 se onboarding-fl\u00f6det trots att deras riktiga data redan hunnit
+        // komma tillbaka fr\u00e5n molnet.
+        if(!S.onboarded){
+          const hasRealData=(S.assets2&&S.assets2.length)||(S.debts2&&S.debts2.length)||(S.goals&&S.goals.length)||(S.budget.gem||[]).some(i=>i.amount&&Math.abs(i.amount)>0)||Object.keys(TX).length;
+          if(hasRealData){
+            S.onboarded=true;saveLS();
+          } else {
+            try{ showOnboarding(0); }catch(e){console.warn('[showOnboarding post-login]',e.message);}
+          }
         }
       }).catch(e=>console.warn('[sbEnsureHousehold]',e.message));
     } else if(event==='SIGNED_OUT'){
