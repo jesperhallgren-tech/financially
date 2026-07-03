@@ -4239,6 +4239,19 @@ function gieUpdatePctLive(val){
   const p2Amt=amt-p1Amt;
   const p1=contributors[0]?.name||p1Name(),p2=contributors[1]?.name||p2Name();
   document.getElementById('gie-pct-amounts').innerHTML=`<span>${p1}: ${fmt(p1Amt)}</span><span>${p2}: ${fmt(p2Amt)}</span>`;
+  // VIKTIGT: reglaget uppdaterade tidigare bara F\u00f6RHANDSVISNINGEN ovan, utan
+  // att n\u00e5gonsin faktiskt spara den nya f\u00f6rdelningen till posten \u2014 drog man
+  // i reglaget och tryckte Spara l\u00e5g den gamla f\u00f6rdelningen (t.ex. "fast")
+  // kvar helt of\u00f6r\u00e4ndrad, vilket gjorde det se ut som att l\u00e4get inte gick att
+  // \u00e4ndra alls. Skriver nu \u00e4ven till item.shares direkt, i samma tv\u00e5-fasta-
+  // belopp-format som "Avviker fr\u00e5n standardf\u00f6rdelningen"-l\u00e4sningen redan
+  // f\u00f6rv\u00e4ntar sig vid \u00e5teröppning.
+  if(contributors.length>=2){
+    item.shares=[
+      {personId:contributors[0].id,mode:'fixed',fixedAmount:p1Amt},
+      {personId:contributors[1].id,mode:'fixed',fixedAmount:p2Amt},
+    ];
+  }
 }
 
 function gieResetDefault(){
