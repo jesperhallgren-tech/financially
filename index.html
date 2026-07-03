@@ -7212,19 +7212,19 @@ function rBal(){
   const vis=i=>tab==='shared'||i.own==='shared'||(tab==='j'&&i.own==='j')||(tab==='n'&&i.own==='n');
 
   const aCats=[
-    {id:'boende',lbl:'Bostad',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12L12 3l9 9"/><path d="M5 10v9h5v-5h4v5h5v-9"/></svg>'},
-    {id:'sparande',lbl:'Sparande',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',subcats:[
-      {id:'konto',lbl:'Sparkonto & likvida medel',ico:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>'},
-      {id:'investering',lbl:'Investeringar',ico:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'},
-      {id:'pension',lbl:'Pensionssparande',ico:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'},
+    {id:'boende',lbl:'Bostad',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12L12 3l9 9"/><path d="M5 10v9h5v-5h4v5h5v-9"/></svg>'},
+    {id:'sparande',lbl:'Sparande',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',subcats:[
+      {id:'konto',lbl:'Sparkonto & likvida medel',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>'},
+      {id:'investering',lbl:'Investeringar',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>'},
+      {id:'pension',lbl:'Pensionssparande',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'},
     ]},
-    {id:'annat',lbl:'Andra tillg\u00e5ngar',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L6 7h12z"/></svg>'},
+    {id:'annat',lbl:'Andra tillg\u00e5ngar',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L6 7h12z"/></svg>'},
   ];
   const dCats=[
-    {id:'bolan',lbl:'Bol\u00e5n',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12L12 3l9 9"/><path d="M5 10v9h14v-9"/></svg>'},
-    {id:'studielan',lbl:'Studiel\u00e5n',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>'},
-    {id:'kort',lbl:'Krediter & konsumentl\u00e5n',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>'},
-    {id:'annat',lbl:'Andra skulder',ico:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>'},
+    {id:'bolan',lbl:'Bol\u00e5n',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12L12 3l9 9"/><path d="M5 10v9h14v-9"/></svg>'},
+    {id:'studielan',lbl:'Studiel\u00e5n',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>'},
+    {id:'kort',lbl:'Krediter & konsumentl\u00e5n',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h2"/></svg>'},
+    {id:'annat',lbl:'Andra skulder',ico:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>'},
   ];
 
   const jN=p1Name(), nN=p2Name();
@@ -7311,7 +7311,7 @@ function rBal(){
             cat.subcats.forEach(sub=>{
               const subItems=catItems.filter(i=>i.subcat===sub.id);
               if(!subItems.length)return;
-              rows+=`<div style="display:flex;align-items:center;gap:6px;padding:8px 14px 6px;${firstGroup?'':'border-top:.5px solid var(--bd)'}">
+              rows+=`<div style="display:flex;align-items:center;gap:7px;padding:8px 14px 6px;${firstGroup?'':'border-top:.5px solid var(--bd)'}">
                 <span style="color:var(--t2);opacity:.85;flex-shrink:0">${sub.ico}</span>
                 <span style="font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.2px">${sub.lbl}</span>
               </div>`;
