@@ -6556,9 +6556,16 @@ function refreshSignOutRow(){
 let sbLastSyncAt=null;
 async function sbPush(silent){
   if(!sb||!sbUser||!sbHouseholdId){if(!silent)showSnack('Inte inloggad mot molnet.');return;}
-  try{
-    if(!silent){hapMed();showSnack('Synkar till molnet…');}
+  if(!silent){hapMed();showSnack('Synkar till molnet…');}
+  const errors=[];
 
+  // Varje tabell synkas i sin egen try/catch — ett fel i EN tabell (t.ex. ett
+  // saknat kolumnnamn) ska aldrig kunna hindra de andra tabellerna från att
+  // synkas. Tidigare stoppade ett enda fel HELA resten av körningen tyst,
+  // vilket kunde se ut som att inget alls sparades trots att flera tabeller
+  // egentligen hade lyckats.
+
+  try{
     // Upsert med appens egna lokala ID:n som radens nyckel (istället för
     // att radera allt och skapa nytt) — det är detta som gör att databasens
     // change_log-utlösare faktiskt ser en UPPDATERING och kan logga
@@ -6570,30 +6577,41 @@ async function sbPush(silent){
       const{error}=await sb.from('assets').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
-    let del=sb.from('assets').delete().eq('household_id',sbHouseholdId);
-    del=assetIds.length?del.not('id','in','('+assetIds.map(id=>`"${id}"`).join(',')+')'):del;
-    await del;
+    // VIKTIGT: raderar ALDRIG hela hushållets rader bara för att den lokala
+    // listan råkar vara tom (t.ex. efter en cache-rensning eller ett tillfälligt
+    // laddningsfel) — det kan aldrig skiljas från att användaren faktiskt
+    // tagit bort allt, så det säkraste är att hellre riskera en kvarglömd
+    // molnrad än att oåterkalleligen radera riktig data.
+    if(assetIds.length){
+      await sb.from('assets').delete().eq('household_id',sbHouseholdId).not('id','in','('+assetIds.map(id=>`"${id}"`).join(',')+')');
+    }
+  }catch(e){console.warn('[sbPush assets]',e.message);errors.push('Tillgångar: '+e.message);}
 
+  try{
     const debtIds=(S.debts2||[]).map(d=>d.id);
     if((S.debts2||[]).length){
       const rows=S.debts2.map(d=>({id:d.id,household_id:sbHouseholdId,category:d.cat||'annat',label:d.label||'',value:Math.abs(d.amount||0),meta:{src:d.src,own:d.own,sJ:d.sJ,sN:d.sN}}));
       const{error}=await sb.from('debts').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
-    let delD=sb.from('debts').delete().eq('household_id',sbHouseholdId);
-    delD=debtIds.length?delD.not('id','in','('+debtIds.map(id=>`"${id}"`).join(',')+')'):delD;
-    await delD;
+    if(debtIds.length){
+      await sb.from('debts').delete().eq('household_id',sbHouseholdId).not('id','in','('+debtIds.map(id=>`"${id}"`).join(',')+')');
+    }
+  }catch(e){console.warn('[sbPush debts]',e.message);errors.push('Skulder: '+e.message);}
 
+  try{
     const goalIds=(S.goals||[]).map(g=>g.id);
     if((S.goals||[]).length){
       const rows=S.goals.map(g=>({id:g.id,household_id:sbHouseholdId,label:g.label||'',target_amount:g.target||0,target_date:null,current_amount:getEffectiveCurrent(g)||0,monthly_contrib:getEffectiveMonthly(g)||0,meta:{type:g.type,owner:g.owner}}));
       const{error}=await sb.from('goals').upsert(rows,{onConflict:'id'});
       if(error)throw error;
     }
-    let delG=sb.from('goals').delete().eq('household_id',sbHouseholdId);
-    delG=goalIds.length?delG.not('id','in','('+goalIds.map(id=>`"${id}"`).join(',')+')'):delG;
-    await delG;
+    if(goalIds.length){
+      await sb.from('goals').delete().eq('household_id',sbHouseholdId).not('id','in','('+goalIds.map(id=>`"${id}"`).join(',')+')');
+    }
+  }catch(e){console.warn('[sbPush goals]',e.message);errors.push('Mål: '+e.message);}
 
+  try{
     // Budgetposter — Inkomster & utgifter (gem[]) samt Sparande-fördelningen
     // (sav[]), i samma tabell särskiljda av kolumnen 'list'.
     const gemItems=(S.budget.gem||[]).map((it,i)=>({
@@ -6612,10 +6630,12 @@ async function sbPush(silent){
       const{error}=await sb.from('budget_items').upsert(budgetRows,{onConflict:'id'});
       if(error)throw error;
     }
-    let delB=sb.from('budget_items').delete().eq('household_id',sbHouseholdId);
-    delB=budgetIds.length?delB.not('id','in','('+budgetIds.map(id=>`"${id}"`).join(',')+')'):delB;
-    await delB;
+    if(budgetIds.length){
+      await sb.from('budget_items').delete().eq('household_id',sbHouseholdId).not('id','in','('+budgetIds.map(id=>`"${id}"`).join(',')+')');
+    }
+  }catch(e){console.warn('[sbPush budget_items]',e.message);errors.push('Budgetposter: '+e.message);}
 
+  try{
     // Transaktioner — TX-objektet är plant nyckel-baserat (TX["ÅÅÅÅ-MM"]=[...]),
     // plattas ut till enskilda rader; datumet räcker för att sortera/filtrera
     // senare, ingen anledning att spara ÅÅÅÅ-MM-nyckeln separat.
@@ -6632,10 +6652,12 @@ async function sbPush(silent){
       const{error}=await sb.from('transactions').upsert(txRows,{onConflict:'id'});
       if(error)throw error;
     }
-    let delT=sb.from('transactions').delete().eq('household_id',sbHouseholdId);
-    delT=txIds.length?delT.not('id','in','('+txIds.map(id=>`"${id}"`).join(',')+')'):delT;
-    await delT;
+    if(txIds.length){
+      await sb.from('transactions').delete().eq('household_id',sbHouseholdId).not('id','in','('+txIds.map(id=>`"${id}"`).join(',')+')');
+    }
+  }catch(e){console.warn('[sbPush transactions]',e.message);errors.push('Transaktioner: '+e.message);}
 
+  try{
     // Profiler (huvudanvändare + familjemedlemmar) — "me" har ett fast
     // stabilt ID eftersom hushållet bara har en huvudanvändare; varje
     // familjemedlem använder sitt eget lokala ID, precis som tillgångar etc.
@@ -6647,7 +6669,9 @@ async function sbPush(silent){
     if(eMem)throw eMem;
     const memberIds=memberRows.map(m=>m.id);
     await sb.from('members').delete().eq('household_id',sbHouseholdId).not('id','in','('+memberIds.map(id=>`"${id}"`).join(',')+')');
+  }catch(e){console.warn('[sbPush members]',e.message);errors.push('Profiler: '+e.message);}
 
+  try{
     // Hushållsinställningar — en rad per hushåll (skattesatser, hushållsläge,
     // fördelningsmetod, notiser, egna kategorier). Läses direkt från DOM:en
     // precis som build() gör, eftersom dessa fält aldrig speglas i S{}.
@@ -6662,7 +6686,9 @@ async function sbPush(silent){
     };
     const{error:eSet}=await sb.from('household_settings').upsert(settingsRow,{onConflict:'household_id'});
     if(eSet)throw eSet;
+  }catch(e){console.warn('[sbPush household_settings]',e.message);errors.push('Inställningar: '+e.message);}
 
+  try{
     // Tre separata tidsserier, så de kan plottas var för sig senare
     // (inte bara nettovärdet som tidigare).
     const totA=(S.assets2||[]).reduce((s,a)=>s+Math.abs(a.amount||0),0);
@@ -6672,14 +6698,16 @@ async function sbPush(silent){
       {household_id:sbHouseholdId,series_key:'total_assets',value:totA},
       {household_id:sbHouseholdId,series_key:'total_debts',value:totD},
     ]);
+  }catch(e){console.warn('[sbPush value_history]',e.message);errors.push('Historik: '+e.message);}
 
-    sbLastSyncAt=new Date();
-    if(!S.firstSyncAt){S.firstSyncAt=sbLastSyncAt.toISOString();saveLS();}
-    if(_sv==='data')rDataMgmt();
-    if(!silent)showSnack('✓ Synkat till molnet');
-  }catch(e){
-    console.warn('[sbPush]',e.message);
-    if(!silent)showSnack('Synk misslyckades: '+e.message);
+  sbLastSyncAt=new Date();
+  if(!S.firstSyncAt){S.firstSyncAt=sbLastSyncAt.toISOString();saveLS();}
+  if(_sv==='data')rDataMgmt();
+  if(errors.length){
+    if(!silent)showSnack('Synk delvis misslyckad: '+errors.join(' · '));
+    console.warn('[sbPush] sammanfattning av fel:',errors);
+  }else if(!silent){
+    showSnack('✓ Synkat till molnet');
   }
 }
 
