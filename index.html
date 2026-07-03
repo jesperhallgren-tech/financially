@@ -2301,7 +2301,7 @@ function rCardGem(items, targetEl){
     const gItems=groups[g.id]||[];
     // Döljer Barn-kategorin helt i singel/par-l\u00e4ge (annars visas alla kategorier alltid, \u00e4ven tomma)
     if(g.id==='barn'&&!isFamilj())return;
-    const gTotal=gItems.reduce((s,i)=>s+Math.abs(cA(i)),0);
+    const gTotal=gItems.reduce((s,i)=>s+Math.abs(personAmt(i)),0);
     const gId='gem-'+g.id;
     const isOpen=!!BCO[gId];
     const hasItems=gItems.some(item=>{const a=cA(item);return a&&Math.abs(a)>=1;});
@@ -2320,10 +2320,11 @@ function rCardGem(items, targetEl){
         rows=`<div style="padding:10px 14px 10px 35px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();startBudgetSetup('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
       } else {
       activeItems.forEach(item=>{
-        const a=cA(item);
+        const full=cA(item);
+        const a=personAmt(item);
         let splitText='';
-        if(!isSingel()&&a){
-          splitText=sharesSummaryText(item,a);
+        if(!isSingel()&&full){
+          splitText=sharesSummaryText(item,full);
         }
         rows+=`<div class="brow-swipe">
           <div class="brow-swipe-actions">
@@ -3901,6 +3902,27 @@ function setPlanFilter(id){
 }
 
 // Avg\u00f6r om en gem-post matchar valt filter, baserat p\u00e5 dess shares[]/split
+// Belopp-motsvarighet till filterGemByPlan()/filterIncomeByPlan() \u2014 cA(item)
+// och item.amount returnerar ALLTID postens FULLA belopp, oavsett vilket
+// personfilter som \u00e4r aktivt. Utan den h\u00e4r funktionen visas och summeras
+// hela beloppet f\u00f6r en delad post \u00e4ven n\u00e4r man filtrerat p\u00e5 en enskild
+// person \u2014 som d\u00e5 verkar betala/tj\u00e4na mer \u00e4n sin faktiska andel.
+function personAmt(item){
+  const full=cA(item);
+  if(_planFilter==='alla'||_planFilter==='gemensamt'||isSingel())return full;
+  const shares=resolveShares(item,Math.abs(full)||1);
+  const s=shares.find(x=>x.personId===_planFilter);
+  const portion=s?Math.abs(s.amount):0;
+  return full<0?-portion:portion;
+}
+function personIncAmt(item){
+  if(_planFilter==='alla'||_planFilter==='gemensamt'||isSingel())return item.amount||0;
+  if(item.id.startsWith('inc_lon_'))return item.id==='inc_lon_'+_planFilter?(item.amount||0):0;
+  const shares=resolveShares(item,Math.abs(item.amount||0)||1);
+  const s=shares.find(x=>x.personId===_planFilter);
+  return s?Math.abs(s.amount):0;
+}
+
 function filterGemByPlan(items){
   if(_planFilter==='alla'||isSingel())return items;
   return items.filter(item=>{
@@ -4816,7 +4838,7 @@ function rIncomeSection(targetEl){
     INC_GROUPS.push({id:'fritt',label:'Andra inkomster',ic:'coin',match:i=>!matchedIds.has(i.id)});
   }
 
-  const total=items.filter(item=>item.amount&&Math.abs(item.amount)>=1).reduce((s,i)=>s+(i.amount||0),0);
+  const total=items.filter(item=>item.amount&&Math.abs(item.amount)>=1).reduce((s,i)=>s+personIncAmt(i),0);
 
   let rows='';
   INC_GROUPS.forEach((g,gi)=>{
@@ -4824,7 +4846,7 @@ function rIncomeSection(targetEl){
     const gId='inc-'+g.id;
     const isOpen=!!BCO[gId];
     const hasItems=gItems.some(item=>item.amount&&Math.abs(item.amount)>=1);
-    const gTotal=gItems.filter(item=>item.amount&&Math.abs(item.amount)>=1).reduce((s,i)=>s+(i.amount||0),0);
+    const gTotal=gItems.filter(item=>item.amount&&Math.abs(item.amount)>=1).reduce((s,i)=>s+personIncAmt(i),0);
     const chevron=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:.2s;transform:rotate(${isOpen?'0':'180'}deg);flex-shrink:0;opacity:.5"><polyline points="18 15 12 9 6 15"/></svg>`;
 
     let inner='';
@@ -4834,7 +4856,8 @@ function rIncomeSection(targetEl){
         inner=`<div style="padding:10px 14px 10px 35px;border-top:.5px solid var(--bd);font-size:13px;color:var(--t3)">Inga poster \u2014 <button onclick="event.stopPropagation();openAddGemItem('inkomst','${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--bl);font-size:13px;font-weight:500;padding:0">+ L\u00e4gg till</button></div>`;
       } else {
         activeItems.forEach(item=>{
-          const totHtml=`<span class="brow-tot" style="${item.amount?'color:var(--ok)':'color:var(--t3);font-weight:400'}">${item.amount?'+'+fmt(item.amount):'Ej satt'}</span>`;
+          const pAmt=personIncAmt(item);
+          const totHtml=`<span class="brow-tot" style="${pAmt?'color:var(--ok)':'color:var(--t3);font-weight:400'}">${pAmt?'+'+fmt(pAmt):'Ej satt'}</span>`;
           const nameHtml=`<span class="brow-name">${item.label}</span>`;
           inner+=`<div class="brow-swipe"><div class="brow-swipe-actions">
             <button class="brow-swipe-edit" onclick="openGemItemEditor('${item.id}')">${UI.ed}</button>
@@ -5865,10 +5888,10 @@ function _rBudPlan(ct){
 
     // Disponibel inkomst — inkomster minus utgifter (samma totaler som korten nedan)
     var incItemsForDisp=filterIncomeByPlan((S.budget.gem||[]).filter(function(i){return i.cat==='inkomst';}));
-    var totalIncForDisp=incItemsForDisp.filter(function(item){return item.amount&&Math.abs(item.amount)>=1;}).reduce(function(s,i){return s+(i.amount||0);},0);
+    var totalIncForDisp=incItemsForDisp.filter(function(item){return item.amount&&Math.abs(item.amount)>=1;}).reduce(function(s,i){return s+personIncAmt(i);},0);
     var gemForDisp=(S.budget.gem&&S.budget.gem.length)?S.budget.gem:[].concat(S.budget.cos||[],S.budget.exp||[]);
     gemForDisp=gemForDisp.filter(function(i){return i.cat!=='inkomst';});
-    var totalExpForDisp=filterGemByPlan(gemForDisp).reduce(function(s,i){return s+Math.abs(cA(i));},0);
+    var totalExpForDisp=filterGemByPlan(gemForDisp).reduce(function(s,i){return s+Math.abs(personAmt(i));},0);
     var disp=totalIncForDisp-totalExpForDisp;
     var dispUp='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
     var dispDown='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
