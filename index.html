@@ -5735,7 +5735,7 @@ function rSparandeBricka(){
       sub=assetSharesSummaryText(item);
     } else if(item.own==='shared'&&contributors.length>=2){
       const jA=Math.round((item.amount||0)*(item.sJ||.5)),nA=Math.round((item.amount||0)*(item.sN||.5));
-      sub=`${contributors[0].name}: ${fmt(jA)}\u00a0\u00b7\u00a0${contributors[1].name}: ${fmt(nA)}`;
+      sub=`${contributors[0].name}\u00a0${fmt(jA)}  ${contributors[1].name}\u00a0${fmt(nA)}`;
     } else if(item.own==='j'||item.own==='n'){
       sub=item.own==='j'?(contributors[0]?.name||p1Name()):(contributors[1]?.name||p2Name());
     }
@@ -5743,9 +5743,9 @@ function rSparandeBricka(){
         <button class="brow-swipe-edit" onclick="openBalItemEditor('a','${item.id}')">${UI.ed}</button>
         <button class="brow-swipe-del" onclick="confirmDeleteBalItem('a','${item.id}')">${UI.tr}</button>
       </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 35px">
-        <div style="display:flex;align-items:center;gap:6px">
+        <div style="display:flex;align-items:center;gap:7px">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
+            <div style="font-size:13px;font-weight:400;color:var(--t2)">${item.label||'Ny post'}</div>
             <div style="font-size:11px;color:var(--t3);margin-top:1px">
               <div style="opacity:.85">${srcBadge(item.src,11)}</div>
               ${sub?`<div style="margin-top:1px">${sub}</div>`:''}
@@ -7276,12 +7276,15 @@ function rBal(){
             const total2=getAmt(item)+(item._others||[]).reduce((s,o)=>s+getAmt(o),0);
             let sub='';
             if(item._merged){
-              sub=[item,...(item._others||[])].map(o=>`${o.own==='j'?jN:o.own==='n'?nN:''}: ${fmt(Math.round(getAmt(o)))}`).filter(x=>!x.startsWith(':')&&!x.startsWith(': ')).join('\u00a0\u00b7\u00a0');
+              sub=[item,...(item._others||[])].map(o=>{
+                const nm=o.own==='j'?jN:o.own==='n'?nN:'';
+                return nm?`${nm}\u00a0${fmt(Math.round(getAmt(o)))}`:'';
+              }).filter(Boolean).join('  ');
             } else if(item.shares&&item.shares.length){
               sub=assetSharesSummaryText(item);
             } else if(item.own==='shared'){
               const jA=Math.round(item.amount*(item.sJ||.5)),nA=Math.round(item.amount*(item.sN||.5));
-              sub=`${jN}: ${fmt(jA)}\u00a0\u00b7\u00a0${nN}: ${fmt(nA)}`;
+              sub=`${jN}\u00a0${fmt(jA)}  ${nN}\u00a0${fmt(nA)}`;
             } else {
               sub=item.own==='j'?jN:item.own==='n'?nN:'';
             }
@@ -7289,9 +7292,9 @@ function rBal(){
                 <button class="brow-swipe-edit" onclick="openBalItemEditor('${type}','${item.id}')">${UI.ed}</button>
                 <button class="brow-swipe-del" onclick="confirmDeleteBalItem('${type}','${item.id}')">${UI.tr}</button>
               </div><div class="brow-swipe-content"><div style="padding:10px 14px 10px 35px">
-              <div style="display:flex;align-items:center;gap:6px">
+              <div style="display:flex;align-items:center;gap:7px">
                 <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:500;color:var(--t1)">${item.label||'Ny post'}</div>
+                  <div style="font-size:13px;font-weight:400;color:var(--t2)">${item.label||'Ny post'}</div>
                   <div style="font-size:11px;color:var(--t3);margin-top:1px">
                     <div style="opacity:.85">${srcBadge(item.src,11)}</div>
                     ${sub?`<div style="margin-top:1px">${sub}</div>`:''}
