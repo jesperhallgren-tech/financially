@@ -6767,10 +6767,10 @@ async function sbPush(silent){
   }catch(e){console.warn('[sbPush value_history]',e.message);errors.push('Historik: '+e.message);}
 
   sbLastSyncAt=new Date();
-  if(!S.firstSyncAt){S.firstSyncAt=sbLastSyncAt.toISOString();saveLS();}
+  if(!S.firstSyncAt&&!errors.length){S.firstSyncAt=sbLastSyncAt.toISOString();saveLS();}
   if(_sv==='data')rDataMgmt();
   if(errors.length){
-    if(!silent)showSnack('Synk delvis misslyckad: '+errors.join(' · '));
+    showSnack('Synk delvis misslyckad: '+errors.join(' · '));
     console.warn('[sbPush] sammanfattning av fel:',errors);
   }else if(!silent){
     showSnack('✓ Synkat till molnet');
@@ -6920,7 +6920,12 @@ async function sbPull(silent){
   compInc();recalcAllNetIncomes();
   markUns();
   clearTimeout(_sbAutoSyncT); // det vi just hämtade behöver inte synkas tillbaka direkt
-  if(!S.firstSyncAt)S.firstSyncAt=new Date().toISOString();
+  // VIKTIGT: markerar bara enheten som "synkad minst en gång" om h\u00e4mtningen
+  // lyckades HELT (inga tabellfel) \u2014 annars kan ett tillf\u00e4lligt fel p\u00e5 EN
+  // tabell (t.ex. ett n\u00e4tverksglapp precis vid inloggning) l\u00e4mna lokalt state
+  // ofullst\u00e4ndigt, men \u00e4nd\u00e5 l\u00e5ta n\u00e4sta synkf\u00f6rs\u00f6k tro att enheten \u00e4r
+  // "betrodd" och pusha det ofullst\u00e4ndiga l\u00e4get \u00f6ver den r\u00e4tta molndatan.
+  if(!S.firstSyncAt&&!errors.length)S.firstSyncAt=new Date().toISOString();
   try{localStorage.setItem(LS,JSON.stringify(build()));}catch(e){}
   try{storeP();}catch(e){}
   sbLastSyncAt=new Date();
@@ -6929,7 +6934,11 @@ async function sbPull(silent){
   if(document.getElementById('family-list'))renderFamilyList();
   if(_sv==='data')rDataMgmt();
   if(errors.length){
-    if(!silent)showSnack('Hämtning delvis misslyckad: '+errors.join(' · '));
+    // Visas \u00c4VEN vid en tyst (t.ex. inloggnings-)h\u00e4mtning \u2014 en tyst
+    // FRAMG\u00c5NG kan f\u00f6rbli tyst, men ett fel f\u00e5r aldrig g\u00f6mmas bort helt;
+    // det \u00e4r precis den tystnaden som lät det h\u00e4r problemet g\u00e5 obemärkt
+    // f\u00f6rbi tills verklig skada redan skett.
+    showSnack('Hämtning delvis misslyckad: '+errors.join(' · '));
     console.warn('[sbPull] sammanfattning av fel:',errors);
   }else if(!silent){
     showSnack('✓ Hämtat från molnet');
