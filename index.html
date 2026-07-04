@@ -2,6 +2,9 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -1059,6 +1062,11 @@ let P={me:{name:"",city:"",gender:"",occ:"",sector:"",dob:"",email:"",phone:"",g
 const CO={},MO={},EM={},DD={},CE={},MSO={in:true},BCO={sav:false,cos:false,exp:false,inkomst:false},OVC={};
 let _csv=null,_csvRawLines=null,_csvNeedsAI=false,_cc='total',_cR=null,_rcT=null,_svT=null,_saving=false;
 let _cCache=null,_cKey='';
+// Enkel version/byggstämpel — uppdatera datumet vid varje leverans. Gör det
+// trivialt att bekräfta om en enhet kör den senaste uppladdade filen (visas
+// under Instäl\u2192Data), ist\u00e4llet f\u00f6r att beh\u00f6va gissa sig fram via en l\u00e4ng
+// felsökningsrunda n\u00e4r en webbl\u00e4sare cachat en \u00e4ldre version.
+const APP_VERSION='2026-07-04';
 const IN_CLAUDE=(()=>{try{if(location.hostname.includes('claude.ai')||location.hostname.includes('anthropic.com'))return true;if(!location.hostname)return false;try{const p=window.parent;if(p===window)return false;p.document;return true;}catch(ce){return false;}}catch(e){return false;}})();
 
 // ── Supabase (molnbackend) ───────────────────────────────────
@@ -2111,7 +2119,8 @@ function rDataMgmt(){
           ⚠ Fabriksåterställning
         </button>
       </div>
-    </div>`;
+    </div>
+    <div style="text-align:center;padding:16px 0 4px;font-size:11px;color:var(--t3)">Version ${APP_VERSION}</div>`;
   if(sbUser&&sbHouseholdId){sbLoadHistory();sbLoadHouseholdSection();}
 }
 
