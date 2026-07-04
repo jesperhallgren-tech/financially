@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 /* Skandinavisk minimalism – varm off-white, rena kort, ett accentfärgfamilj */
 :root{
@@ -1425,6 +1426,40 @@ function toggleGoalChart(id, btn){
   if(btn)btn.childNodes[btn.childNodes.length-1].textContent=isOpen?'Visa prognos':'Dölj prognos';
 }
 
+// ══ Snabbt l\u00e4gg till pengar mot ett m\u00e5l (utan att \u00f6ppna hela redigeraren) ══
+function quickAddToGoal(goalId){
+  const g=S.goals.find(x=>x.id===goalId);
+  if(!g)return;
+  const modal=document.createElement('div');
+  modal.id='quick-add-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.5);display:flex;align-items:flex-end';
+  modal.innerHTML=`<div style="background:var(--bg);border-radius:16px 16px 0 0;padding:20px 18px 32px;width:100%" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:16px;font-weight:700">Lägg till pengar</span>
+      <button onclick="document.getElementById('quick-add-modal').remove()" style="background:none;border:none;font-size:22px;color:var(--t3);cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div style="font-size:13px;color:var(--t3);margin-bottom:12px">Mot "${g.label||'Namnlöst mål'}" \u2014 nuvarande: ${fmt(g.current||0)} kr</div>
+    <div class="fi" style="margin-bottom:16px"><div class="fl">Belopp (kr)</div>
+      <input class="inp" id="qa-amount" type="number" inputmode="decimal" placeholder="0" autofocus></div>
+    <button class="btn pri" style="width:100%" onclick="qaCommit('${goalId}')">Lägg till</button>
+  </div>`;
+  modal.onclick=()=>modal.remove();
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('qa-amount')?.focus(),50);
+}
+function qaCommit(goalId){
+  const g=S.goals.find(x=>x.id===goalId);
+  const val=parseFloat(document.getElementById('qa-amount')?.value)||0;
+  if(g&&val){
+    g.current=(g.current||0)+val;
+    saveLS();
+    hapMed();
+    showSnack('✓ '+fmt(val)+' tillagt');
+  }
+  document.getElementById('quick-add-modal')?.remove();
+  rGoals();
+}
+
 
 // ═══ Swipe-to-delete på transaktionsrader ═══════════════════
 function initSwipeDelete(){
@@ -1775,7 +1810,7 @@ function deleteEditTx(){
 
 // ═══ AI-kategorisering ════════════════════════════════════════
 async function aiCategorize(){
-  if(!IN_CLAUDE){showSnack('Kräver Claude.ai-miljö');return;}
+  if(!sb||!sbUser){showSnack('Logga in mot molnet f\u00f6r att anv\u00e4nda AI-kategorisering');return;}
   const{year,month,isYear}=getAP();
   // Find uncategorized or 'ovrigt' transactions
   const all=isYear?
@@ -1809,7 +1844,7 @@ async function aiCategorize(){
     showSnack(`✓ ${updated} transaktioner kategoriserade`);
   }catch(e){
     console.warn('[aiCategorize]',e);
-    showSnack('Kategorisering misslyckades');
+    showSnack('Kategorisering misslyckades: '+(e.message||'ok\u00e4nt fel'));
   }
 }
 
@@ -1865,9 +1900,7 @@ function rYearCompareGrid(year, container){
 
 // ═══ Kvitto-kamera (AI Vision) ════════════════════════════════
 function openCamera(){
-  const canUseClaudeProxy=IN_CLAUDE;
-  const canUseOwnProxy=!!(sb&&sbUser);
-  if(!canUseClaudeProxy&&!canUseOwnProxy){
+  if(!sb||!sbUser){
     showSnack('Logga in (Inställningar → Datahantering) för att använda kvitto-scan');
     return;
   }
@@ -1891,17 +1924,7 @@ function openCamera(){
         {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
         {type:'text',text:'Extrahera från detta kvitto: totalt belopp (kr), butik/beskrivning, datum (YYYY-MM-DD). Svara BARA med JSON: {"amount":123,"desc":"Butiknamn","date":"2024-01-15"}. Om du inte kan avgöra, sätt null.'}
       ];
-      let data;
-      if(canUseClaudeProxy){
-        const resp=await fetch('https://api.anthropic.com/v1/messages',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content}]})
-        });
-        data=await resp.json();
-      } else {
-        data=await callAIProxy(content,300);
-      }
+      const data=await callAIProxy(content,300);
       const text=data.content?.[0]?.text||'';
       const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
 
@@ -1942,7 +1965,7 @@ function scheduleAutoSave(){
 
 // ── AI CSV-formatidentifiering ────────────────────────────────
 async function aiDetectCSVFormat(){
-  if(!IN_CLAUDE||!_csvRawLines){return;}
+  if(!sb||!sbUser||!_csvRawLines){return;}
   showSnack('✦ AI identifierar CSV-format…');
   const sample=_csvRawLines.slice(0,8).join('\n');
   try{
@@ -1962,7 +1985,7 @@ async function aiDetectCSVFormat(){
     }
   }catch(e){
     console.warn('[aiCSV]',e);
-    showSnack('AI-analys misslyckades');
+    showSnack('AI-analys misslyckades: '+(e.message||'ok\u00e4nt fel'));
   }
 }
 
@@ -2083,7 +2106,7 @@ function rDataMgmt(){
         <div style="font-size:12px;color:var(--t3);margin-bottom:10px">Stöder Amex, Nordea, SEB och generisk CSV</div>
         <div style="display:flex;gap:8px">
           <label style="flex:1;text-align:center;background:var(--blbg);color:var(--bl);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer">
-            Välj CSV-fil<input id="csvf" type="file" accept=".csv,.txt" style="display:none" onchange="pCSV(this.files[0])">
+            Välj CSV- eller Excel-fil<input id="csvf" type="file" accept=".csv,.txt,.xlsx,.xls" style="display:none" onchange="pCSV(this.files[0])">
           </label>
           <button id="csv-ai-btn" onclick="aiDetectCSVFormat()" class="btn sec sm" style="display:none;flex-shrink:0">AI-tolka</button>
         </div>
@@ -2244,7 +2267,7 @@ function cycleSortAct(){
   const btn=document.getElementById('act-sort-btn');
   if(!sel)return;
   const opts=['date-desc','date-asc','amt-desc','amt-asc'];
-  const lbls={'date-desc':'↓D','date-asc':'↑D','amt-desc':'↓kr','amt-asc':'↑kr'};
+  const lbls={'date-desc':'Datum ↓','date-asc':'Datum ↑','amt-desc':'Belopp ↓','amt-asc':'Belopp ↑'};
   const cur=sel.value||'date-desc';
   const next=opts[(opts.indexOf(cur)+1)%opts.length];
   sel.value=next;
@@ -2584,8 +2607,6 @@ function refreshUtfall(){
   // Re-render Utfall content wherever it currently lives
   if(document.getElementById('page-budget')?.querySelector('#acat')){
     _renderUtfallContent();
-  } else {
-    refreshUtfall();
   }
 }
 
@@ -5090,23 +5111,10 @@ async function callAIProxy(content,maxTokens,system){
   return data;
 }
 
-async function callD(prompt,tok,sys){try{
-  const body={model:'claude-sonnet-4-20250514',max_tokens:tok||1024,
-    messages:[{role:'user',content:prompt}],
-    mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gd'}]};
-  if(sys)body.system=sys;
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(body)});
-  if(!r.ok){
-    let msg='HTTP '+r.status;
-    if(r.status===401)msg='HTTP 401 \u2014 Autentiseringsfel';
-    else if(r.status===400)msg='HTTP 400 \u2014 Ogiltig f\u00f6rfr\u00e5gan';
-    else if(r.status===429)msg='HTTP 429 \u2014 Rate limit';
-    throw new Error(msg);
-  }
-  return r.json();
-}catch(e){throw e;}}
+async function callD(prompt,tok,sys){
+  const data=await callAIProxy(prompt,tok||1024,sys);
+  return data?.content?.[0]?.text||'';
+}
 async function saveDrive(man=false){
   if(!IN_CLAUDE||typeof fetch==='undefined'){dlog('Drive kr\u00e4ver Claude.ai.');return;}
   if(_saving)return;_saving=true;setDS('spin','Sparar\u2026');
@@ -5236,13 +5244,33 @@ function gCatCol(cat){
 
 function txBdy(ctxs,catId,isYear,isEdit,catOpt,sk){
   const a=[...ctxs];if(sk==='date-desc')a.sort((x,y)=>y.date.localeCompare(x.date));else if(sk==='date-asc')a.sort((x,y)=>x.date.localeCompare(y.date));else if(sk==='amt-desc')a.sort((x,y)=>Math.abs(y.amount)-Math.abs(x.amount));else a.sort((x,y)=>Math.abs(x.amount)-Math.abs(y.amount));
-  const mm={};a.forEach(tx=>{const mk=tx.desc.split(' ').slice(0,3).join(' ').toUpperCase().trim().slice(0,24);if(!mm[mk])mm[mk]=[];mm[mk].push(tx);});
-  let body='';
-  Object.entries(mm).forEach(([mk,mts])=>{const mt=mts.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);const mid=`${catId}_${mk.replace(/\W/g,'_')}`;const mop=!!MO[mid];const isM=mts.length>1;
-    if(isM)body+=`<tr style="background:var(--bd2)"><td></td><td colspan="2"><button style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:7px 0;width:100%" onclick="tgM('${mid}')"><span class="chev${mop?' op':''}" id="mc-${mid}" style="transform:rotate(-90deg)">${UI.chd}</span><span style="font-size:13px;font-weight:500;color:var(--t1)">${mk}</span><span style="font-size:11px;color:var(--t3);margin-left:4px">${mts.length}x</span></button></td><td class="ri" style="color:var(--t2);font-size:13px">${fmt(mt)}</td><td></td></tr>`;
-    mts.forEach(tx=>{const dp=tx.date.split('-');const ds=`${dp[2]}/${dp[1]}`;const isX=!!tx.excluded;const tks=txK(parseInt(dp[0]),parseInt(dp[1])-1);const eye=tx.source!=='auto'?`<button class="eyb${isX?' on':''}" onclick="tgX('${tks}','${tx.id}')">${UI.eye(isX)}</button>`:'<span style="display:inline-block;width:25px"></span>';const act=isEdit&&tx.source!=='auto'?`<select class="sel sm" style="width:100px" onchange="chCat('${tks}','${tx.id}',this.value)">${catOpt}</select> <button class="del-btn" onclick="dlTx('${tks}','${tx.id}')">${UI.tr}</button>`:'';body+=`<tr class="txr${isX?' xd':''}"${isM?` data-mid="${mid}" style="display:${mop?'':'none'}"`:''} data-id="${tx.id}" ondblclick="openEditTx('${tx.id}')"><td style="width:30px">${eye}</td><td class="ri" style="width:40px;font-size:11px;color:var(--t3)">${ds}</td><td class="dn" style="font-size:13px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${gCatCol(tx.cat)};margin-right:5px;vertical-align:middle"></span>${tx.desc}${(tx.note?'<br><span style="font-size:11px;color:var(--t3)">'+ tx.note +'</span>':'')}${(tx.tags||[]).length?'<br><span style="font-size:10px;color:var(--bl);opacity:.85">'+tx.tags.map(t=>'#'+t).join(' ')+'</span>':''}</td><td class="ri" style="width:82px;font-size:13px;font-weight:500">${fmt(Math.abs(tx.amount))}</td><td style="width:${isEdit?'125':'0'}px;overflow:visible;text-align:right">${act}</td></tr>`;});
-  });
-  return body||`<tr><td colspan="5" style="padding:28px 16px;text-align:center"><div style="font-size:24px;margin-bottom:8px">💸</div><div style="font-size:14px;font-weight:600;color:var(--t2);margin-bottom:3px">Inga transaktioner</div><div style="font-size:12px;color:var(--t3)">Prova ett annat filter eller lägg till en transaktion</div></td></tr>`;
+  if(!a.length)return `<div style="padding:28px 16px;text-align:center"><div style="font-size:24px;margin-bottom:8px">\ud83d\udcb8</div><div style="font-size:14px;font-weight:600;color:var(--t2);margin-bottom:3px">Inga transaktioner</div><div style="font-size:12px;color:var(--t3)">Prova ett annat filter eller l\u00e4gg till en transaktion</div></div>`;
+  return a.map((tx,i)=>{
+    const dp=tx.date.split('-');
+    const ds=`${dp[2]}/${dp[1]}`;
+    const isX=!!tx.excluded;
+    const isAuto=tx.source==='auto';
+    const tks=txK(parseInt(dp[0]),parseInt(dp[1])-1);
+    const rowContent=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px 10px 35px;${isAuto?'':'cursor:pointer;'}${isX?'opacity:.4':''}"${isAuto?'':` onclick="openEditTx('${tx.id}')"`}>
+        <div style="flex-shrink:0;font-size:11px;color:var(--t3);width:30px">${ds}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:400;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${gCatCol(tx.cat)};margin-right:6px"></span>${tx.desc}${isAuto?' <span style="font-size:10px;color:var(--t3)">(auto)</span>':''}</div>
+          ${(tx.note||(tx.tags||[]).length)?`<div style="font-size:11px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.note?tx.note:''}${(tx.tags||[]).length?' '+tx.tags.map(t=>'#'+t).join(' '):''}</div>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap">${fmt(Math.abs(tx.amount))}</div>
+        ${isAuto?'<span style="width:18px;flex-shrink:0"></span>':`<button onclick="event.stopPropagation();tgX('${tks}','${tx.id}')" class="eyb${isX?' on':''}" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--t3);padding:2px;width:18px">${UI.eye(isX)}</button>`}
+      </div>`;
+    if(isAuto){
+      return `<div${i>0?' style="border-top:.5px solid var(--bd3)"':''}>${rowContent}</div>`;
+    }
+    return `<div class="brow-swipe"${i>0?' style="border-top:.5px solid var(--bd3)"':''}>
+      <div class="brow-swipe-actions">
+        <button class="brow-swipe-edit" onclick="openEditTx('${tx.id}')">${UI.ed}</button>
+        <button class="brow-swipe-del" onclick="delTxWithUndo('${tx.id}',null)">${UI.tr}</button>
+      </div>
+      <div class="brow-swipe-content">${rowContent}</div>
+    </div>`;
+  }).join('');
 }
 function initSels(){const now=new Date();const ys=document.getElementById('acy');if(!ys)return;ys.innerHTML='';for(let y=now.getFullYear()+1;y>=2022;y--){const o=document.createElement('option');o.value=y;o.textContent=y;if(y===now.getFullYear())o.selected=true;ys.appendChild(o);}const acmEl=document.getElementById('acm');if(acmEl)acmEl.value=String(now.getMonth());buildMonthBand();}
 function _renderUtfallContent(){
@@ -5255,7 +5283,7 @@ function _renderUtfallContent(){
   const diff=act-bgt;
   let smr='';
   if(isYear)smr=`<div class="mc"><div class="ml">Utfall ${year}</div><div id="sa" class="mv neg">${fmt(act)}</div></div><div class="mc"><div class="ml">\u00c5rsbudget</div><div class="mv">${fmt(bgt)}</div></div><div class="mc"><div class="ml">Avvikelse</div><div id="sd" class="mv ${diff>0?'neg':'pos'}">${diff>0?'+':''}${fmt(diff)}</div></div><div class="mc"><div class="ml">M\u00e5nadssnitt</div><div class="mv">${fmt(Math.round(act/12))}</div></div>`;
-  else{const now=new Date();const iC=now.getFullYear()===year&&now.getMonth()===month;const el=iC?now.getDate()/new Date(year,month+1,0).getDate():1;const proj=el>0?act/el:act;smr=`<div class="mc"><div class="ml">Utfall ${MF[month]}</div><div id="sa" class="mv neg">${fmt(act)}</div></div><div class="mc"><div class="ml">Budget</div><div class="mv">${fmt(bgt)}</div></div><div class="mc"><div class="ml">Avvikelse</div><div id="sd" class="mv ${diff>0?'neg':'pos'}">${diff>0?'+':''}${fmt(diff)}</div></div><div class="mc"><div class="ml">Prognos</div><div id="sp" class="mv ${proj>bgt?'neg':''}">${fmt(Math.round(proj))}</div></div>`;}
+  else{const now=new Date();const iC=now.getFullYear()===year&&now.getMonth()===month;const el=iC?now.getDate()/new Date(year,month+1,0).getDate():1;const monthKey=year+'-'+String(month+1).padStart(2,'0');const plannedForMonth=(S.plannedItems||[]).filter(p=>p.status==='planned'&&p.amount<0&&p.month===monthKey).reduce((s,p)=>s+Math.abs(p.amount),0);const proj=(el>0?act/el:act)+plannedForMonth;smr=`<div class="mc"><div class="ml">Utfall ${MF[month]}</div><div id="sa" class="mv neg">${fmt(act)}</div></div><div class="mc"><div class="ml">Budget</div><div class="mv">${fmt(bgt)}</div></div><div class="mc"><div class="ml">Avvikelse</div><div id="sd" class="mv ${diff>0?'neg':'pos'}">${diff>0?'+':''}${fmt(diff)}</div></div><div class="mc"><div class="ml">Prognos${plannedForMonth?' *':''}</div><div id="sp" class="mv ${proj>bgt?'neg':''}">${fmt(Math.round(proj))}</div></div>`+(plannedForMonth?`<div style="grid-column:1/-1;font-size:11px;color:var(--t3);margin-top:-4px">* inkl. ${fmt(plannedForMonth)} i k\u00e4nda kommande poster denna m\u00e5nad</div>`:'');}
   document.getElementById('asmr').innerHTML=smr;
 
   const cO=utfallCats.map(c=>`<option value="${c.id}">${c.la}</option>`).join('');
@@ -5268,14 +5296,16 @@ function _renderUtfallContent(){
     const ca=cat.txs.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);
     const pct=cbgt>0?ca/cbgt*100:0;
     const fc=pct>100?'var(--err)':pct>85?'var(--warn)':'var(--ok)';
-    const isOp=!!CO[cat.id];const isEd=!!CE[cat.id];
-    html+=`<div class="ccat">
-  <div class="chdr" onclick="tgC('${cat.id}')">${mkCHdr(cat.id,cat.la,cat.ic,'var(--t2)','var(--bd2)',isOp,etB(cat.id,isEd))}</div>
-  <div id="cc-${cat.id}" style="display:${isOp?'block':'none'}">
-    <div class="cbdy">
-      <div style="overflow-x:auto"><table class="tt"><colgroup><col style="width:30px"><col style="width:40px"><col><col style="width:82px"><col style="width:${isEd?'125':'0'}px"></colgroup><thead><tr><th></th><th class="la">Datum</th><th class="la">Beskrivning</th><th>Belopp</th><th></th></tr></thead><tbody>${txBdy(cat.txs,cat.id,isYear,isEd,cO,sk)}</tbody></table></div>
-    </div>
+    const isOp=!!CO[cat.id];
+    html+=`<div class="gc" style="margin-bottom:12px;overflow:hidden">
+  <div onclick="tgC('${cat.id}')" style="display:flex;align-items:center;gap:7px;padding:12px 14px;cursor:pointer${isOp?';border-bottom:.5px solid var(--bd)':''}">
+    <span style="color:var(--t2);flex-shrink:0;opacity:.85">${catI(cat.ic,14,'var(--t2)')}</span>
+    <span style="font-size:12px;font-weight:600;letter-spacing:.4px;color:var(--t2);flex:1">${cat.la}</span>
+    <span style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;white-space:nowrap">${cbgt>0?fmt(ca)+' / '+fmt(cbgt):fmt(ca)}</span>
+    ${cbgt>0?`<span style="font-size:11px;font-weight:700;color:${fc};background:${fc}22;padding:2px 6px;border-radius:6px;flex-shrink:0">${pct>100?'+'+Math.round(pct-100):Math.round(pct)}%</span>`:''}
+    <span style="display:inline-flex;width:18px;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:.2s;transform:rotate(${isOp?'0':'180'}deg);opacity:.5"><polyline points="18 15 12 9 6 15"/></svg></span>
   </div>
+  <div id="cc-${cat.id}" style="display:${isOp?'block':'none'}">${txBdy(cat.txs,cat.id,isYear,false,cO,sk)}</div>
 </div>`;
   });
   document.getElementById('acat').innerHTML=html;
@@ -5293,15 +5323,6 @@ function _renderUtfallContent(){
     const yg=document.getElementById('year-grid');if(yg)yg.innerHTML='';
     const cmp=document.getElementById('year-compare');if(cmp)cmp.innerHTML='';
   }
-
-  setTimeout(()=>{
-    utfallCats.forEach(cat=>{
-      const cbgt=cat.b*months;
-      const ca=cat.txs.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);
-      fillCHdr(cat.id,ca,cbgt,cbgt>0?ca/cbgt*100:0);
-    });
-    initSwipeDelete();
-  },0);
 }
 
 function etB(id,ed){
@@ -5316,7 +5337,37 @@ function addTx(){const{year,month,isYear}=getAP();if(isYear)return;const date=do
   ['txdes','txamt','txtags'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const tr=document.getElementById('txrec');if(tr)tr.checked=false;
   refreshUtfall();}
-function pCSV(file){const r=new FileReader();r.onload=ev=>{try{const rows=aDet(ev.target.result,file.name);if(!rows.length){cst('Inga transaktioner hittades.','warn');return;}_csv=rows;showPr(rows);}catch(e){cst('Fel: '+e.message,'err');}};r.readAsText(file,'UTF-8');}
+function pCSV(file){
+  const fn=(file.name||'').toLowerCase();
+  if(fn.endsWith('.xlsx')||fn.endsWith('.xls')){pXLSX(file);return;}
+  const r=new FileReader();r.onload=ev=>{try{const rows=aDet(ev.target.result,file.name);if(!rows.length){cst('Inga transaktioner hittades.','warn');return;}_csv=rows;showPr(rows);}catch(e){cst('Fel: '+e.message,'err');}};r.readAsText(file,'UTF-8');
+}
+function pXLSX(file){
+  if(typeof XLSX==='undefined'){cst('Kunde inte ladda Excel-st\u00f6d \u2014 kontrollera internetanslutningen och f\u00f6rs\u00f6k igen.','err');return;}
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:'array',cellDates:true});
+      const sheetName=wb.SheetNames[0];
+      if(!sheetName){cst('Hittade inget kalkylblad i filen.','warn');return;}
+      const sheet=wb.Sheets[sheetName];
+      const rowsArr=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,dateNF:'yyyy-mm-dd',defval:''});
+      // Konverterar varje rad till en CSV-liknande textrad, s\u00e5 samma
+      // bankformat-tolkning (aDet/pAm/pNo/pSEB/pGen, inklusive AI-fallbacket)
+      // kan \u00e5teranv\u00e4ndas helt of\u00f6r\u00e4ndrad oavsett om k\u00e4llan var CSV eller Excel.
+      const lines=rowsArr.map(row=>row.map(cell=>{
+        const s=String(cell??'');
+        return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+      }).join(','));
+      const text=lines.join('\n');
+      const rows=aDet(text,file.name);
+      if(!rows.length){cst('Inga transaktioner hittades.','warn');return;}
+      _csv=rows;showPr(rows);
+    }catch(e){cst('Fel vid l\u00e4sning av Excel-fil: '+e.message,'err');}
+  };
+  r.readAsArrayBuffer(file);
+}
 function sp2(l){const r=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){r.push(c.trim().replace(/^"|"$/g,''));c='';}else c+=ch;}r.push(c.trim().replace(/^"|"$/g,''));return r;}
 function pd2(s){const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];const m2=s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);if(m2)return`${m2[3]}-${m2[1].padStart(2,'0')}-${m2[2].padStart(2,'0')}`;return null;}
 function pa2(s){return parseFloat((s||'').replace(/[\s\u00a0]/g,'').replace(',','.').replace(/[^0-9.\-]/g,''));}
@@ -5486,6 +5537,8 @@ function build(){
     assets2:S.assets2,
     debts2:S.debts2,
     goals:S.goals,
+    goalsAdvanced:S.goalsAdvanced,
+    plannedItems:S.plannedItems,
     nwHist:S.nwHist||[],
     milestonesSeen:S.milestonesSeen||[],
     lastDataUpdateAt:S.lastDataUpdateAt||null,
@@ -5535,6 +5588,8 @@ function applyP(p){
   if(p.assets2&&Array.isArray(p.assets2))S.assets2=p.assets2;
   if(p.debts2&&Array.isArray(p.debts2))S.debts2=p.debts2;
   if(p.goals&&Array.isArray(p.goals))S.goals=p.goals;
+  if(p.goalsAdvanced!==undefined)S.goalsAdvanced=p.goalsAdvanced;
+  if(p.plannedItems&&Array.isArray(p.plannedItems))S.plannedItems=p.plannedItems;
   if(p.nwHist&&Array.isArray(p.nwHist))S.nwHist=p.nwHist;
   if(p.milestonesSeen&&Array.isArray(p.milestonesSeen))S.milestonesSeen=p.milestonesSeen;
   if(p.lastDataUpdateAt)S.lastDataUpdateAt=p.lastDataUpdateAt;
@@ -5718,7 +5773,7 @@ const S={onboarded:false,onbStep:0,mode:'par',budSeg:'plan',
     {id:'ovrigt',  label:'Övrigt',             ic:'bag',   order:10},
     {id:'inkomst', label:'Inkomster',          ic:'coin',  order:11, isIncome:true},
   ],
-extraInc:[],assets2:[],debts2:[],goals:[],nwHist:[],nwHistImportLog:[],balTab:"shared",balCatOpen:{},hhVisibility:{income:true,expenses:true,assets:true,debts:true},budget:{
+extraInc:[],assets2:[],debts2:[],goals:[],goalsAdvanced:false,plannedItems:[],nwHist:[],nwHistImportLog:[],balTab:"shared",balCatOpen:{},hhVisibility:{income:true,expenses:true,assets:true,debts:true},budget:{
   sav:[
     {id:'s_buf', label:'Buffert',           split:'L', amount:0},
     {id:'s_long',label:'Långsiktigt / ISK', split:'L', amount:0},
@@ -5975,6 +6030,8 @@ function _rBudPlan(ct){
       +'</span>'
       +'</div>';
 
+    html += '<div id="ic-planned" style="margin-bottom:16px"></div>';
+
     // Inkomster (separat sektion, alltid högst upp)
     html += '<div id="ic-income"></div>';
 
@@ -5983,6 +6040,7 @@ function _rBudPlan(ct){
 
     ct.innerHTML = html;
 
+    try{ rPlannedItems(document.getElementById('ic-planned')); }catch(e){}
     try{ rIncomeSection(ct.querySelector('#ic-income')); }catch(e){}
 
     var gemEl = ct.querySelector('#ic-budget');
@@ -6004,13 +6062,14 @@ function _rBudPlan(ct){
   }
 }
 function toggleUtfallJamfor(){
-  BCO['utfall-jamfor']=!BCO['utfall-jamfor'];
+  const wasOpen=BCO['utfall-jamfor']!==false;
+  BCO['utfall-jamfor']=!wasOpen;
   const ct=document.getElementById('bud-content');
   if(ct)_rBudUtfall(ct);
 }
 
 function _rBudUtfall(ct){
-  const jOpen=!!BCO['utfall-jamfor'];
+  const jOpen=BCO['utfall-jamfor']!==false;
   ct.innerHTML=
     '<div class="gc" style="margin-bottom:16px;overflow:hidden">'+
       '<div onclick="toggleUtfallJamfor()" style="display:flex;align-items:center;gap:8px;padding:13px 16px;cursor:pointer">'+
@@ -6022,8 +6081,8 @@ function _rBudUtfall(ct){
     '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;overflow:hidden">'+
     '<select class="sel sm" id="acy" onchange="buildMonthBand();_renderUtfallContent()" style="flex:0 0 64px;min-width:0;width:64px"></select>'+
     '<input id="act-search" type="text" placeholder="S\u00f6k..." oninput="_renderUtfallContent()" style="flex:1;min-width:0;width:0;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;font-size:16px;color:var(--t1);-webkit-appearance:none">'+
-    '<button onclick="cycleSortAct()" id="act-sort-btn" style="flex:0 0 auto;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--t2);font-size:12px;font-weight:600">\u2193D</button>'+
-    '<button onclick="aiCategorize()" style="flex:0 0 auto;background:var(--blbg);border:none;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--bl);font-size:13px;font-weight:600">\u2736</button>'+
+    '<button onclick="cycleSortAct()" id="act-sort-btn" style="flex:0 0 auto;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--t2);font-size:12px;font-weight:600;white-space:nowrap">Datum ↓</button>'+
+    '<button onclick="aiCategorize()" style="flex:0 0 auto;background:var(--blbg);border:none;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--bl);font-size:12px;font-weight:600;white-space:nowrap">✶ AI</button>'+
     '<select id="acs" style="display:none"><option value="date-desc">Datum \u2193</option><option value="date-asc">Datum \u2191</option><option value="amt-desc">Belopp \u2193</option><option value="amt-asc">Belopp \u2191</option></select></div>'+
     '<select id="acm" style="display:none"><option value="all">Hel\u00e5r</option></select><div id="month-band"></div><div id="cat-chips"></div>'+
     '<div id="asmr" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>'+
@@ -6757,7 +6816,8 @@ async function sbPush(silent){
       mr:parseFloat(g('mr'))||null,jcr:parseFloat(g('jcr'))||null,
       mode:S.mode||'par',split_method:S.splitMethod||'income',
       use_separate_accounts:!!S.useSeparateAccounts,notif_enabled:!!S.notifEnabled,
-      user_cats:S.userCats||[]
+      user_cats:S.userCats||[],
+      planned_items:S.plannedItems||[]
     };
     const{error:eSet}=await sb.from('household_settings').upsert(settingsRow,{onConflict:'household_id'});
     if(eSet)throw eSet;
@@ -6865,6 +6925,7 @@ async function sbPull(silent){
       if(hhSettings.use_separate_accounts!==null)S.useSeparateAccounts=!!hhSettings.use_separate_accounts;
       if(hhSettings.notif_enabled!==null)S.notifEnabled=!!hhSettings.notif_enabled;
       if(hhSettings.user_cats&&hhSettings.user_cats.length)S.userCats=hhSettings.user_cats;
+      if(hhSettings.planned_items)S.plannedItems=mergeCloudList(S.plannedItems,hhSettings.planned_items,x=>x);
     }
   }catch(e){console.warn('[sbPull apply household_settings]',e.message);errors.push('Inställningar (tillämpa): '+e.message);}
 
@@ -7083,12 +7144,16 @@ function rGoals(){
     const t=typeMap[g.type]||typeMap.annat;
     const prog=Math.min(curr/(g.target||1),1);
     const pct=Math.round(prog*100);
-    const onTrack=fvCalc(curr,monthly,g.returnRate||0,g.horizon||0)>=(g.target||0);
+    const achieved=(g.target||0)>0&&curr>=g.target;
     const ownerLbl=g.owner==='j'?jN:g.owner==='n'?nN:'Gemensamt';
+    const remaining=Math.max((g.target||0)-curr,0);
+    const simpleMonths=monthly>0?Math.ceil(remaining/monthly):null;
+    const onTrack=fvCalc(curr,monthly,g.returnRate||0,g.horizon||0)>=(g.target||0);
     const base=fvCalc(curr,monthly,g.returnRate||0,g.horizon||0);
     const opt=fvCalc(curr,monthly,(g.returnRate||0)*1.5+0.02,g.horizon||0);
     const pes=fvCalc(curr,monthly,Math.max((g.returnRate||0)*0.5-0.01,0),g.horizon||0);
     const mBase=monthsToTarget(curr,monthly,g.returnRate||0,g.target||0);
+    const barColor=achieved?'var(--ok)':S.goalsAdvanced?(onTrack?'var(--ok)':'var(--warn)'):'var(--bl)';
 
     // Länkade konton
     const linked=(S.assets2||[]).filter(a=>(g.linkedAssets||[]).includes(a.id));
@@ -7096,20 +7161,28 @@ function rGoals(){
     // Skulder relevanta för målet (bostad → bolån)
     const relDebts=g.type==='bostad'?(S.debts2||[]).filter(d=>d.cat==='bolan'):[];
 
-    // Projektionskurva SVG
+    // Projektionskurva SVG (bara i avancerat läge)
     const W=260,H=72,PAD=6,months=Math.max(g.horizon||24,1);
     const maxV=Math.max(opt,g.target||1)*1.05;
     const px=m=>PAD+(m/months)*(W-PAD*2);
     const py=v=>H-PAD-(v/maxV)*(H-PAD*2);
     const path=rate=>{let pts=[];for(let m=0;m<=months;m+=Math.max(1,Math.floor(months/30)))pts.push(`${px(m).toFixed(1)},${py(fvCalc(curr,monthly,rate,m)).toFixed(1)}`);return'M'+pts.join('L');};
 
-    return `<div class="gc" style="margin-bottom:14px">
+    const timelineHtml=achieved
+      ?`<div style="font-size:12px;color:var(--ok);font-weight:600;margin-bottom:10px">\ud83c\udf89 Mål uppnått!</div>`
+      :`<div style="font-size:12px;color:var(--t3);margin-bottom:10px">${simpleMonths!=null?('Klart om '+(simpleMonths<=1?'mindre än en månad':simpleMonths<12?simpleMonths+' månader':Math.round(simpleMonths/12*10)/10+' år')+', i nuvarande takt'):'Lägg till ett månadsbelopp i redigeraren för att se en tidsuppskattning'}</div>`;
+
+    const quickAddBtn=(!g.useLinkedBalance&&!achieved)?`<button onclick="quickAddToGoal('${g.id}')" style="width:100%;background:var(--bd2);color:var(--bl);border:none;cursor:pointer;padding:9px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:${(linked.length||relDebts.length)?'10':'0'}px">+ Lägg till pengar</button>`:'';
+
+    return `<div class="gc" style="margin-bottom:14px${achieved?';border:1px solid rgba(52,199,89,.3)':''}">
       <div style="padding:13px 14px 10px">
         <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
-          <div style="width:32px;height:32px;border-radius:9px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+          <div style="width:32px;height:32px;border-radius:9px;background:${achieved?'var(--okbg)':'var(--blbg)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${achieved?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--bl)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>'}
+          </div>
           <div style="flex:1">
             <div style="font-size:15px;font-weight:600;color:var(--t1)">${g.label||'Namnlöst mål'}</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:1px">${t.lbl}\u00a0\u00b7\u00a0${ownerLbl}${g.useDisposable?'\u00a0\u00b7\u00a0'+Math.round(disp*(g.disposablePct||30)/100).toLocaleString('sv-SE')+'\u202fkr/mån':''}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px">${t.lbl}\u00a0\u00b7\u00a0${ownerLbl}</div>
           </div>
           <button onclick="editGoal('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--t3);padding:2px;flex-shrink:0">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
@@ -7118,25 +7191,28 @@ function rGoals(){
 
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
           <span style="color:var(--t2)">${fmt(curr)} <span style="color:var(--t3)">/ ${fmt(g.target||0)}</span></span>
-          <span style="font-weight:600;color:${onTrack?'var(--ok)':'var(--warn)'}">${pct}%${onTrack?' \u2713':''}</span>
+          <span style="font-weight:600;color:${achieved?'var(--ok)':'var(--t2)'}">${pct}%${achieved?' \u2713':''}</span>
         </div>
         <div style="height:5px;background:var(--bd2);border-radius:3px;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;width:${pct}%;background:${onTrack?'var(--ok)':'var(--warn)'};border-radius:3px"></div>
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px"></div>
         </div>
 
-        ${linked.length?`<div style="margin-bottom:10px">
+        ${timelineHtml}
+        ${quickAddBtn}
+
+        ${linked.length?`<div style="margin-top:10px">
           <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:4px">Kopplade konton</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px">
             ${linked.map(a=>`<span style="font-size:12px;padding:3px 8px;border-radius:99px;background:var(--blbg);color:var(--bl)">${a.label}\u00a0${fmt(Math.abs(a.amount))}</span>`).join('')}
           </div>
         </div>`:''}
 
-        ${relDebts.length?`<div style="margin-bottom:10px;padding:7px 10px;border-radius:8px;background:var(--errbg)">
+        ${relDebts.length?`<div style="margin-top:10px;padding:7px 10px;border-radius:8px;background:var(--errbg)">
           <div style="font-size:11px;color:var(--t3);margin-bottom:2px">Befintliga skulder att beakta</div>
           ${relDebts.map(d=>`<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--t2)">${d.label}</span><span style="color:var(--err);font-weight:500">${fmt(Math.round(-Math.abs(d.amount)))}</span></div>`).join('')}
         </div>`:''}
 
-        <div id="gc-chart-${g.id}" style="overflow:hidden;max-height:0;transition:max-height .3s ease">
+        ${S.goalsAdvanced?`<div id="gc-chart-${g.id}" style="overflow:hidden;max-height:0;transition:max-height .3s ease;margin-top:10px">
         <svg width="${W}" height="${H}" style="width:100%;overflow:visible;margin-bottom:4px">
           <line x1="${PAD}" y1="${py(g.target||0).toFixed(1)}" x2="${W-PAD}" y2="${py(g.target||0).toFixed(1)}" stroke="var(--t3)" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
           <path d="${path(Math.max((g.returnRate||0)*0.5-0.01,0))}" fill="none" stroke="var(--err)" stroke-width="1.5" opacity=".45"/>
@@ -7144,26 +7220,12 @@ function rGoals(){
           <path d="${path((g.returnRate||0)*1.5+0.02)}" fill="none" stroke="var(--ok)" stroke-width="1.5" opacity=".45"/>
           <circle cx="${px(0).toFixed(1)}" cy="${py(curr).toFixed(1)}" r="3" fill="var(--bl)"/>
         </svg>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">
           <span>Idag</span><span>${g.horizon||0} mån</span>
         </div>
-        </div>
+        </div>`:''}
       </div>
-      <div style="border-top:.5px solid var(--bd3);padding:10px 14px;background:var(--bd3)">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:6px">Kopplat till budget</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <span style="font-size:13px;color:var(--t2)">Disponibelt/mån</span>
-          <span style="font-size:13px;font-weight:600">${fmt(Math.round(disp))}</span>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <span style="font-size:13px;color:var(--t2)">Sparandel</span>
-          <span style="font-size:13px;font-weight:600;color:var(--bl)">${Math.round((monthly/Math.max(disp,1))*100)}% · ${fmt(Math.round(monthly))}/mån</span>
-        </div>
-        <input type="range" min="1" max="${Math.round(disp)}" step="100" value="${Math.round(monthly)}" 
-          oninput="updateGoalSlider('${g.id}',this.value)"
-          style="width:100%;accent-color:var(--bl);height:4px">
-      </div>
-      ${window._fireMode===g.id?getFIREHtml(g,disp):''}
+      ${S.goalsAdvanced?`${window._fireMode===g.id?getFIREHtml(g,disp):''}
       <div style="border-top:.5px solid var(--bd3);padding:6px 14px;display:flex;justify-content:space-between;align-items:center">
         <button onclick="toggleGoalChart('${g.id}',this)" style="background:none;border:none;font-size:12px;color:var(--bl);font-weight:500;cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:4px"><svg id="gc-chevron-${g.id}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .3s"><polyline points="6 9 12 15 18 9"/></svg>Visa prognos</button>
       </div>
@@ -7172,7 +7234,7 @@ function rGoals(){
         <div><div style="font-size:10px;color:var(--t3);margin-bottom:1px">Bas</div><div style="font-size:12px;font-weight:600;color:${onTrack?'var(--ok)':'var(--warn)'}">${fmt(Math.round(base))}</div></div>
         <div><div style="font-size:10px;color:var(--t3);margin-bottom:1px">Optimistiskt</div><div style="font-size:12px;font-weight:500;color:var(--ok)">${fmt(Math.round(opt))}</div></div>
         ${mBase!==Infinity?`<div style="margin-left:auto"><div style="font-size:10px;color:var(--t3);margin-bottom:1px">Når målet</div><div style="font-size:12px;font-weight:600;color:var(--t1)">${mBase<12?mBase+'mån':Math.round(mBase/12*10)/10+'år'}</div></div>`:''}
-      </div>
+      </div>`:''}
     </div>`;
   };
 
@@ -7181,10 +7243,18 @@ function rGoals(){
   pg.innerHTML=
   `<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-top:4px">
       <div style="width:46px;height:46px;border-radius:16px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0">${catI('coin',21,'var(--bl)')}</div>
-      <div>
+      <div style="flex:1">
         <div style="font-size:24px;font-weight:800;color:var(--t1);letter-spacing:-.4px;line-height:1.15">Sparande &amp; mål</div>
         <div style="font-size:13px;color:var(--t3);margin-top:1px">${S.goals.length} aktiva mål</div>
       </div>
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex-shrink:0">
+        <span style="position:relative;display:inline-block;width:38px;height:22px">
+          <input type="checkbox" ${S.goalsAdvanced?'checked':''} onchange="S.goalsAdvanced=this.checked;saveLS();rGoals()" style="opacity:0;width:0;height:0">
+          <span style="position:absolute;inset:0;background:${S.goalsAdvanced?'var(--bl)':'var(--bd2)'};border-radius:11px;transition:background .2s;pointer-events:none"></span>
+          <span style="position:absolute;top:3px;left:${S.goalsAdvanced?'19px':'3px'};width:16px;height:16px;background:var(--t1);border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none"></span>
+        </span>
+        <span style="font-size:9px;color:var(--t3);font-weight:600;letter-spacing:.02em;white-space:nowrap">Avancerat</span>
+      </label>
   </div>`+
   rGoalFilterBar()+
   '<div id="ic-sav-goals" style="margin-bottom:8px"></div>'+
@@ -7207,6 +7277,176 @@ function rGoals(){
   if(savEl2)savEl2.innerHTML=rSparandeBricka();
   try{ rSavLinks('sav-links-goals'); }catch(e){}
 }
+
+// ══ Kommande poster \u2014 k\u00e4nda framtida eng\u00e5ngsh\u00e4ndelser (renovering, resa,
+// st\u00f6rre g\u00e5va etc), skilt fr\u00e5n b\u00e5de \u00e5terkommande Budget och aspirationella M\u00e5l ══
+function rPlannedItems(el){
+  if(!el)return;
+  const items=(S.plannedItems||[]).filter(p=>p.status!=='dismissed').sort((a,b)=>(a.month||'').localeCompare(b.month||''));
+  const isOpen=BCO['planned-items']!==false;
+  const now=new Date();
+  const curMonthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  let rows='';
+  if(!items.length){
+    rows=`<div style="padding:14px;text-align:center;font-size:13px;color:var(--t3)">Inga kommande poster \u00e4n \u2014 t.ex. en renovering, resa eller st\u00f6rre g\u00e5va du redan k\u00e4nner till.</div>`;
+  } else {
+    items.forEach((p,i)=>{
+      const isDue=p.month&&p.month<=curMonthKey&&p.status==='planned';
+      const mp=(p.month||'').split('-');
+      const monthLbl=mp.length===2?(MF[parseInt(mp[1])-1]||'')+' '+mp[0]:'';
+      const isIncome=p.amount>0;
+      rows+=`<div class="brow-swipe"${i>0?' style="border-top:.5px solid var(--bd3)"':''}>
+        <div class="brow-swipe-actions">
+          <button class="brow-swipe-edit" onclick="editPlannedItem('${p.id}')">${UI.ed}</button>
+          <button class="brow-swipe-del" onclick="deletePlannedItem('${p.id}')">${UI.tr}</button>
+        </div>
+        <div class="brow-swipe-content"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px 10px 35px">
+          <div onclick="editPlannedItem('${p.id}')" style="flex:1;min-width:0;cursor:pointer">
+            <div style="font-size:13px;font-weight:400;color:var(--t2)">${p.label||'Namnl\u00f6s post'}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px">${monthLbl}${p.linkedGoalId?' \u00b7 Kopplat sparm\u00e5l':''}</div>
+          </div>
+          <div style="font-size:13px;font-weight:500;color:${isIncome?'var(--t1)':'var(--t2)'};font-variant-numeric:tabular-nums">${isIncome?'+':''}${fmt(p.amount)}</div>
+          ${isDue?`<button onclick="event.stopPropagation();convertPlannedToTransaction('${p.id}')" style="flex-shrink:0;background:var(--warnbg);color:var(--warn);border:none;cursor:pointer;padding:5px 9px;border-radius:7px;font-size:11px;font-weight:600">Bokf\u00f6r</button>`:''}
+        </div></div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML=`<div class="gc" style="overflow:hidden">
+    <div onclick="BCO['planned-items']=(BCO['planned-items']!==false)?false:true;rPlannedItems(document.getElementById('ic-planned'))" style="display:flex;align-items:center;gap:7px;padding:12px 14px;cursor:pointer${isOpen?';border-bottom:.5px solid var(--bd)':''}">
+      <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;flex:1">Kommande poster</span>
+      ${items.length?`<span style="font-size:11px;color:var(--t3)">${items.length}</span>`:''}
+      <span style="display:inline-flex;width:18px;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:.2s;transform:rotate(${isOpen?'0':'180'}deg);opacity:.5"><polyline points="18 15 12 9 6 15"/></svg></span>
+    </div>
+    <div style="display:${isOpen?'block':'none'}">
+      ${rows}
+      <div style="padding:10px 0 2px;text-align:center;border-top:${items.length?'.5px solid var(--bd3)':'none'}">
+        <button onclick="event.stopPropagation();editPlannedItem(null)" style="background:none;color:var(--bl);border:none;font-size:13px;font-weight:600;cursor:pointer;padding:8px">+ L\u00e4gg till post</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function pinRefresh(){ rPlannedItems(document.getElementById('ic-planned')); }
+
+function editPlannedItem(id){
+  let p=id?(S.plannedItems||[]).find(x=>x.id===id):null;
+  const isNew=!p;
+  if(isNew){
+    if(!S.plannedItems)S.plannedItems=[];
+    const now=new Date();
+    const nm=new Date(now.getFullYear(),now.getMonth()+1,1);
+    p={id:'plan'+Date.now().toString(36),label:'',amount:-10000,month:nm.getFullYear()+'-'+String(nm.getMonth()+1).padStart(2,'0'),cat:null,owner:'shared',linkedGoalId:null,status:'planned'};
+    S.plannedItems.push(p);saveLS();
+  }
+  const modal=document.createElement('div');
+  modal.id='planned-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);display:flex;align-items:flex-end';
+  const inner=document.createElement('div');
+  inner.style.cssText='background:var(--bg);border-radius:16px 16px 0 0;padding:20px 18px 32px;width:100%;max-height:90vh;overflow-y:auto';
+  modal.appendChild(inner);
+  document.body.appendChild(modal);
+  rebuildPlannedModal(p.id,isNew);
+}
+
+function rebuildPlannedModal(id,isNew){
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  const inner=document.getElementById('planned-modal')?.querySelector('div');
+  if(!p||!inner)return;
+  const jN=p1Name(),nN=p2Name();
+  const oOpts=[['shared','Gemensamt'],['j',jN],['n',nN]].map(([v,l])=>`<option value="${v}"${v===p.owner?' selected':''}>${l}</option>`).join('');
+  const isExpense=(p.amount||0)<=0;
+  const closeAndDiscardIfEmpty=`if(${isNew}&&!S.plannedItems.find(x=>x.id==='${p.id}').label){S.plannedItems=S.plannedItems.filter(x=>x.id!=='${p.id}');saveLS();}document.getElementById('planned-modal').remove();pinRefresh();`;
+  inner.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <span style="font-size:16px;font-weight:700">${isNew?'Ny kommande post':'Redigera post'}</span>
+    <button onclick="${closeAndDiscardIfEmpty}" style="background:none;border:none;font-size:22px;color:var(--t3);cursor:pointer;line-height:1">\u00d7</button>
+  </div>
+  <div class="fi" style="margin-bottom:10px"><div class="fl">Namn</div>
+    <input class="inp" value="${(p.label||'').replace(/"/g,'&quot;')}" placeholder="Ex. K\u00f6ksrenovering, resa, st\u00f6rre g\u00e5va" oninput="pinSyncField('${p.id}','label',this.value)"></div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button onclick="pinSetType('${p.id}',true)" class="btn ${isExpense?'pri':'sec'} sm" style="flex:1">Utgift</button>
+    <button onclick="pinSetType('${p.id}',false)" class="btn ${!isExpense?'pri':'sec'} sm" style="flex:1">Inkomst</button>
+  </div>
+  <div class="fi" style="margin-bottom:10px"><div class="fl">Belopp (kr)</div>
+    <input class="inp" type="number" inputmode="decimal" value="${Math.abs(p.amount||0)}" oninput="pinSetAmount('${p.id}',this.value)"></div>
+  <div class="fi" style="margin-bottom:10px"><div class="fl">M\u00e5nad</div>
+    <input class="inp" type="month" value="${p.month||''}" oninput="pinSyncField('${p.id}','month',this.value)"></div>
+  <div class="fi" style="margin-bottom:14px"><div class="fl">\u00c4gare</div>
+    <select class="sel" style="width:100%" onchange="pinSyncField('${p.id}','owner',this.value)">${oOpts}</select></div>
+  ${isExpense&&!p.linkedGoalId?`<button onclick="offerGoalForPlanned('${p.id}')" style="width:100%;background:var(--blbg);color:var(--bl);border:none;cursor:pointer;padding:10px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px">Vill du spara till detta? Skapa sparm\u00e5l \u2192</button>`:''}
+  ${p.linkedGoalId?`<div style="font-size:12px;color:var(--ok);padding:8px 10px;background:var(--okbg);border-radius:8px;margin-bottom:14px">\u2713 Kopplat till ett sparm\u00e5l \u2014 se Sparande &amp; m\u00e5l</div>`:''}
+  ${(()=>{const now=new Date();const cmk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');return p.month&&p.month<=cmk&&p.status==='planned';})()?`<button onclick="convertPlannedToTransaction('${p.id}');document.getElementById('planned-modal').remove()" style="width:100%;background:var(--warnbg);color:var(--warn);border:none;cursor:pointer;padding:10px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px">Bokf\u00f6r nu i Utfall</button>`:''}
+  <div style="display:flex;gap:8px">
+    <button class="btn pri" style="flex:1" onclick="document.getElementById('planned-modal').remove();pinRefresh()">Klar</button>
+    ${!isNew?`<button class="btn dan" onclick="deletePlannedItem('${p.id}');document.getElementById('planned-modal').remove()">Ta bort</button>`:''}
+  </div>`;
+}
+function pinSyncField(id,field,val){
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  if(p){p[field]=val;saveLS();}
+}
+function pinSetType(id,expense){
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  if(!p)return;
+  const abs=Math.abs(p.amount||0)||10000;
+  p.amount=expense?-abs:abs;
+  saveLS();
+  rebuildPlannedModal(id,false);
+}
+function pinSetAmount(id,val){
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  if(!p)return;
+  const n=Math.abs(parseFloat(val)||0);
+  p.amount=p.amount<0?-n:n;
+  saveLS();
+}
+function deletePlannedItem(id){
+  if(!confirm('Ta bort denna kommande post?'))return;
+  S.plannedItems=(S.plannedItems||[]).filter(x=>x.id!==id);
+  saveLS();
+  document.getElementById('planned-modal')?.remove();
+  hapMed();
+  pinRefresh();
+}
+// Erbjuder att skapa ett sparm\u00e5l kopplat till en kommande utgift \u2014 f\u00f6rifyllt
+// med beloppet och m\u00e5naderna fram till m\u00e5lm\u00e5naden som tidshorisont.
+function offerGoalForPlanned(id){
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  if(!p)return;
+  if(!confirm('Skapa ett sparm\u00e5l p\u00e5 '+fmt(Math.abs(p.amount))+' kr för "'+(p.label||'denna post')+'"?'))return;
+  const now=new Date();
+  const[gy,gm]=(p.month||'').split('-').map(Number);
+  const horizon=gy?Math.max(1,(gy-now.getFullYear())*12+(gm-1-now.getMonth())):12;
+  const goal={id:'goal'+Date.now().toString(36),label:p.label||'Sparm\u00e5l',type:'annat',target:Math.abs(p.amount||0),current:0,
+    monthly:Math.round(Math.abs(p.amount||0)/horizon),returnRate:0,horizon,owner:p.owner||'shared',
+    linkedAssets:[],useDisposable:false,disposablePct:20,useLinkedBalance:false};
+  if(!S.goals)S.goals=[];
+  S.goals.push(goal);
+  p.linkedGoalId=goal.id;
+  saveLS();
+  hapMed();
+  showSnack('\u2713 Sparm\u00e5l skapat');
+  rebuildPlannedModal(id,false);
+}
+// N\u00e4r m\u00e5nlm\u00e5naden n\u00e5s, l\u00e5t anv\u00e4ndaren snabbt bokf\u00f6ra posten som en riktig
+// transaktion i Utfall \u2014 f\u00f6rifylld, bara datum beh\u00f6ver bekr\u00e4ftas.
+function convertPlannedToTransaction(id){
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  if(!p)return;
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth();
+  const txs=gTX(y,m);
+  txs.push({id:'plan_tx'+Date.now(),date:now.toISOString().slice(0,10),desc:p.label||'Kommande post',amount:-Math.abs(p.amount),cat:p.cat||'ovrigt',source:'manual'});
+  if(p.amount>0)txs[txs.length-1].amount=Math.abs(p.amount);
+  sTX(y,m,txs);
+  p.status='done';
+  saveLS();
+  hapMed();
+  showSnack('\u2713 Bokf\u00f6rd i Utfall');
+  pinRefresh();
+}
+
 
 function editGoal(id){
   let g=id?S.goals.find(x=>x.id===id):null;
@@ -7275,17 +7515,12 @@ function editGoal(id){
       <input class="inp" type="number" inputmode="decimal" value="${g.target}" oninput="S.goals.find(x=>x.id==='${g.id}').target=parseFloat(this.value)||0;saveLS()"></div>
 
     <div style="border-top:.5px solid rgba(128,128,128,.15);margin:12px 0;padding-top:12px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Nuläge — koppla till widget</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Nuläge</div>
       ${savingsAssets.length?`<div style="font-size:12px;color:var(--t3);margin-bottom:6px">Välj konton/tillgångar som bidrar till detta mål:</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">${assetRows}</div>`:'<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Inga konton/investeringar definierade ännu. Lägg till under Tillgångar.</div>'}
-
-      <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-top:14px;margin-bottom:8px">Finansiering — koppla till budget</div>
-      ${(S.budget.sav||[]).length?`<div style="font-size:12px;color:var(--t3);margin-bottom:6px">Koppla till en budgeterad sparpost (ersätter manuellt belopp nedan):</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">${budgetItemRows}</div>`:''}
-      ${g.linkedBudgetItem?`<button onclick="const gi=S.goals.find(x=>x.id==='${g.id}');gi.linkedBudgetItem=null;saveLS();rebuildGoalModal('${g.id}')" style="font-size:12px;color:var(--bl);background:none;border:none;cursor:pointer;padding:0;margin-bottom:10px">Koppla bort, mata in belopp manuellt</button>`:''}
-
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${g.useLinkedBalance?'4':'10'}px">
+      ${savingsAssets.length?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:${g.useLinkedBalance?'4':'10'}px">
         <input type="checkbox" id="gm-ulb" ${g.useLinkedBalance?'checked':''} onchange="S.goals.find(x=>x.id==='${g.id}').useLinkedBalance=this.checked;saveLS();sbSyncNow();rebuildGoalModal('${g.id}')">
         <label for="gm-ulb" style="font-size:13px;color:var(--t2);cursor:pointer">Använd saldo från kopplade konton som nuläge</label>
-      </div>
+      </div>`:''}
       ${!g.useLinkedBalance?`<div class="fi" style="margin-bottom:10px"><div class="fl">Nuvarande sparande (kr)</div>
         <input class="inp" type="number" inputmode="decimal" value="${g.current||0}" oninput="S.goals.find(x=>x.id==='${g.id}').current=parseFloat(this.value)||0;saveLS()"></div>`
         :`<div style="font-size:12px;color:var(--ok);margin-bottom:10px;padding:6px 10px;background:var(--okbg);border-radius:6px">Nuläge: ${fmt(getLinkedBalance(g))} (från kopplade konton)</div>`}
@@ -7293,13 +7528,15 @@ function editGoal(id){
 
     <div style="border-top:.5px solid rgba(128,128,128,.15);margin-bottom:12px;padding-top:12px">
       <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Månadsinsats</div>
-      ${!g.linkedBudgetItem?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      ${(S.budget.sav||[]).length?`<div style="font-size:12px;color:var(--t3);margin-bottom:6px">Koppla till en budgeterad sparpost (ersätter manuellt belopp nedan):</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">${budgetItemRows}</div>`:''}
+      ${g.linkedBudgetItem?`<button onclick="const gi=S.goals.find(x=>x.id==='${g.id}');gi.linkedBudgetItem=null;saveLS();rebuildGoalModal('${g.id}')" style="font-size:12px;color:var(--bl);background:none;border:none;cursor:pointer;padding:0;margin-bottom:10px">Koppla bort, mata in belopp manuellt</button>`:''}
+      ${S.goalsAdvanced&&!g.linkedBudgetItem?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <input type="checkbox" id="gm-ud" ${g.useDisposable?'checked':''} onchange="S.goals.find(x=>x.id==='${g.id}').useDisposable=this.checked;saveLS();sbSyncNow();rebuildGoalModal('${g.id}')">
         <label for="gm-ud" style="font-size:13px;color:var(--t2);cursor:pointer">Basera på disponibelt (${fmt(Math.round(disp))}/mån)</label>
       </div>`:''}
       ${g.linkedBudgetItem&&(S.budget.sav||[]).some(i=>i.id===g.linkedBudgetItem)?
         `<div style="font-size:12px;color:var(--bl);padding:8px 10px;background:var(--blbg);border-radius:8px">Finansieras av kopplad budgetpost: ${fmt(getEffectiveMonthly(g))} kr/mån</div>`
-        :g.useDisposable?
+        :(S.goalsAdvanced&&g.useDisposable)?
         `<div class="fi" style="margin-bottom:4px"><div class="fl">Andel av disponibelt: <span id="gm-dpct">${g.disposablePct||20}</span>%</div></div>
         <input type="range" min="1" max="100" value="${g.disposablePct||20}" style="width:100%;margin-bottom:6px" oninput="S.goals.find(x=>x.id==='${g.id}').disposablePct=parseInt(this.value);document.getElementById('gm-dpct').textContent=this.value;saveLS()">
         <div style="font-size:12px;color:var(--ok);padding:6px 10px;background:var(--okbg);border-radius:6px">${fmt(Math.round(disp*(g.disposablePct||20)/100))} kr/mån</div>`
@@ -7307,7 +7544,7 @@ function editGoal(id){
         <input class="inp" type="number" inputmode="decimal" value="${g.monthly||0}" oninput="S.goals.find(x=>x.id==='${g.id}').monthly=parseFloat(this.value)||0;saveLS()"></div>`}
     </div>
 
-    <div class="fi" style="margin-bottom:4px"><div class="fl">Förv. årsavkastning: <span id="gm-rr">${Math.round((g.returnRate||0)*100)}</span>%</div></div>
+    ${S.goalsAdvanced?`<div class="fi" style="margin-bottom:4px"><div class="fl">Förv. årsavkastning: <span id="gm-rr">${Math.round((g.returnRate||0)*100)}</span>%</div></div>
     <input type="range" min="0" max="20" step="0.5" value="${Math.round((g.returnRate||0)*100)}" style="width:100%;margin-bottom:10px" oninput="S.goals.find(x=>x.id==='${g.id}').returnRate=this.value/100;document.getElementById('gm-rr').textContent=this.value;saveLS()">
     <div class="fi" style="margin-bottom:4px"><div class="fl">Tidshorisont: <span id="gm-hz">${g.horizon||36}</span> mån (${Math.round((g.horizon||36)/12*10)/10} år)</div></div>
     <input type="range" min="1" max="360" value="${g.horizon||36}" style="width:100%;margin-bottom:14px" oninput="S.goals.find(x=>x.id==='${g.id}').horizon=parseInt(this.value);document.getElementById('gm-hz').textContent=this.value+' mån ('+Math.round(this.value/12*10)/10+' år)';saveLS()">
@@ -7318,7 +7555,7 @@ function editGoal(id){
         <span style="font-size:13px;font-weight:700;color:${onTrack?'var(--ok)':'var(--warn)'}">${fmt(Math.round(base))}</span>
       </div>
       <div style="font-size:11px;color:var(--t3)">${onTrack?'\u2713 Når målet'+( mBase!==Infinity?' om '+( mBase<12?mBase+'mån':Math.round(mBase/12*10)/10+'år'):''):'\u26a0 Når ej målet inom tidsramen'}</div>
-    </div>
+    </div>`:''}
 
     <div style="display:flex;gap:8px">
       <button class="btn pri" style="flex:1" onclick="trackDataUpdate();saveLS();document.getElementById('goal-modal').remove();rGoals()">Spara</button>
@@ -7792,6 +8029,7 @@ function rOv(){
     </div>
     ${rProfileCompleteness()}
     ${rDataFreshness()}
+    ${rUpcomingPlannedCard()}
     <div id="ov-month-summary"></div>
     ${card2}${card1}${card3}${extraCard}
     ${rConnectionsCard()}`;
@@ -7800,7 +8038,30 @@ function rOv(){
   updateBudgetBadge();
 }
 
-// ══ Profilkomplettering ("hur mycket av appens nytta har hushållet låst upp") ══
+// ══ Hemsidans p\u00e5minnelse om n\u00e4rmaste kommande post ══════════════
+function rUpcomingPlannedCard(){
+  const items=(S.plannedItems||[]).filter(p=>p.status==='planned').sort((a,b)=>(a.month||'').localeCompare(b.month||''));
+  if(!items.length)return'';
+  const now=new Date();
+  const curMonthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const nearest=items[0];
+  const isDue=nearest.month&&nearest.month<=curMonthKey;
+  const mp=(nearest.month||'').split('-');
+  const monthLbl=mp.length===2?(MF[parseInt(mp[1])-1]||'')+' '+mp[0]:'';
+  const isIncome=nearest.amount>0;
+  return `<div class="gc" style="padding:13px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="nav('budget');setBudSeg('plan')">
+    <div style="width:32px;height:32px;border-radius:9px;background:${isDue?'var(--warnbg)':'var(--blbg)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${isDue?'var(--warn)':'var(--bl)'}" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600;color:var(--t1)">${nearest.label||'Kommande post'}</div>
+      <div style="font-size:11px;color:${isDue?'var(--warn)':'var(--t3)'};margin-top:1px">${isDue?'Dags att bokf\u00f6ra? \u00b7 ':''}${monthLbl}${items.length>1?' \u00b7 +'+(items.length-1)+' till':''}</div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:${isIncome?'var(--ok)':'var(--t2)'};font-variant-numeric:tabular-nums;flex-shrink:0">${isIncome?'+':''}${fmt(nearest.amount)}</div>
+  </div>`;
+}
+
+
 // Viktad checklista, inte bara antal ifyllda fält — vissa saker (inkomst,
 // molnsynk) spelar större roll för hur användbar appen faktiskt blir.
 function getProfileCompleteness(){
