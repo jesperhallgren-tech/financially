@@ -838,7 +838,28 @@ function getCTC(){return S.budget.cos.map(i=>CM[i.id]?.t).filter(Boolean);}
 function bCats(){const _gemSrc=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];const key=_gemSrc.map(i=>i.id+'|'+(i.amount||0)).join(',');if(key===_cKey&&_cCache)return _cCache;_cKey=key;const cats=[];const idx={};const _gemItems=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];
   for(const item of _gemItems){const m=CM[item.id];if(!m)continue;const a=Math.abs(cA(item));if(idx[m.t]!==undefined){cats[idx[m.t]].b+=a;cats[idx[m.t]].k=[...new Set([...cats[idx[m.t]].k,...(m.k||[])])];}else{idx[m.t]=cats.length;cats.push({id:item.id,la:item.label,t:m.t,ic:m.ic,cl:m.cl,bg:m.bg,b:a,k:m.k||[]});}}return(_cCache=cats);}
 function bustC(){_cCache=null;_cKey='';}
-function gc(d){const s=(d||'').toLowerCase();for(const[,m]of Object.entries(CM)){if(m.k?.some(k=>s.includes(k)))return m.t;}return'ovrigt';}
+// Normaliserar en beskrivning till en stabil "handlar-nyckel" — samma idé
+// som anv\u00e4nds f\u00f6r att gruppera transaktioner, men h\u00e4r f\u00f6r att komma ih\u00e5g
+// en tidigare manuell kategori-r\u00e4ttning \u00e4ven n\u00e4r referensnummer/ort skiljer
+// sig mellan tv\u00e5 k\u00f6p fr\u00e5n samma st\u00e4lle (t.ex. "NETFLIX.COM 020790637").
+function normMerchant(d){
+  return (d||'').toUpperCase().trim().split(/\s+/)[0]||'';
+}
+function rememberCategory(desc,cat){
+  const key=normMerchant(desc);
+  if(!key||!cat)return;
+  if(!S.catMemory)S.catMemory={};
+  S.catMemory[key]=cat;
+}
+function recallCategory(desc){
+  const key=normMerchant(desc);
+  if(!key||!S.catMemory)return null;
+  return S.catMemory[key]||null;
+}
+function gc(d){
+  const remembered=recallCategory(d);
+  if(remembered)return remembered;
+  const s=(d||'').toLowerCase();for(const[,m]of Object.entries(CM)){if(m.k?.some(k=>s.includes(k)))return m.t;}return'ovrigt';}
 const fmt=n=>{const s=Math.abs(Math.round(n)).toLocaleString('sv-SE');return(n<0?'\u2212':'')+s+'\u202fkr'};
 const srcClr={manual:['var(--t3)',''],bank:['var(--bl)',''],avanza:['var(--ok)',''],nordnet:['#AF52DE','']};
 // Kommunalskatt 2026 (kommun + region, ungefärliga värden) för de ~35 största
@@ -1786,7 +1807,11 @@ function saveEditTx(){
   const etxNote=(document.getElementById('etx-note')?.value||'').trim();
   const[y,mo]=key.split('-').map(Number);
   const updated=[...TX[key]];
+  const oldCat=updated[idx].cat;
   updated[idx]={...updated[idx],desc,amount:-Math.abs(amt),date,cat,tags:etxTags,note:etxNote};
+  // Kommer ih\u00e5g r\u00e4ttningen om kategorin faktiskt \u00e4ndrades, s\u00e5 samma handlare
+  // kategoriseras r\u00e4tt automatiskt n\u00e4sta g\u00e5ng \u2014 vid b\u00e5de import och AI.
+  if(cat&&cat!==oldCat)rememberCategory(desc,cat);
   sTX(y,mo-1,updated);
   markUns();hapMed();dirty('actual','ov');
   closeEditTx();
@@ -1812,40 +1837,90 @@ function deleteEditTx(){
 async function aiCategorize(){
   if(!sb||!sbUser){showSnack('Logga in mot molnet f\u00f6r att anv\u00e4nda AI-kategorisering');return;}
   const{year,month,isYear}=getAP();
-  // Find uncategorized or 'ovrigt' transactions
   const all=isYear?
     Array.from({length:12},(_,m)=>gTX(year,m)).flat():
     gTX(year,month);
-  const toCateg=all.filter(t=>!t.cat||t.cat==='ovrigt'||t.cat==='annat');
+  let toCateg=all.filter(t=>!t.cat||t.cat==='ovrigt'||t.cat==='annat');
   if(!toCateg.length){showSnack('Inga okategoriserade transaktioner');return;}
-  
-  const cats=bCats().map(c=>`${c.t}: ${c.la||c.t}`).join(', ');
-  const txList=toCateg.slice(0,30).map(t=>`${t.id}|${t.desc}|${Math.abs(t.amount)}`).join('\n');
-  
-  showSnack(`Kategoriserar ${Math.min(toCateg.length,30)} transaktioner…`);
-  
-  try{
-    const raw=await callD(
-      `Du är en svensk privatekonomikategoriserare. Kategorisera dessa transaktioner.\nTillgängliga kategorier: ${cats}\nSvara BARA med JSON-array: [{"id":"tx-id","cat":"kategori-kod"}]\n\nTransaktioner (id|beskrivning|belopp):\n${txList}`,
-      800,
-      'Svara enbart med JSON, inga kommentarer.'
-    );
-    const json=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    if(!Array.isArray(json))throw new Error('Ogiltigt svar');
-    
-    let updated=0;
-    json.forEach(({id,cat})=>{
-      const key=findTxKey(id);
-      if(!key)return;
-      const idx=TX[key].findIndex(t=>t.id===id);
-      if(idx>=0){TX[key][idx].cat=cat;updated++;}
-    });
-    markUns();refreshUtfall();
-    showSnack(`✓ ${updated} transaktioner kategoriserade`);
-  }catch(e){
-    console.warn('[aiCategorize]',e);
-    showSnack('Kategorisering misslyckades: '+(e.message||'ok\u00e4nt fel'));
+
+  // Applicerar k\u00e4nda handlare fr\u00e5n tidigare r\u00e4ttningar direkt, gratis \u2014
+  // innan AI ens tillfr\u00e5gas. Minskar b\u00e5de kostnad och antalet omg\u00e5ngar.
+  let rememberedCount=0;
+  toCateg.forEach(t=>{
+    const known=recallCategory(t.desc);
+    if(known){
+      const k=findTxKey(t.id);
+      if(k){
+        const i=TX[k].findIndex(x=>x.id===t.id);
+        if(i>=0){TX[k][i].cat=known;rememberedCount++;}
+      }
+    }
+  });
+  if(rememberedCount){markUns();refreshUtfall();}
+  toCateg=toCateg.filter(t=>!recallCategory(t.desc));
+  if(!toCateg.length){
+    showSnack(`\u2713 ${rememberedCount} kategoriserade direkt fr\u00e5n tidigare r\u00e4ttningar \u2014 inget AI-anrop beh\u00f6vdes`);
+    return;
   }
+
+  const cats=bCats().map(c=>`${c.t}: ${c.la||c.t}`).join(', ');
+  const totalCount=toCateg.length;
+  const totalBatches=Math.ceil(totalCount/30);
+  let totalUpdated=0;
+  let batchNum=0;
+
+  // G\u00e5r igenom ALLA omg\u00e5ngar om 30 automatiskt ist\u00e4llet f\u00f6r att kr\u00e4va ett
+  // nytt klick per omg\u00e5ng \u2014 med m\u00e5nga poster i "\u00d6vrigt" var det opraktiskt
+  // att beh\u00f6va trycka p\u00e5 knappen flera g\u00e5nger i rad.
+  while(toCateg.length){
+    batchNum++;
+    const batch=toCateg.slice(0,30);
+    showSnack(`Kategoriserar \u2014 omg\u00e5ng ${batchNum} av ${totalBatches} (${totalUpdated}/${totalCount})\u2026`);
+
+    const txList=batch.map(t=>`${t.id}|${t.desc}|${Math.abs(t.amount)}`).join('\n');
+    let batchUpdated=0;
+    try{
+      const raw=await callD(
+        `Du är en svensk privatekonomikategoriserare. Kategorisera dessa transaktioner.\nTillgängliga kategorier: ${cats}\nSvara BARA med JSON-array: [{"id":"tx-id","cat":"kategori-kod"}]\n\nTransaktioner (id|beskrivning|belopp):\n${txList}`,
+        800,
+        'Svara enbart med JSON, inga kommentarer.'
+      );
+      const json=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      if(!Array.isArray(json))throw new Error('Ogiltigt svar');
+      json.forEach(({id,cat})=>{
+        const key=findTxKey(id);
+        if(!key)return;
+        const idx=TX[key].findIndex(t=>t.id===id);
+        if(idx>=0){TX[key][idx].cat=cat;batchUpdated++;}
+      });
+    }catch(e){
+      console.warn('[aiCategorize batch '+batchNum+']',e);
+      showSnack('Kategorisering avbruten vid omg\u00e5ng '+batchNum+': '+(e.message||'ok\u00e4nt fel'));
+      markUns();refreshUtfall();
+      return;
+    }
+
+    totalUpdated+=batchUpdated;
+    markUns(); // sparar/synkar l\u00f6pande, s\u00e5 inget g\u00e5r f\u00f6rlorat om n\u00e5got avbryts mitt i
+
+    // S\u00e4kerhetsstopp: om en omg\u00e5ng inte gjorde n\u00e5gon skillnad alls, avbryt
+    // ist\u00e4llet f\u00f6r att riskera en o\u00e4ndlig loop.
+    if(batchUpdated===0){
+      showSnack(`Stannade efter ${totalUpdated}/${totalCount} \u2014 n\u00e5gra poster gick inte att kategorisera`);
+      refreshUtfall();
+      return;
+    }
+
+    // R\u00e4kna om vilka som forfarande \u00e5terst\u00e5r (samma lista, uppdaterad TX)
+    const stillAll=isYear?
+      Array.from({length:12},(_,m)=>gTX(year,m)).flat():
+      gTX(year,month);
+    toCateg=stillAll.filter(t=>!t.cat||t.cat==='ovrigt'||t.cat==='annat');
+  }
+
+  refreshUtfall();
+  const grandTotal=totalUpdated+rememberedCount;
+  showSnack(`\u2713 ${grandTotal} transaktioner kategoriserade${rememberedCount?` (${rememberedCount} direkt fr\u00e5n minnet)`:''}`);
 }
 
 
@@ -5568,6 +5643,7 @@ function build(){
     goals:S.goals,
     goalsAdvanced:S.goalsAdvanced,
     plannedItems:S.plannedItems,
+    catMemory:S.catMemory,
     nwHist:S.nwHist||[],
     milestonesSeen:S.milestonesSeen||[],
     lastDataUpdateAt:S.lastDataUpdateAt||null,
@@ -5619,6 +5695,7 @@ function applyP(p){
   if(p.goals&&Array.isArray(p.goals))S.goals=p.goals;
   if(p.goalsAdvanced!==undefined)S.goalsAdvanced=p.goalsAdvanced;
   if(p.plannedItems&&Array.isArray(p.plannedItems))S.plannedItems=p.plannedItems;
+  if(p.catMemory&&typeof p.catMemory==='object')S.catMemory=p.catMemory;
   if(p.nwHist&&Array.isArray(p.nwHist))S.nwHist=p.nwHist;
   if(p.milestonesSeen&&Array.isArray(p.milestonesSeen))S.milestonesSeen=p.milestonesSeen;
   if(p.lastDataUpdateAt)S.lastDataUpdateAt=p.lastDataUpdateAt;
@@ -5802,7 +5879,7 @@ const S={onboarded:false,onbStep:0,mode:'par',budSeg:'plan',
     {id:'ovrigt',  label:'Övrigt',             ic:'bag',   order:10},
     {id:'inkomst', label:'Inkomster',          ic:'coin',  order:11, isIncome:true},
   ],
-extraInc:[],assets2:[],debts2:[],goals:[],goalsAdvanced:false,plannedItems:[],nwHist:[],nwHistImportLog:[],balTab:"shared",balCatOpen:{},hhVisibility:{income:true,expenses:true,assets:true,debts:true},budget:{
+extraInc:[],assets2:[],debts2:[],goals:[],goalsAdvanced:false,plannedItems:[],catMemory:{},nwHist:[],nwHistImportLog:[],balTab:"shared",balCatOpen:{},hhVisibility:{income:true,expenses:true,assets:true,debts:true},budget:{
   sav:[
     {id:'s_buf', label:'Buffert',           split:'L', amount:0},
     {id:'s_long',label:'Långsiktigt / ISK', split:'L', amount:0},
@@ -6846,7 +6923,8 @@ async function sbPush(silent){
       mode:S.mode||'par',split_method:S.splitMethod||'income',
       use_separate_accounts:!!S.useSeparateAccounts,notif_enabled:!!S.notifEnabled,
       user_cats:S.userCats||[],
-      planned_items:S.plannedItems||[]
+      planned_items:S.plannedItems||[],
+      cat_memory:S.catMemory||{}
     };
     const{error:eSet}=await sb.from('household_settings').upsert(settingsRow,{onConflict:'household_id'});
     if(eSet)throw eSet;
@@ -6955,6 +7033,7 @@ async function sbPull(silent){
       if(hhSettings.notif_enabled!==null)S.notifEnabled=!!hhSettings.notif_enabled;
       if(hhSettings.user_cats&&hhSettings.user_cats.length)S.userCats=hhSettings.user_cats;
       if(hhSettings.planned_items)S.plannedItems=mergeCloudList(S.plannedItems,hhSettings.planned_items,x=>x);
+      if(hhSettings.cat_memory&&typeof hhSettings.cat_memory==='object')S.catMemory={...hhSettings.cat_memory,...S.catMemory};
     }
   }catch(e){console.warn('[sbPull apply household_settings]',e.message);errors.push('Inställningar (tillämpa): '+e.message);}
 
