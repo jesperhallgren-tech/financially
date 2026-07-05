@@ -6971,6 +6971,27 @@ async function sbPush(silent){
     // Hushållsinställningar — en rad per hushåll (skattesatser, hushållsläge,
     // fördelningsmetod, notiser, egna kategorier). Läses direkt från DOM:en
     // precis som build() gör, eftersom dessa fält aldrig speglas i S{}.
+    //
+    // VIKTIGT: planned_items/cat_memory h\u00e4mtas och sl\u00e5s ihop med molnets
+    // NUVARANDE v\u00e4rde innan push, ist\u00e4llet f\u00f6r att bara skicka upp det
+    // lokala v\u00e4rdet rakt av. Den h\u00e4r tabellen \u00e4r en enda rad per hush\u00e5ll
+    // (ingen per-post delete-diff-logik som f\u00f6r tillg\u00e5ngar/skulder), s\u00e5 en
+    // enhet som synkat framg\u00e5ngsrikt m\u00e5nga g\u00e5nger tidigare (och d\u00e4rf\u00f6r \u00e4r
+    // "betrodd" enligt S.firstSyncAt) men aldrig haft just DETTA f\u00e4lt
+    // lokalt \u00e4n, skulle annars skriva \u00f6ver molnets riktiga data med sin
+    // egen tomma lista \u2014 exakt det som just h\u00e4nde med en kommande post.
+    let mergedPlanned=S.plannedItems||[];
+    let mergedCatMem=S.catMemory||{};
+    try{
+      const{data:existing}=await sb.from('household_settings').select('planned_items,cat_memory').eq('household_id',sbHouseholdId).maybeSingle();
+      if(existing){
+        if(existing.planned_items)mergedPlanned=mergeCloudList(S.plannedItems||[],existing.planned_items,x=>x);
+        if(existing.cat_memory)mergedCatMem={...existing.cat_memory,...S.catMemory};
+      }
+    }catch(e){console.warn('[sbPush settings pre-merge]',e.message);}
+    S.plannedItems=mergedPlanned;
+    S.catMemory=mergedCatMem;
+
     const settingsRow={
       household_id:sbHouseholdId,
       kr:parseFloat(g('kr'))||null,
@@ -6979,8 +7000,8 @@ async function sbPush(silent){
       mode:S.mode||'par',split_method:S.splitMethod||'income',
       use_separate_accounts:!!S.useSeparateAccounts,notif_enabled:!!S.notifEnabled,
       user_cats:S.userCats||[],
-      planned_items:S.plannedItems||[],
-      cat_memory:S.catMemory||{}
+      planned_items:mergedPlanned,
+      cat_memory:mergedCatMem
     };
     const{error:eSet}=await sb.from('household_settings').upsert(settingsRow,{onConflict:'household_id'});
     if(eSet)throw eSet;
