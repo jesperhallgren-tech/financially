@@ -1311,7 +1311,7 @@ function openFAB(){
     const cats=[...bCats()];
     cats.forEach(cat=>{
       const o=document.createElement('option');
-      o.value=cat.id; o.textContent=cat.name;
+      o.value=cat.id; o.textContent=cat.la;
       sel.appendChild(o);
     });
   }
@@ -1776,7 +1776,7 @@ function openEditTx(id){
     catSel.innerHTML='<option value="">— Kategori —</option>';
     bCats().forEach(cat=>{
       const o=document.createElement('option');
-      o.value=cat.t;o.textContent=cat.name;
+      o.value=cat.t;o.textContent=cat.la;
       if(cat.t===foundTx.cat)o.selected=true;
       catSel.appendChild(o);
     });
@@ -5426,12 +5426,15 @@ function _renderUtfallContent(){
     const fc=pct>100?'var(--err)':pct>85?'var(--warn)':'var(--ok)';
     const isOp=!!CO[cat.id];
     html+=`<div class="gc" style="margin-bottom:12px;overflow:hidden">
-  <div onclick="tgC('${cat.id}')" style="display:flex;align-items:center;gap:7px;padding:12px 14px;cursor:pointer${isOp?';border-bottom:.5px solid var(--bd)':''}">
-    <span style="color:var(--t2);flex-shrink:0;opacity:.85">${catI(cat.ic,14,'var(--t2)')}</span>
-    <span style="font-size:12px;font-weight:600;letter-spacing:.4px;color:var(--t2);flex:1">${cat.la}</span>
-    <span style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;white-space:nowrap">${cbgt>0?fmt(ca)+' / '+fmt(cbgt):fmt(ca)}</span>
-    ${cbgt>0?`<span style="font-size:11px;font-weight:700;color:${fc};background:${fc}22;padding:2px 6px;border-radius:6px;flex-shrink:0">${pct>100?'+'+Math.round(pct-100):Math.round(pct)}%</span>`:''}
-    <span style="display:inline-flex;width:18px;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:.2s;transform:rotate(${isOp?'0':'180'}deg);opacity:.5"><polyline points="18 15 12 9 6 15"/></svg></span>
+  <div onclick="tgC('${cat.id}')" style="padding:12px 14px;cursor:pointer${isOp?';border-bottom:.5px solid var(--bd)':''}">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:${cbgt>0?'8':'0'}px">
+      <span style="color:var(--t2);flex-shrink:0;opacity:.85">${catI(cat.ic,14,'var(--t2)')}</span>
+      <span style="font-size:12px;font-weight:600;letter-spacing:.4px;color:var(--t2);flex:1">${cat.la}</span>
+      <span style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;white-space:nowrap">${cbgt>0?fmt(ca)+' / '+fmt(cbgt):fmt(ca)}</span>
+      ${cbgt>0?`<span style="font-size:11px;font-weight:700;color:${fc};background:${fc}22;padding:2px 6px;border-radius:6px;flex-shrink:0">${pct>100?'+'+Math.round(pct-100):Math.round(pct)}%</span>`:''}
+      <span style="display:inline-flex;width:18px;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:.2s;transform:rotate(${isOp?'0':'180'}deg);opacity:.5"><polyline points="18 15 12 9 6 15"/></svg></span>
+    </div>
+    ${cbgt>0?`<div style="height:4px;background:var(--bd2);border-radius:2px;overflow:hidden;margin-left:21px"><div style="height:100%;width:${Math.min(pct,100)}%;background:${fc};border-radius:2px"></div></div>`:''}
   </div>
   <div id="cc-${cat.id}" style="display:${isOp?'block':'none'}">${txBdy(cat.txs,cat.id,isYear,false,cO,sk)}</div>
 </div>`;
@@ -6229,15 +6232,7 @@ function toggleUtfallJamfor(){
 }
 
 function _rBudUtfall(ct){
-  const jOpen=BCO['utfall-jamfor']!==false;
   ct.innerHTML=
-    '<div class="gc" style="margin-bottom:16px;overflow:hidden">'+
-      '<div onclick="toggleUtfallJamfor()" style="display:flex;align-items:center;gap:8px;padding:13px 16px;cursor:pointer">'+
-        '<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;flex:1">Budget vs. faktiskt</span>'+
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color:var(--t3);transition:.2s;transform:rotate('+(jOpen?'0':'180')+'deg);opacity:.5"><polyline points="18 15 12 9 6 15"/></svg>'+
-      '</div>'+
-      '<div id="utfall-jamfor-wrap" style="display:'+(jOpen?'block':'none')+'"><div id="ic-budget" style="padding:0 16px 16px"></div></div>'+
-    '</div>'+
     '<div id="budget-alloc"></div>'+
     '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;overflow:hidden">'+
     '<select class="sel sm" id="acy" onchange="buildMonthBand();_renderUtfallContent()" style="flex:0 0 64px;min-width:0;width:64px"></select>'+
@@ -6248,7 +6243,6 @@ function _rBudUtfall(ct){
     '<select id="acm" style="display:none"><option value="all">Hel\u00e5r</option></select><div id="month-band"></div><div id="cat-chips"></div>'+
     '<div id="asmr" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>'+
     '<div id="aent"></div><div id="year-grid"></div><div id="acat"></div>';
-  if(jOpen){try{rJamfor();}catch(e){console.warn('[rJamfor in Utfall]',e.message);}}
   try{rBudgetDonut();}catch(e){console.warn('[rBudgetDonut in Utfall]',e.message);}
   initSels();buildCatChips();
   const ae=document.getElementById('aent');
