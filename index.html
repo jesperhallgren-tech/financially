@@ -2491,13 +2491,25 @@ function rJamfor(){
   const el=document.getElementById('ic-budget');
   if(!el) return;
   const now=new Date();
-  const yr=now.getFullYear(), mo=now.getMonth();
-  const daysInMonth=new Date(yr,mo+1,0).getDate();
-  const daysPassed=now.getDate();
-  const fracElapsed=daysPassed/daysInMonth;
-  
-  // Get all this month's transactions
-  const allTx=[...auTX(yr,mo),...gTX(yr,mo)].filter(t=>!t.excluded);
+  const ys2=document.getElementById('acy2');
+  const ms2=document.getElementById('acm2');
+  const yr=ys2&&ys2.value?parseInt(ys2.value):now.getFullYear();
+  const isAllYear=!!(ms2&&ms2.value==='all');
+  const mo=isAllYear?now.getMonth():(ms2&&ms2.value!==''&&ms2.value!=null?parseInt(ms2.value):now.getMonth());
+  const isCurrentMonth=!isAllYear&&yr===now.getFullYear()&&mo===now.getMonth();
+  const isPastMonth=!isAllYear&&(yr<now.getFullYear()||(yr===now.getFullYear()&&mo<now.getMonth()));
+  const daysInMonth=isAllYear?365:new Date(yr,mo+1,0).getDate();
+  // F\u00f6rfluten tid: dagens datum f\u00f6r innevarande m\u00e5nad, hela m\u00e5naden om den
+  // redan passerat, 0 om den ligger i framtiden \u2014 annars blir "I takt"/
+  // "\u00d6verskriden"-bed\u00f6mningen missvisande f\u00f6r andra m\u00e5nader \u00e4n dagens.
+  const daysPassed=isAllYear?daysInMonth:(isCurrentMonth?now.getDate():isPastMonth?daysInMonth:0);
+  const fracElapsed=daysInMonth>0?daysPassed/daysInMonth:1;
+  const monthsInPeriod=isAllYear?12:1;
+
+  // Get all transactions f\u00f6r vald period (en m\u00e5nad, eller hela \u00e5ret)
+  const allTx=isAllYear
+    ? Array.from({length:12},(_,m)=>[...auTX(yr,m),...gTX(yr,m)]).flat().filter(t=>!t.excluded)
+    : [...auTX(yr,mo),...gTX(yr,mo)].filter(t=>!t.excluded);
   
   // Get gem items with budget amounts
   const gem=(S.budget.gem&&S.budget.gem.length
@@ -2537,7 +2549,7 @@ function rJamfor(){
   gem.forEach(item=>{
     const cat=item.cat||(CM[item.id]?CM[item.id].t:'ovrigt');
     const macro=tToMacro(cat);
-    const amt=Math.abs(cA(item));
+    const amt=Math.abs(cA(item))*monthsInPeriod;
     budgetByMacro[macro]=(budgetByMacro[macro]||0)+amt;
     if(!itemsByMacro[macro])itemsByMacro[macro]=[];
     itemsByMacro[macro].push(item);
@@ -2565,7 +2577,7 @@ function rJamfor(){
       ${['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'].map((m,i)=>`<option value="${i}"${i===now.getMonth()?' selected':''}>${m}</option>`).join('')}
     </select>
     <div style="flex:1"></div>
-    <div style="font-size:12px;color:var(--t3);flex-shrink:0;white-space:nowrap">Dag ${daysPassed}/${daysInMonth}</div>
+    <div style="font-size:12px;color:var(--t3);flex-shrink:0;white-space:nowrap">${isAllYear?'Hel\u00e5r':isCurrentMonth?`Dag ${daysPassed}/${daysInMonth}`:isPastMonth?'Avslutad':'Kommande'}</div>
   </div>`;
   
   // Populate year select
@@ -2686,10 +2698,51 @@ function refreshUtfall(){
 }
 
 
+// Samma visuella stil som Utfallsf\u00f6rdelningen, men byggd p\u00e5 BUDGETERADE
+// belopp (planen) ist\u00e4llet f\u00f6r verkliga transaktioner \u2014 h\u00f6r hemma p\u00e5
+// Budget-fliken (planering), inte Utfall (verklighet).
+function rBudgetPlanDonut(){
+  const el=document.getElementById('budget-plan-alloc');if(!el)return;
+  const gem=(S.budget.gem&&S.budget.gem.length?S.budget.gem:[].concat(S.budget.cos||[],S.budget.exp||[])).filter(i=>i.cat!=='inkomst');
+  const _ucats2=getUserCats().slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  const aliases2={restaurang:'noje',pension:'sparande'};
+  const validIds2=_ucats2.map(c=>c.id);
+  function tToMacro2(t){
+    const resolved=aliases2[t]||t;
+    return validIds2.includes(resolved)?resolved:'ovrigt';
+  }
+  const labels={};_ucats2.forEach(c=>{labels[c.id]=c.label;});
+  const groups={};
+  gem.forEach(item=>{
+    const cat=item.cat||(CM[item.id]?CM[item.id].t:'ovrigt');
+    const macro=tToMacro2(cat);
+    groups[macro]=(groups[macro]||0)+Math.abs(cA(item));
+  });
+  const total=Object.values(groups).reduce((s,v)=>s+v,0);
+  if(!total){el.innerHTML='';return;}
+  const R=52,r=32,cx=64,cy=64;let angle=-Math.PI/2,segments='',legendHtml='';
+  const shades=['#3A5FE0','#19A3A0','#5E5CE6','#2E5BBA','#4A8FBA','#1F7A6C','#7B8FE0','#6BAFAF','#8E8E93'];
+  const entries=Object.entries(groups).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  entries.forEach(([cat,val],i)=>{
+    const pct=val/total,a1=angle,a2=angle+pct*Math.PI*2;
+    const x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+    const x2=cx+R*Math.cos(a2),y2=cy+R*Math.sin(a2);
+    const xi=cx+r*Math.cos(a1),yi=cy+r*Math.sin(a1);
+    const xj=cx+r*Math.cos(a2),yj=cy+r*Math.sin(a2);
+    const large=pct>0.5?1:0,col=shades[i%shades.length];
+    segments+=`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xj.toFixed(1)},${yj.toFixed(1)} A${r},${r} 0 ${large},0 ${xi.toFixed(1)},${yi.toFixed(1)} Z" fill="${col}" stroke="var(--bg)" stroke-width="1.5"/>`;
+    legendHtml+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:2px;background:${col};flex-shrink:0"></div><span style="font-size:12px;color:var(--t2)">${labels[cat]||cat}</span></div><span style="font-size:12px;font-weight:600">${Math.round(pct*100)}%</span></div>`;
+    angle=a2;
+  });
+  const totLbl=total>=1000000?(total/1000000).toFixed(1)+'M':total>=1000?Math.round(total/1000)+'k':Math.round(total);
+  el.innerHTML=`<div style="background:var(--card);border-radius:var(--r2);padding:14px 16px;margin-bottom:16px;border:.5px solid rgba(255,255,255,.06)"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;margin-bottom:12px">Budgetf\u00f6rdelning</div><div style="display:flex;align-items:center;gap:14px"><div style="flex-shrink:0"><svg width="128" height="128" viewBox="0 0 128 128">${segments}<text x="64" y="60" text-anchor="middle" font-size="11" fill="var(--t3)" font-weight="500">Totalt</text><text x="64" y="76" text-anchor="middle" font-size="13" fill="var(--t1)" font-weight="700">${totLbl}</text></svg></div><div style="flex:1;min-width:0">${legendHtml}</div></div></div>`;
+}
 function rBudgetDonut(){
   const el=document.getElementById('budget-alloc');if(!el)return;
-  const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
-  const allTx=[...auTX(yr,mo),...gTX(yr,mo)].filter(t=>!t.excluded);
+  const{year:yr,month:mo,isYear}=getAP();
+  const allTx=isYear
+    ? Array.from({length:12},(_,m)=>[...auTX(yr,m),...gTX(yr,m)]).flat().filter(t=>!t.excluded)
+    : [...auTX(yr,mo),...gTX(yr,mo)].filter(t=>!t.excluded);
   const _ucats2=getUserCats().slice().sort((a,b)=>(a.order||0)-(b.order||0));
   const aliases2={restaurang:'noje',pension:'sparande'};
   const validIds2=_ucats2.map(c=>c.id);
@@ -5398,6 +5451,7 @@ function _renderUtfallContent(){
     const yg=document.getElementById('year-grid');if(yg)yg.innerHTML='';
     const cmp=document.getElementById('year-compare');if(cmp)cmp.innerHTML='';
   }
+  try{rBudgetDonut();}catch(e){console.warn('[rBudgetDonut refresh]',e.message);}
 }
 
 function etB(id,ed){
@@ -6112,7 +6166,7 @@ function _rBudPlan(ct){
   try {
     var html = '';
     html += '<div id="transfer-widget"></div>';
-    html += '<div id="budget-alloc"></div>';
+    html += '<div id="budget-plan-alloc"></div>';
 
     // Filter-flikar: Alla / Gemensamt / per person (endast par/familj)
     if(!isSingel()){
@@ -6162,7 +6216,7 @@ function _rBudPlan(ct){
     }
 
     try{ rTransferWidget(ct.querySelector('#transfer-widget')); }catch(e){}
-    try{ rBudgetDonut(); }catch(e){}
+    try{ rBudgetPlanDonut(); }catch(e){}
   } catch(e) {
     ct.innerHTML = '<div style="padding:20px;color:var(--err)">Plan-fel: ' + e.message + '</div>';
   }
@@ -6184,6 +6238,7 @@ function _rBudUtfall(ct){
       '</div>'+
       '<div id="utfall-jamfor-wrap" style="display:'+(jOpen?'block':'none')+'"><div id="ic-budget" style="padding:0 16px 16px"></div></div>'+
     '</div>'+
+    '<div id="budget-alloc"></div>'+
     '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;width:100%;box-sizing:border-box;overflow:hidden">'+
     '<select class="sel sm" id="acy" onchange="buildMonthBand();_renderUtfallContent()" style="flex:0 0 64px;min-width:0;width:64px"></select>'+
     '<input id="act-search" type="text" placeholder="S\u00f6k..." oninput="_renderUtfallContent()" style="flex:1;min-width:0;width:0;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 10px;font-size:16px;color:var(--t1);-webkit-appearance:none">'+
@@ -6194,6 +6249,7 @@ function _rBudUtfall(ct){
     '<div id="asmr" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>'+
     '<div id="aent"></div><div id="year-grid"></div><div id="acat"></div>';
   if(jOpen){try{rJamfor();}catch(e){console.warn('[rJamfor in Utfall]',e.message);}}
+  try{rBudgetDonut();}catch(e){console.warn('[rBudgetDonut in Utfall]',e.message);}
   initSels();buildCatChips();
   const ae=document.getElementById('aent');
   if(ae){
