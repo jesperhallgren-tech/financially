@@ -5377,6 +5377,11 @@ function aDet(text,fn){
   const f=(fn||'').toLowerCase();
   // Bank-specific detection
   if(f.includes('amex')||text.includes('American Express'))return pAm(lines);
+  // Amex "Aktivitet"-export (Excel, t.ex. fr\u00e5n amexonline.se) \u2014 k\u00e4nns igen p\u00e5
+  // header-raden "Datum...Kortmedlem...Konto #...Belopp", som skiljer sig fr\u00e5n
+  // b\u00e5de den generiska tolkningen och den \u00e4ldre pAm()-tolkningens antaganden
+  // om kolumnordning.
+  if(text.includes('Transaktionsspecifikationer')||(text.includes('Kortmedlem')&&text.includes('Konto #')))return pAmXlsx(lines);
   if(lines[0]?.includes('Bokföringsdag'))return pNo(lines);
   if(lines[0]?.toLowerCase().includes('transaktionsdatum'))return pSEB(lines);
   // Generic attempt
@@ -5391,6 +5396,30 @@ function aDet(text,fn){
   return generic;
 }
 function pAm(lines){const r=[];const seen=new Set();lines.forEach(l=>{const p=sp2(l);if(p.length<3)return;const d=pd2(p[0]);if(!d)return;const desc=p[2];const a=pa2(p[p.length>4?4:p.length-1]);if(isNaN(a)||!desc.trim()||a<=0)return;if(desc.toUpperCase().includes('BETALNING'))return;const key=`${d}|${desc.slice(0,30)}|${Math.round(a)}`;if(seen.has(key))return;seen.add(key);r.push({id:uid(),date:d,desc:desc.trim(),amount:-Math.abs(a),cat:gc(desc),source:'amex'});});return r;}
+// Amex "Aktivitet"-export (Excel): 5\u20136 metadatarader (rubrik, kontoinnehavare,
+// kontonummer, tom rad) f\u00f6re den riktiga header-raden. Hittar header-raden
+// explicit ist\u00e4llet f\u00f6r att bara hoppa \u00f6ver EN rad, och l\u00e4ser r\u00e4tt kolumner:
+// Datum(0), Beskrivning(1), Kortmedlem(2), Konto #(3), Belopp(4).
+function pAmXlsx(lines){
+  const r=[];const seen=new Set();
+  let headerIdx=lines.findIndex(l=>l.startsWith('Datum')&&l.includes('Beskrivning'));
+  if(headerIdx<0)headerIdx=0; // fallback, borde inte h\u00e4nda om detekteringen tr\u00e4ffade r\u00e4tt
+  lines.slice(headerIdx+1).forEach(l=>{
+    const p=sp2(l);
+    if(p.length<5)return;
+    const d=pd2(p[0]);
+    if(!d)return;
+    const desc=p[1];
+    const a=pa2(p[4]);
+    if(isNaN(a)||!desc.trim())return;
+    if(desc.toUpperCase().includes('BETALNING'))return; // korthavarens egna betalningar \u00e4r inte en utgift
+    const key=`${d}|${desc.slice(0,30)}|${Math.round(a)}`;
+    if(seen.has(key))return;
+    seen.add(key);
+    r.push({id:uid(),date:d,desc:desc.trim(),amount:-Math.abs(a),cat:gc(desc),source:'amex'});
+  });
+  return r;
+}
 function pNo(lines){const r=[];let go=false;lines.forEach(l=>{if(!go){if(l.includes('Bokf\u00f6ringsdag'))go=true;return;}const p=sp2(l);if(p.length<4)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[3]);if(isNaN(a))return;r.push({id:uid(),date:d,desc:(p[2]||p[1]).trim(),amount:a<0?a:-a,cat:gc(p[2]||p[1]),source:'csv'});});return r;}
 function pSEB(lines){const r=[];let go=false;lines.forEach(l=>{if(!go){if(l.toLowerCase().includes('transaktionsdatum'))go=true;return;}const p=sp2(l);if(p.length<4)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[3]);if(isNaN(a))return;r.push({id:uid(),date:d,desc:(p[2]||p[1]).trim(),amount:a<0?a:-a,cat:gc(p[2]||p[1]),source:'csv'});});return r;}
 function pGen(lines){const r=[];lines.forEach((l,i)=>{if(i===0)return;const p=sp2(l);if(p.length<3)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[2]);if(isNaN(a)||!p[1].trim())return;r.push({id:uid(),date:d,desc:p[1].trim(),amount:a<0?a:-a,cat:gc(p[1]),source:'csv'});});return r;}
