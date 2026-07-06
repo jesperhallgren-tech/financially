@@ -5450,6 +5450,53 @@ async function aiHealthCheck(){
   }
 }
 
+// ══ C) Naturligt spr\u00e5k-fr\u00e5gor mot egen data ══
+function openAIAskModal(){
+  showAIInsightModal('Fr\u00e5ga om din ekonomi');
+  setAIInsightBody(`
+    <div class="fi" style="margin-bottom:10px">
+      <input class="inp" id="ai-ask-input" type="text" placeholder="T.ex. Hur mycket spenderade vi p\u00e5 resor i \u00e5r?" onkeydown="if(event.key==='Enter')aiAskSubmit()">
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:12px">Svarar utifr\u00e5n i \u00e5r och f\u00f6rra \u00e5rets transaktioner, budget, tillg\u00e5ngar/skulder och m\u00e5l.</div>
+    <button class="btn pri" style="width:100%" onclick="aiAskSubmit()">Fr\u00e5ga</button>
+  `);
+  setTimeout(()=>document.getElementById('ai-ask-input')?.focus(),50);
+}
+async function aiAskSubmit(){
+  if(!sb||!sbUser){showSnack('Logga in mot molnet f\u00f6r att anv\u00e4nda AI-funktioner');return;}
+  const q=(document.getElementById('ai-ask-input')?.value||'').trim();
+  if(!q)return;
+
+  setAIInsightBody(`<div style="display:flex;align-items:center;gap:10px;padding:20px 0;color:var(--t3);font-size:13px"><span style="width:16px;height:16px;border:2px solid var(--bd2);border-top-color:var(--bl);border-radius:50%;display:inline-block;animation:spin .7s linear infinite"></span>Anthropics AI tänker\u2026</div>`);
+
+  const now=new Date();
+  // I \u00e5r + f\u00f6rra \u00e5ret, s\u00e5 fr\u00e5gor om "i \u00e5r"/"f\u00f6rra \u00e5ret"/j\u00e4mf\u00f6relser g\u00e5r att
+  // besvara, utan att skicka HELA historiken (h\u00e5ller tokens/kostnad nere).
+  let allTx=[];
+  for(let m=0;m<12;m++)allTx=allTx.concat(gTX(now.getFullYear(),m));
+  for(let m=0;m<12;m++)allTx=allTx.concat(gTX(now.getFullYear()-1,m));
+  allTx=allTx.filter(t=>!t.excluded&&t.source!=='auto');
+  const txList=allTx.map(t=>`${t.date}|${t.desc}|${Math.round(Math.abs(t.amount))}|${t.cat||''}`).join('\n');
+
+  const gem=(S.budget.gem||[]).filter(i=>i.cat!=='inkomst');
+  const budgetSummary=gem.map(i=>`${i.label}: ${Math.round(Math.abs(cA(i)))} kr/m\u00e5n`).join(', ');
+  const totA=(S.assets2||[]).reduce((s,a)=>s+Math.abs(a.amount||0),0);
+  const totD=(S.debts2||[]).reduce((s,d)=>s+Math.abs(d.amount||0),0);
+  const goalsSum=(S.goals||[]).map(g=>`${g.label}: ${Math.round(getEffectiveCurrent(g))}/${Math.round(g.target||0)} kr`).join(', ')||'inga';
+  const inc=ctxInc();
+
+  try{
+    const raw=await callD(
+      `Du \u00e4r en svensk privatekonomiassistent med tillg\u00e5ng till detta hush\u00e5lls data.\n\nTransaktioner i \u00e5r och f\u00f6rra \u00e5ret (datum|beskrivning|belopp|kategori):\n${txList}\n\nM\u00e5natlig budget per post: ${budgetSummary}\nM\u00e5natlig inkomst: ${Math.round(inc)} kr\nTotala tillg\u00e5ngar: ${Math.round(totA)} kr, totala skulder: ${Math.round(totD)} kr\nSparm\u00e5l: ${goalsSum}\n\nFr\u00e5ga: "${q}"\n\nSvara kort och konkret p\u00e5 svenska, med faktiska siffror fr\u00e5n datan ovan. Om fr\u00e5gan inte g\u00e5r att besvara med tillg\u00e4nglig data, s\u00e4g det tydligt ist\u00e4llet f\u00f6r att gissa. Ingen inledande fras, ingen markdown.`,
+      500
+    );
+    setAIInsightBody(`<div style="font-size:12px;color:var(--t3);margin-bottom:10px;font-style:italic">"${q.replace(/</g,'&lt;')}"</div>${renderAIProse(raw)}`);
+  }catch(e){
+    console.warn('[aiAskSubmit]',e);
+    setAIInsightError(e.message||'ok\u00e4nt fel');
+  }
+}
+
 async function callD(prompt,tok,sys){
   const data=await callAIProxy(prompt,tok||1024,sys);
   return data?.content?.[0]?.text||'';
@@ -8424,7 +8471,8 @@ function rOv(){
     ${rProfileCompleteness()}
     ${rDataFreshness()}
     ${rUpcomingPlannedCard()}
-    <button onclick="aiHealthCheck()" style="width:100%;background:var(--blbg);color:var(--bl);border:none;cursor:pointer;padding:11px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px">✶ Ekonomisk h\u00e4lsokoll</button>
+    <button onclick="aiHealthCheck()" style="width:100%;background:var(--blbg);color:var(--bl);border:none;cursor:pointer;padding:11px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:10px">✶ Ekonomisk h\u00e4lsokoll</button>
+    <button onclick="openAIAskModal()" style="width:100%;background:var(--blbg);color:var(--bl);border:none;cursor:pointer;padding:11px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px">✶ Fr\u00e5ga om din ekonomi</button>
     <div id="ov-month-summary"></div>
     ${card2}${card1}${card3}${extraCard}
     ${rConnectionsCard()}`;
