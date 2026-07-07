@@ -510,11 +510,16 @@ html,body{background:#1C1C1E!important}
     <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 16px"></div>
     <div style="font-size:16px;font-weight:700;margin-bottom:14px">Redigera transaktion</div>
     <input type="hidden" id="etx-id"><input type="hidden" id="etx-y"><input type="hidden" id="etx-m">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Belopp (kr)</div>
         <input id="etx-amt" type="number" inputmode="decimal" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
       <div><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Datum</div>
         <input id="etx-date" type="date" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
+    </div>
+    <input type="hidden" id="etx-refund" value="0">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button type="button" id="etx-type-exp" onclick="setEtxType(false)" class="btn pri sm" style="flex:1">Utgift</button>
+      <button type="button" id="etx-type-ref" onclick="setEtxType(true)" class="btn sec sm" style="flex:1">\u00c5terbetalning</button>
     </div>
     <div style="margin-bottom:10px"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Beskrivning</div>
       <input id="etx-desc" type="text" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
@@ -1280,8 +1285,8 @@ function catTrend6(catT,isC){
   return Array.from({length:6},(_,i)=>{
     const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);
     const all=[...auTX(d.getFullYear(),d.getMonth()),...gTX(d.getFullYear(),d.getMonth())].filter(t=>!t.excluded);
-    if(isC)return all.filter(t=>ctc.includes(t.cat)).reduce((s,t)=>s+Math.abs(t.amount),0);
-    return all.filter(t=>t.cat===catT).reduce((s,t)=>s+Math.abs(t.amount),0);
+    if(isC)return all.filter(t=>ctc.includes(t.cat)).reduce((s,t)=>s-t.amount,0);
+    return all.filter(t=>t.cat===catT).reduce((s,t)=>s-t.amount,0);
   });
 }
 
@@ -1556,7 +1561,7 @@ function rYearGrid(year, container){
   let maxSpent=0;
   for(let m=0;m<12;m++){
     const all=[...auTX(year,m),...gTX(year,m)].filter(t=>!t.excluded);
-    const spent=all.reduce((s,t)=>s+Math.abs(t.amount),0);
+    const spent=all.reduce((s,t)=>s-t.amount,0);
     const cats=bCats();
     const _gp=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];
   const budget=_gp.reduce((s,i)=>s+Math.abs(cA(i)),0);
@@ -1643,7 +1648,7 @@ function showSnack(msg, actionLabel, actionFn){
 // ═══ Månadsstatistik + jämförelse ════════════════════════════
 function getMonthStats(y, m){
   const all=[...auTX(y,m),...gTX(y,m)].filter(t=>!t.excluded);
-  const spent=all.reduce((s,t)=>s+Math.abs(t.amount),0);
+  const spent=all.reduce((s,t)=>s-t.amount,0);
   const cats=bCats();
   const _gp=(S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp]).filter(i=>i.cat!=='inkomst');
   const budget=_gp.reduce((s,i)=>s+Math.abs(cA(i)),0);
@@ -1663,7 +1668,7 @@ function updateBudgetBadge(){
   const WARN_PCT=0.80;
   const hasWarn=cats.some(cat=>{
     if(!cat.b)return false;
-    const spent=all.filter(t=>t.cat===cat.t).reduce((s,t)=>s+Math.abs(t.amount),0);
+    const spent=all.filter(t=>t.cat===cat.t).reduce((s,t)=>s-t.amount,0);
     return spent/cat.b>=WARN_PCT;
   });
   // Update actual tab icon badge
@@ -1770,6 +1775,7 @@ function openEditTx(id){
   document.getElementById('etx-desc').value=foundTx.desc||'';
   document.getElementById('etx-amt').value=Math.abs(foundTx.amount||0);
   document.getElementById('etx-date').value=foundTx.date||'';
+  setEtxType((foundTx.amount||0)>0);
   const etxTagEl=document.getElementById('etx-tags');if(etxTagEl)etxTagEl.value=fmtTags(foundTx.tags||[]);
   const etxNoteEl=document.getElementById('etx-note');if(etxNoteEl)etxNoteEl.value=foundTx.note||'';
   const catSel=document.getElementById('etx-cat');
@@ -1809,11 +1815,19 @@ function closeEditTx(){
   setTimeout(()=>{if(sheet)sheet.style.display='none';},300);
 }
 
+function setEtxType(isRefund){
+  document.getElementById('etx-refund').value=isRefund?'1':'0';
+  const expBtn=document.getElementById('etx-type-exp');
+  const refBtn=document.getElementById('etx-type-ref');
+  if(expBtn)expBtn.className='btn '+(isRefund?'sec':'pri')+' sm';
+  if(refBtn)refBtn.className='btn '+(isRefund?'pri':'sec')+' sm';
+}
 function saveEditTx(){
   const id=document.getElementById('etx-id').value;
   const key=document.getElementById('etx-y').value;
   const desc=(document.getElementById('etx-desc').value||'').trim();
   const amt=parseFloat(document.getElementById('etx-amt').value)||0;
+  const isRefund=document.getElementById('etx-refund')?.value==='1';
   const date=document.getElementById('etx-date').value;
   const cat=document.getElementById('etx-cat').value;
   if(!key||!TX[key])return;
@@ -1824,7 +1838,7 @@ function saveEditTx(){
   const[y,mo]=key.split('-').map(Number);
   const updated=[...TX[key]];
   const oldCat=updated[idx].cat;
-  updated[idx]={...updated[idx],desc,amount:-Math.abs(amt),date,cat,tags:etxTags,note:etxNote};
+  updated[idx]={...updated[idx],desc,amount:isRefund?Math.abs(amt):-Math.abs(amt),date,cat,tags:etxTags,note:etxNote};
   // Kommer ih\u00e5g r\u00e4ttningen om kategorin faktiskt \u00e4ndrades, s\u00e5 samma handlare
   // kategoriseras r\u00e4tt automatiskt n\u00e4sta g\u00e5ng \u2014 vid b\u00e5de import och AI.
   if(cat&&cat!==oldCat)rememberCategory(desc,cat);
@@ -1951,8 +1965,8 @@ function rYearCompareGrid(year, container){
   for(let m=0;m<12;m++){
     const allCurr=[...auTX(year,m),...gTX(year,m)].filter(t=>!t.excluded);
     const allPrev=[...auTX(prevYear,m),...gTX(prevYear,m)].filter(t=>!t.excluded);
-    const curr=allCurr.reduce((s,t)=>s+Math.abs(t.amount),0);
-    const prev=allPrev.reduce((s,t)=>s+Math.abs(t.amount),0);
+    const curr=allCurr.reduce((s,t)=>s-t.amount,0);
+    const prev=allPrev.reduce((s,t)=>s-t.amount,0);
     const cats=bCats();
     const _gp=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];
   const budget=_gp.reduce((s,i)=>s+Math.abs(cA(i)),0);
@@ -2352,7 +2366,7 @@ function getBarnCostsSummary(){
   // Transactions in barn-related categories
   const barnCats=['barn','e5','c7','c10'];
   const barnSpent=all.filter(t=>barnCats.includes(t.cat))
-    .reduce((s,t)=>s+Math.abs(t.amount),0);
+    .reduce((s,t)=>s-t.amount,0);
   const barnBudget=bCats().filter(c=>barnCats.includes(c.t))
     .reduce((s,c)=>s+c.b,0);
   const children=P.family.filter(m=>m.role==='barn');
@@ -3550,7 +3564,7 @@ function buildMonthSummaryText(){
   const now=new Date();
   const yr=now.getFullYear(),mo=now.getMonth();
   const allTx=[...auTX(yr,mo),...gTX(yr,mo)].filter(t=>!t.excluded);
-  const monthSpent=allTx.reduce((s,t)=>s+Math.abs(t.amount),0);
+  const monthSpent=allTx.reduce((s,t)=>s-t.amount,0);
 
   const pace=cPace();
   const onTrack=pace.act<=pace.exp*1.05;
@@ -5315,7 +5329,7 @@ async function aiMonthlyInsight(){
   const months=isYear?12:1;
   const cats=getUtfallCats(isYear?Array.from({length:12},(_,m)=>[...auTX(year,m),...gTX(year,m)]).flat():[...auTX(year,month),...gTX(year,month)],months);
   const catSummary=cats.map(c=>{
-    const act=c.txs.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);
+    const act=c.txs.filter(t=>!t.excluded).reduce((s,t)=>s-t.amount,0);
     const bgt=c.b*months;
     return `${c.la}: ${Math.round(act)} kr (budget ${Math.round(bgt)} kr)`;
   }).join('\n');
@@ -5352,7 +5366,7 @@ async function aiBudgetReview(){
     const cats=getUtfallCats([...auTX(y,m),...gTX(y,m)],1);
     cats.forEach(c=>{
       if(!perCatHistory[c.la])perCatHistory[c.la]={budget:Math.round(c.b),months:[]};
-      const act=c.txs.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);
+      const act=c.txs.filter(t=>!t.excluded).reduce((s,t)=>s-t.amount,0);
       perCatHistory[c.la].months.push(Math.round(act));
     });
   }
@@ -5652,9 +5666,9 @@ function curAll(){const{year,month,isYear}=getAP();let all=[];if(isYear)for(let 
 function auTX(y,m){const now=new Date();if(y>now.getFullYear()||(y===now.getFullYear()&&m>now.getMonth()))return[];const date=`${y}-${String(m+1).padStart(2,'0')}-01`;const _gem=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];
   const allB=[...S.budget.sav,..._gem];return AI.map(ai=>{const it=allB.find(i=>i.id===ai.b);if(!it)return null;const a=Math.abs(cA(it));if(!a)return null;const mc=CM[ai.b];return{id:'a-'+ai.b,date,desc:ai.d,amount:-a,cat:mc?mc.t:ai.b,source:'auto'};}).filter(Boolean);}
 function tgX(key,id){const[y,mo]=key.split('-').map(Number);const m=mo-1;const txs=gTX(y,m);const tx=txs.find(t=>t.id===id);if(!tx)return;tx.excluded=!tx.excluded;sTX(y,m,txs);const row=document.querySelector(`[data-id="${id}"]`);if(row){row.classList.toggle('xd',!!tx.excluded);const b=row.querySelector('.eyb');if(b){b.classList.toggle('on',!!tx.excluded);b.innerHTML=UI.eye(!!tx.excluded);}}const{all,months,isYear,year,month}=curAll();ptchCH(tx.cat,all,months);ptchSm(all,months,isYear,year,month);}
-function ptchCH(tc,all,months){const ctc=getCTC();const isC=ctc.includes(tc);const id=isC?'__c':bCats().find(c=>c.t===tc)?.id;if(!id)return;const bgt=isC?S.budget.sav.reduce((s,i)=>s+Math.abs(cA(i)),0)*months:(bCats().find(c=>c.t===tc)?.b||0)*months;const act=all.filter(t=>!t.excluded&&(isC?ctc.includes(t.cat):t.cat===tc)).reduce((s,t)=>s+Math.abs(t.amount),0);const pct=bgt>0?act/bgt*100:0;const fc=pct>100?'var(--err)':pct>85?'var(--warn)':'var(--ok)';const ae=document.getElementById('ca-'+id);if(ae)ae.textContent=bgt>0?`${fmt(act)} / ${fmt(bgt)}`:fmt(act);const be=document.getElementById('cb-'+id);if(be){be.style.width=Math.min(pct,100).toFixed(1)+'%';be.style.background=fc;}const de=document.getElementById('cd-'+id);if(de)de.innerHTML=bgt>0?`<span class="bdg ${pct>100?'err':pct>85?'warn':'ok'}">${pct>100?'+'+Math.round(pct-100):Math.round(pct)}%</span>`:'';
+function ptchCH(tc,all,months){const ctc=getCTC();const isC=ctc.includes(tc);const id=isC?'__c':bCats().find(c=>c.t===tc)?.id;if(!id)return;const bgt=isC?S.budget.sav.reduce((s,i)=>s+Math.abs(cA(i)),0)*months:(bCats().find(c=>c.t===tc)?.b||0)*months;const act=all.filter(t=>!t.excluded&&(isC?ctc.includes(t.cat):t.cat===tc)).reduce((s,t)=>s-t.amount,0);const pct=bgt>0?act/bgt*100:0;const fc=pct>100?'var(--err)':pct>85?'var(--warn)':'var(--ok)';const ae=document.getElementById('ca-'+id);if(ae)ae.textContent=bgt>0?`${fmt(act)} / ${fmt(bgt)}`:fmt(act);const be=document.getElementById('cb-'+id);if(be){be.style.width=Math.min(pct,100).toFixed(1)+'%';be.style.background=fc;}const de=document.getElementById('cd-'+id);if(de)de.innerHTML=bgt>0?`<span class="bdg ${pct>100?'err':pct>85?'warn':'ok'}">${pct>100?'+'+Math.round(pct-100):Math.round(pct)}%</span>`:'';
 }
-function ptchSm(all,months,isYear,year,month){const cats=bCats();const bgt=S.budget.sav.reduce((s,i)=>s+Math.abs(cA(i)),0)*months+cats.reduce((s,c)=>s+c.b*months,0);const act=all.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);const diff=act-bgt;const ae=document.getElementById('sa');if(ae)ae.textContent=fmt(act);const de=document.getElementById('sd');if(de){de.textContent=(diff>0?'+':'')+fmt(diff);de.className='mv '+(diff>0?'neg':'pos');}if(!isYear){const now=new Date();const iC=now.getFullYear()===year&&now.getMonth()===month;const el=iC?now.getDate()/new Date(year,month+1,0).getDate():1;const proj=el>0?act/el:act;const pe=document.getElementById('sp');if(pe){pe.textContent=fmt(Math.round(proj));pe.className='mv '+(proj>bgt?'neg':'');}}}
+function ptchSm(all,months,isYear,year,month){const cats=bCats();const bgt=S.budget.sav.reduce((s,i)=>s+Math.abs(cA(i)),0)*months+cats.reduce((s,c)=>s+c.b*months,0);const act=all.filter(t=>!t.excluded).reduce((s,t)=>s-t.amount,0);const diff=act-bgt;const ae=document.getElementById('sa');if(ae)ae.textContent=fmt(act);const de=document.getElementById('sd');if(de){de.textContent=(diff>0?'+':'')+fmt(diff);de.className='mv '+(diff>0?'neg':'pos');}if(!isYear){const now=new Date();const iC=now.getFullYear()===year&&now.getMonth()===month;const el=iC?now.getDate()/new Date(year,month+1,0).getDate():1;const proj=el>0?act/el:act;const pe=document.getElementById('sp');if(pe){pe.textContent=fmt(Math.round(proj));pe.className='mv '+(proj>bgt?'neg':'');}}}
 function chCat(key,id,nc){const[y,mo]=key.split('-').map(Number);sTX(y,mo-1,gTX(y,mo-1).map(t=>t.id===id?{...t,cat:nc}:t));refreshUtfall();}
 function dlTx(key,id){const[y,mo]=key.split('-').map(Number);sTX(y,mo-1,gTX(y,mo-1).filter(t=>t.id!==id));refreshUtfall();}
 function tgC(id){CO[id]=!CO[id];const e=document.getElementById('cc-'+id),c=document.getElementById('h-'+id);if(e)e.style.display=CO[id]?'block':'none';if(c)c.classList.toggle('op',!!CO[id]);}
@@ -5705,7 +5719,7 @@ function txBdy(ctxs,catId,isYear,isEdit,catOpt,sk){
           <div style="font-size:13px;font-weight:400;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${gCatCol(tx.cat)};margin-right:6px"></span>${tx.desc}${isAuto?' <span style="font-size:10px;color:var(--t3)">(auto)</span>':''}</div>
           ${(tx.note||(tx.tags||[]).length)?`<div style="font-size:11px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.note?tx.note:''}${(tx.tags||[]).length?' '+tx.tags.map(t=>'#'+t).join(' '):''}</div>`:''}
         </div>
-        <div style="font-size:13px;font-weight:500;color:var(--t2);font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap">${fmt(Math.abs(tx.amount))}</div>
+        <div style="font-size:13px;font-weight:500;color:${tx.amount>0?'var(--ok)':'var(--t2)'};font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap">${tx.amount>0?'+':''}${fmt(Math.abs(tx.amount))}</div>
         ${isAuto?'<span style="width:18px;flex-shrink:0"></span>':`<button onclick="event.stopPropagation();tgX('${tks}','${tx.id}')" class="eyb${isX?' on':''}" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:var(--t3);padding:2px;width:18px">${UI.eye(isX)}</button>`}
       </div>`;
     if(isAuto){
@@ -5727,7 +5741,7 @@ function _renderUtfallContent(){
   const{all,months}=curAll();
   const utfallCats=getUtfallCats(all,months);
   const bgt=utfallCats.reduce((s,c)=>s+c.b*months,0);
-  const act=all.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);
+  const act=all.filter(t=>!t.excluded).reduce((s,t)=>s-t.amount,0);
   const diff=act-bgt;
   let smr='';
   if(isYear)smr=`<div class="mc"><div class="ml">Utfall ${year}</div><div id="sa" class="mv neg">${fmt(act)}</div></div><div class="mc"><div class="ml">\u00c5rsbudget</div><div class="mv">${fmt(bgt)}</div></div><div class="mc"><div class="ml">Avvikelse</div><div id="sd" class="mv ${diff>0?'neg':'pos'}">${diff>0?'+':''}${fmt(diff)}</div></div><div class="mc"><div class="ml">M\u00e5nadssnitt</div><div class="mv">${fmt(Math.round(act/12))}</div></div>`;
@@ -5741,7 +5755,7 @@ function _renderUtfallContent(){
   let html='';
   utfallCats.forEach(cat=>{
     const cbgt=cat.b*months;
-    const ca=cat.txs.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);
+    const ca=cat.txs.filter(t=>!t.excluded).reduce((s,t)=>s-t.amount,0);
     const pct=cbgt>0?ca/cbgt*100:0;
     const fc=pct>100?'var(--err)':pct>85?'var(--warn)':'var(--ok)';
     const isOp=!!CO[cat.id];
@@ -5849,7 +5863,7 @@ function aDet(text,fn){
   }
   return generic;
 }
-function pAm(lines){const r=[];const seen=new Set();lines.forEach(l=>{const p=sp2(l);if(p.length<3)return;const d=pd2(p[0]);if(!d)return;const desc=p[2];const a=pa2(p[p.length>4?4:p.length-1]);if(isNaN(a)||!desc.trim()||a<=0)return;if(desc.toUpperCase().includes('BETALNING'))return;const key=`${d}|${desc.slice(0,30)}|${Math.round(a)}`;if(seen.has(key))return;seen.add(key);r.push({id:uid(),date:d,desc:desc.trim(),amount:-Math.abs(a),cat:gc(desc),source:'amex'});});return r;}
+function pAm(lines){const r=[];const seen=new Set();lines.forEach(l=>{const p=sp2(l);if(p.length<3)return;const d=pd2(p[0]);if(!d)return;const desc=p[2];const a=pa2(p[p.length>4?4:p.length-1]);if(isNaN(a)||!desc.trim())return;if(desc.toUpperCase().includes('BETALNING'))return;const key=`${d}|${desc.slice(0,30)}|${Math.round(a)}`;if(seen.has(key))return;seen.add(key);r.push({id:uid(),date:d,desc:desc.trim(),amount:-a,cat:gc(desc),source:'amex'});});return r;}
 // Amex "Aktivitet"-export (Excel): 5\u20136 metadatarader (rubrik, kontoinnehavare,
 // kontonummer, tom rad) f\u00f6re den riktiga header-raden. Hittar header-raden
 // explicit ist\u00e4llet f\u00f6r att bara hoppa \u00f6ver EN rad, och l\u00e4ser r\u00e4tt kolumner:
@@ -5870,7 +5884,7 @@ function pAmXlsx(lines){
     const key=`${d}|${desc.slice(0,30)}|${Math.round(a)}`;
     if(seen.has(key))return;
     seen.add(key);
-    r.push({id:uid(),date:d,desc:desc.trim(),amount:-Math.abs(a),cat:gc(desc),source:'amex'});
+    r.push({id:uid(),date:d,desc:desc.trim(),amount:-a,cat:gc(desc),source:'amex'});
   });
   return r;
 }
@@ -8381,7 +8395,7 @@ function addBalItem(type,cat){
   saveLS();openBalItemEditor(type,id);
 }
 
-function cPace(){const now=new Date();const y=now.getFullYear();const doy=Math.floor((now-new Date(y,0,1))/86400000)+1;const diy=365+(y%4===0?1:0);const el=doy/diy;let all=[];for(let m=0;m<12;m++)all=[...all,...auTX(y,m),...gTX(y,m)];const act=all.filter(t=>!t.excluded).reduce((s,t)=>s+Math.abs(t.amount),0);const cats=bCats();const bgt=(S.budget.sav.reduce((s,i)=>s+Math.abs(cA(i)),0)+cats.reduce((s,c)=>s+c.b,0))*12;return{act,bgt,exp:bgt*el,el,doy,diy};}
+function cPace(){const now=new Date();const y=now.getFullYear();const doy=Math.floor((now-new Date(y,0,1))/86400000)+1;const diy=365+(y%4===0?1:0);const el=doy/diy;let all=[];for(let m=0;m<12;m++)all=[...all,...auTX(y,m),...gTX(y,m)];const act=all.filter(t=>!t.excluded).reduce((s,t)=>s-t.amount,0);const cats=bCats();const bgt=(S.budget.sav.reduce((s,i)=>s+Math.abs(cA(i)),0)+cats.reduce((s,c)=>s+c.b,0))*12;return{act,bgt,exp:bgt*el,el,doy,diy};}
 
 function pgHdr(title, sub, icon){
   const iconHtml=icon?`<div style="width:46px;height:46px;border-radius:16px;background:var(--blbg);display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon}</div>`:'';
