@@ -524,6 +524,7 @@ html,body{background:#1C1C1E!important}
       <input id="etx-tags" type="text" placeholder="#mat #kontor" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box"></div>
     <div style="margin-bottom:14px"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;font-weight:500">Kategori</div>
       <select id="etx-cat" style="width:100%;background:var(--inp-bg);border:none;border-radius:10px;padding:10px 12px;font-size:16px;color:var(--t1);box-sizing:border-box;-webkit-appearance:none"></select></div>
+    <div id="etx-source-info" style="font-size:11px;color:var(--t3);margin-bottom:14px"></div>
     <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
       <button onclick="deleteEditTx()" style="background:var(--errbg);color:var(--err);border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer">Radera</button>
       <button onclick="saveEditTx()" style="background:var(--bl);color:var(--t1);border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:600;cursor:pointer">Spara</button>
@@ -1784,6 +1785,21 @@ function openEditTx(id){
   sheet.style.display='block';
   requestAnimationFrame(()=>inner.style.transform='translateY(0)');
   setTimeout(()=>document.getElementById('etx-desc')?.focus(),350);
+  const srcEl=document.getElementById('etx-source-info');
+  if(srcEl){
+    const bankLbl={amex:'American Express',nordea:'Nordea',seb:'SEB'}[foundTx.source];
+    const fn=(foundTx.importSource||'').toLowerCase();
+    const method=fn.endsWith('.xlsx')||fn.endsWith('.xls')?'Excel-import':(fn?'CSV-import':(foundTx.source==='csv'?'CSV-import':''));
+    let srcLbl;
+    if(foundTx.source==='manual')srcLbl='Manuellt inlagd';
+    else if(foundTx.source==='auto')srcLbl='Automatiskt ber\u00e4knad (fr\u00e5n budget)';
+    else if(bankLbl)srcLbl=`${method||'Import'} \u2014 ${bankLbl}`;
+    else if(foundTx.source==='csv')srcLbl=`${method||'CSV-import'} (ok\u00e4nd bank)`;
+    else srcLbl=foundTx.source||'Ok\u00e4nd k\u00e4lla';
+    const fileTxt=foundTx.importSource?` \u00b7 ${foundTx.importSource}`:'';
+    const whenTxt=foundTx.importedAt?' \u00b7 '+new Date(foundTx.importedAt).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'}):'';
+    srcEl.textContent=`K\u00e4lla: ${srcLbl}${fileTxt}${whenTxt}`;
+  }
 }
 
 function closeEditTx(){
@@ -2104,12 +2120,16 @@ function rDataMgmt(){
   
   // Import history
   const log=S.nwHistImportLog||[];
+  const bankLbl2={amex:'American Express',nordea:'Nordea',seb:'SEB'};
   const logHtml=log.length?log.slice(0,10).map(e=>{
     const d=new Date(e.ts);
     const dateStr=`${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const fn=(e.fileName||'').toLowerCase();
+    const method=fn.endsWith('.xlsx')||fn.endsWith('.xls')?'Excel-import':'CSV-import';
+    const srcLbl=bankLbl2[e.source]?`${method} \u2014 ${bankLbl2[e.source]}`:`${method} (ok\u00e4nd bank)`;
     return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--bd3)">
       <div><div style="font-size:13px;font-weight:500">${e.count} transaktioner</div>
-        <div style="font-size:11px;color:var(--t3)">${e.month} · ${e.source||'csv'}${e.dups?` · ${e.dups} dubbletter`:''}</div>
+        <div style="font-size:11px;color:var(--t3)">${srcLbl}${e.fileName?' \u00b7 '+e.fileName:''} \u00b7 ${e.month}${e.dups?` · ${e.dups} dubbletter`:''}</div>
       </div>
       <div style="font-size:12px;color:var(--t3)">${dateStr}</div>
     </div>`;
@@ -2202,6 +2222,9 @@ function rDataMgmt(){
         <div style="font-size:13px;font-weight:600;margin-bottom:2px">Importhistorik</div>
         <div style="font-size:12px;color:var(--t3);margin-bottom:8px">Senaste ${Math.min(log.length,10)} av ${log.length} importer</div>
         ${logHtml}
+      </div>
+      <div style="padding:13px 16px">
+        <button onclick="findDuplicateTx()" class="btn sec sm" style="width:100%">Hitta dubbletter i alla transaktioner</button>
       </div>
     </div>
     
@@ -5497,6 +5520,45 @@ async function aiAskSubmit(){
   }
 }
 
+// ══ Hitta m\u00f6jliga dubbletter i hela transaktionshistoriken (inte bara
+// vid import \u2014 t.ex. om n\u00e5got r\u00e5kat matas in b\u00e5de manuellt och via import) ══
+function findDuplicateTx(){
+  const dupKey=t=>`${t.date}|${Math.abs(t.amount)}|${(t.desc||'').slice(0,30).toLowerCase()}`;
+  const groups={};
+  Object.entries(TX).forEach(([key,arr])=>{
+    (arr||[]).forEach(t=>{
+      const k=dupKey(t);
+      if(!groups[k])groups[k]=[];
+      groups[k].push({...t,_monthKey:key});
+    });
+  });
+  const dupGroups=Object.values(groups).filter(g=>g.length>1);
+
+  showAIInsightModal('M\u00f6jliga dubbletter');
+  if(!dupGroups.length){
+    setAIInsightBody(`<div style="padding:16px 0;color:var(--t3);font-size:13px">Inga dubbletter hittades \u2014 varje transaktion \u00e4r unik p\u00e5 datum, belopp och beskrivning.</div>`);
+    return;
+  }
+  const rows=dupGroups.map((g,gi)=>{
+    const itemRows=g.map((t,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0${i>0?';border-top:.5px solid var(--bd3)':''}">
+      <div style="flex:1;min-width:0;font-size:12px;color:var(--t3)">${t._monthKey} \u00b7 ${t.source||'manuell'}</div>
+      ${i>0?`<button onclick="deleteDupTx('${t._monthKey}','${t.id}',this)" style="flex-shrink:0;background:var(--errbg);color:var(--err);border:none;cursor:pointer;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600">Ta bort denna</button>`:'<span style="font-size:11px;color:var(--t3);flex-shrink:0">Beh\u00e5lls</span>'}
+    </div>`).join('');
+    return `<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:${gi<dupGroups.length-1?'.5px solid var(--bd3)':'none'}">
+      <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:2px">${(g[0].desc||'').replace(/</g,'&lt;')}</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px">${g[0].date} \u00b7 ${fmt(Math.abs(g[0].amount))} \u00b7 ${g.length} exemplar</div>
+      ${itemRows}
+    </div>`;
+  }).join('');
+  setAIInsightBody(`<div style="font-size:12px;color:var(--t3);margin-bottom:10px">${dupGroups.length} grupp(er) med samma datum, belopp och beskrivning:</div>${rows}`);
+}
+function deleteDupTx(monthKey,id,btn){
+  if(!TX[monthKey])return;
+  TX[monthKey]=TX[monthKey].filter(t=>t.id!==id);
+  markUns();hapMed();refreshUtfall();
+  if(btn){const row=btn.closest('div');if(row){row.style.opacity='.4';row.innerHTML='<span style="font-size:11px;color:var(--t3)">\u2713 Borttagen</span>';}}
+}
+
 async function callD(prompt,tok,sys){
   const data=await callAIProxy(prompt,tok||1024,sys);
   return data?.content?.[0]?.text||'';
@@ -5727,7 +5789,9 @@ function addTx(){const{year,month,isYear}=getAP();if(isYear)return;const date=do
   ['txdes','txamt','txtags'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const tr=document.getElementById('txrec');if(tr)tr.checked=false;
   refreshUtfall();}
+let _csvFileName=null;
 function pCSV(file){
+  _csvFileName=file.name||'';
   const fn=(file.name||'').toLowerCase();
   if(fn.endsWith('.xlsx')||fn.endsWith('.xls')){pXLSX(file);return;}
   const r=new FileReader();r.onload=ev=>{try{const rows=aDet(ev.target.result,file.name);if(!rows.length){cst('Inga transaktioner hittades.','warn');return;}_csv=rows;showPr(rows);}catch(e){cst('Fel: '+e.message,'err');}};r.readAsText(file,'UTF-8');
@@ -5810,8 +5874,8 @@ function pAmXlsx(lines){
   });
   return r;
 }
-function pNo(lines){const r=[];let go=false;lines.forEach(l=>{if(!go){if(l.includes('Bokf\u00f6ringsdag'))go=true;return;}const p=sp2(l);if(p.length<4)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[3]);if(isNaN(a))return;r.push({id:uid(),date:d,desc:(p[2]||p[1]).trim(),amount:a<0?a:-a,cat:gc(p[2]||p[1]),source:'csv'});});return r;}
-function pSEB(lines){const r=[];let go=false;lines.forEach(l=>{if(!go){if(l.toLowerCase().includes('transaktionsdatum'))go=true;return;}const p=sp2(l);if(p.length<4)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[3]);if(isNaN(a))return;r.push({id:uid(),date:d,desc:(p[2]||p[1]).trim(),amount:a<0?a:-a,cat:gc(p[2]||p[1]),source:'csv'});});return r;}
+function pNo(lines){const r=[];let go=false;lines.forEach(l=>{if(!go){if(l.includes('Bokf\u00f6ringsdag'))go=true;return;}const p=sp2(l);if(p.length<4)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[3]);if(isNaN(a))return;r.push({id:uid(),date:d,desc:(p[2]||p[1]).trim(),amount:a<0?a:-a,cat:gc(p[2]||p[1]),source:'nordea'});});return r;}
+function pSEB(lines){const r=[];let go=false;lines.forEach(l=>{if(!go){if(l.toLowerCase().includes('transaktionsdatum'))go=true;return;}const p=sp2(l);if(p.length<4)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[3]);if(isNaN(a))return;r.push({id:uid(),date:d,desc:(p[2]||p[1]).trim(),amount:a<0?a:-a,cat:gc(p[2]||p[1]),source:'seb'});});return r;}
 function pGen(lines){const r=[];lines.forEach((l,i)=>{if(i===0)return;const p=sp2(l);if(p.length<3)return;const d=pd2(p[0]);if(!d)return;const a=pa2(p[2]);if(isNaN(a)||!p[1].trim())return;r.push({id:uid(),date:d,desc:p[1].trim(),amount:a<0?a:-a,cat:gc(p[1]),source:'csv'});});return r;}
 function showPr(rows){
   const pp=document.getElementById('csvpr');if(!pp)return;
@@ -5899,41 +5963,61 @@ function setCsvCat(i,cat){
 }
 function csvOk(){
   if(!_csv)return;
-  const{year,month}=getAP();
-  const existing=gTX(year,month);
-  
-  // Duplicate detection: same date+amount+description
+  const importedAt=Date.now();
+  const importSource=_csvFileName||_csv[0]?.source||'csv';
+
+  // Bygger EN uppslagstabell av ALLA befintliga transaktioner, oavsett
+  // m\u00e5nad \u2014 tidigare j\u00e4mf\u00f6rdes bara mot den m\u00e5nad som r\u00e5kade vara vald i
+  // vyn, vilket missade dubbletter i andra m\u00e5nader.
   const dupKey=t=>`${t.date}|${Math.abs(t.amount)}|${(t.desc||'').slice(0,30).toLowerCase()}`;
-  const existingKeys=new Set(existing.map(dupKey));
-  
+  const existingKeys=new Set();
+  Object.values(TX).forEach(arr=>(arr||[]).forEach(t=>existingKeys.add(dupKey(t))));
+
   const newTxs=_csv.filter(t=>!existingKeys.has(dupKey(t)));
   const dupCount=_csv.length-newTxs.length;
-  
-  // Keep existing non-csv + add new
-  const kept=existing.filter(t=>t.source!=='amex'&&t.source!=='csv');
-  sTX(year,month,[...kept,...newTxs]);
-  
-  // Log import to history
+
+  // Grupperar varje ny transaktion efter sitt EGET datum \u2014 tidigare
+  // hamnade ALLA importerade transaktioner i samma m\u00e5nads-hink (den som
+  // r\u00e5kade vara vald i vyn), oavsett vilket datum de faktiskt hade. En
+  // flerm\u00e5naders-fil (t.ex. ett helt \u00e5rs Amex-export) hamnade d\u00e4rf\u00f6r helt
+  // fel \u2014 nu hamnar varje post under sin r\u00e4tta m\u00e5nad.
+  const byMonth={};
+  newTxs.forEach(t=>{
+    const key=(t.date||'').slice(0,7); // "\u00c5\u00c5\u00c5\u00c5-MM"
+    if(!key)return;
+    if(!byMonth[key])byMonth[key]=[];
+    byMonth[key].push({...t,importedAt,importSource});
+  });
+  Object.entries(byMonth).forEach(([key,txs])=>{
+    const[y,m]=key.split('-').map(Number);
+    TX[key]=[...gTX(y,m-1),...txs];
+  });
+
+  // Logg\u00e5r import till historik \u2014 nu med vilka m\u00e5nader posterna faktiskt
+  // spreds \u00f6ver, inte bara den enda m\u00e5nad som var vald i vyn, och b\u00e5de
+  // detekterad bank OCH filnamn separat, s\u00e5 b\u00e5da kan visas tydligt.
   if(!S.nwHistImportLog)S.nwHistImportLog=[];
   S.nwHistImportLog.unshift({
-    ts:Date.now(),
+    ts:importedAt,
     count:newTxs.length,
     dups:dupCount,
-    month:`${year}-${String(month+1).padStart(2,'0')}`,
-    source:_csv[0]?.source||'csv'
+    month:Object.keys(byMonth).sort().join(', ')||'\u2014',
+    source:_csv[0]?.source||'csv',
+    fileName:_csvFileName||''
   });
   if(S.nwHistImportLog.length>50)S.nwHistImportLog=S.nwHistImportLog.slice(0,50);
-  
-  _csv=null;_csvRawLines=null;_csvNeedsAI=false;
+
+  _csv=null;_csvRawLines=null;_csvNeedsAI=false;_csvFileName=null;
   document.getElementById('csvpr').style.display='none';
   document.getElementById('csvf').value='';
-  
+
   const msg=dupCount>0?
     `✓ ${newTxs.length} importerade · ${dupCount} dubbletter hoppades över`:
     `✓ ${newTxs.length} transaktioner importerade`;
   cst(msg,'ok');
   showSnack(msg);
   hapMed();
+  markUns();
   dirty('actual','ov');
 }
 function cst(msg,type=''){const e=document.getElementById('csvst');if(!e)return;e.innerHTML=msg?`<div class="noti ${type}">${msg}</div>`:'';e.style.display=msg?'block':'none';}
