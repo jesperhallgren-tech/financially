@@ -2141,11 +2141,11 @@ function rDataMgmt(){
     const fn=(e.fileName||'').toLowerCase();
     const method=fn.endsWith('.xlsx')||fn.endsWith('.xls')?'Excel-import':'CSV-import';
     const srcLbl=bankLbl2[e.source]?`${method} \u2014 ${bankLbl2[e.source]}`:`${method} (ok\u00e4nd bank)`;
-    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--bd3)">
-      <div><div style="font-size:13px;font-weight:500">${e.count} transaktioner</div>
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--bd3);gap:8px">
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">${e.count} transaktioner</div>
         <div style="font-size:11px;color:var(--t3)">${srcLbl}${e.fileName?' \u00b7 '+e.fileName:''} \u00b7 ${e.month}${e.dups?` · ${e.dups} dubbletter`:''}</div>
       </div>
-      <div style="font-size:12px;color:var(--t3)">${dateStr}</div>
+      <div style="font-size:12px;color:var(--t3);flex-shrink:0;text-align:right">${dateStr}<br><button onclick="deleteImportBatch(${e.ts})" style="background:none;border:none;color:var(--err);font-size:11px;font-weight:600;cursor:pointer;padding:2px 0">Ta bort</button></div>
     </div>`;
   }).join(''):`<div style="font-size:13px;color:var(--t3);padding:8px 0">Ingen importhistorik ännu</div>`;
   
@@ -5571,6 +5571,22 @@ function deleteDupTx(monthKey,id,btn){
   TX[monthKey]=TX[monthKey].filter(t=>t.id!==id);
   markUns();hapMed();refreshUtfall();
   if(btn){const row=btn.closest('div');if(row){row.style.opacity='.4';row.innerHTML='<span style="font-size:11px;color:var(--t3)">\u2713 Borttagen</span>';}}
+}
+
+// ══ Tar bort en specifik import (t.ex. f\u00f6r att importera om efter en
+// bugfix) \u2014 matchar transaktioner via den delade importedAt-tidsst\u00e4mpeln
+// som s\u00e4tts p\u00e5 alla poster fr\u00e5n samma import. ══
+function deleteImportBatch(ts){
+  let count=0;
+  Object.values(TX).forEach(arr=>{count+=(arr||[]).filter(t=>t.importedAt===ts).length;});
+  if(!count){showSnack('Hittade inga transaktioner fr\u00e5n den importen \u2014 kan redan vara borttagen.');return;}
+  if(!confirm(`Ta bort ${count} transaktion(er) fr\u00e5n denna import? Manuella \u00e4ndringar du gjort p\u00e5 dessa poster sedan importen g\u00e5r ocks\u00e5 f\u00f6rlorade.`))return;
+  Object.keys(TX).forEach(key=>{TX[key]=TX[key].filter(t=>t.importedAt!==ts);});
+  S.nwHistImportLog=(S.nwHistImportLog||[]).filter(e=>e.ts!==ts);
+  markUns();hapHeavy();
+  showSnack(`\u2713 ${count} transaktion(er) borttagna \u2014 redo att importera om`);
+  refreshUtfall();
+  rDataMgmt();
 }
 
 async function callD(prompt,tok,sys){
