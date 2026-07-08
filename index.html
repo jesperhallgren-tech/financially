@@ -3780,7 +3780,6 @@ function exitBudgetSetup(){
   document.getElementById('app-wrap').style.display='';
   _bsState=null;
   dirty('ov','budget','actual','bal');
-  if(_act==='ov')rOv(); else if(_act==='budget')rBudget(); else if(_act==='bal')rBal();
 }
 
 function bsSaveAndExit(){
@@ -4539,6 +4538,17 @@ function openBalItemEditor(type,itemId){
   const inner=document.getElementById('gem-item-inner');
   if(sheet)sheet.style.display='block';
   requestAnimationFrame(()=>{if(inner)inner.style.transform='translateY(0)';});
+  // Bolår\u00e4nta fr\u00e5n SCB, f\u00f6r j\u00e4mf\u00f6relse mot din egen r\u00e4nta \u2014 bara f\u00f6r
+  // skulder av typen bol\u00e5n, och bara om vi \u00e4r inloggade (kr\u00e4vs f\u00f6r proxyn).
+  if(type==='d'){
+    const item=(S.debts2||[]).find(x=>x.id===itemId);
+    if(item&&item.cat==='bolan'&&sb){
+      fetchMortgageRate().then(({value,period})=>{
+        const el=document.getElementById('bie-rate-compare');
+        if(el&&value)el.textContent=`SCB-snitt just nu (${period}): ${value.toFixed(2)}%`;
+      }).catch(()=>{});
+    }
+  }
 }
 
 let _balEditCloseCb=null; // valfri callback som k\u00f6rs n\u00e4r redigeraren st\u00e4ngs (anv\u00e4nds av onboarding f\u00f6r att \u00e5terg\u00e5 till overlayen)
@@ -4628,6 +4638,7 @@ function rBalItemEditor(){
     <div style="margin-bottom:10px">
       <div class="bs-who-label" style="margin-bottom:6px">R\u00e4nta (%/\u00e5r)</div>
       <input class="inp" id="bie-rate" type="number" step="0.01" inputmode="decimal" value="${item.rate??''}" placeholder="T.ex. 3.5 \u2014 tomt = anv\u00e4nder ${g('mr')||'ej angiven'}% som schablon" style="width:100%">
+      <div id="bie-rate-compare" style="font-size:11px;color:var(--t3);margin-top:5px"></div>
     </div>
     ${item.rateType==='fast'?`<div style="margin-bottom:14px">
       <div class="bs-who-label" style="margin-bottom:6px">Bindningstid</div>
@@ -5265,6 +5276,68 @@ function setDS(s,l){
 function dbClick(){if(!IN_CLAUDE){alert('Drive kr\u00e4ver Claude.ai-kontexten.\n\nAnv\u00e4nd Spara JSON-fil under Inst. f\u00f6r att synka.');return;}const s=document.getElementById('dsb')?.className||'';if(s.includes('idle'))loadDrive(true);else if(s.includes('uns')||s.includes('err'))saveDrive(true);}
 // ── AI-anrop via egen Supabase Edge Function (utanför Claude.ai) ──
 // content: Anthropic content-block-array (text/image), se Edge Function-koden.
+// ══ Extern statistik (SCB) \u2014 inflation, bor\u00e4nta, m.fl. via en egen,
+// nyckelfri proxy (samma m\u00f6nster som ai-proxy, men SCB kr\u00e4ver ingen
+// hemlighet \u2014 proxyn finns bara f\u00f6r att undvika CORS och cacha svar). ══
+async function callSCBProxy(tablePath,query){
+  if(!sb)throw new Error('Inte ansluten till molnet \u2014 kr\u00e4ver inloggning.');
+  const{data,error}=await sb.functions.invoke('scb-proxy',{body:{tablePath,query}});
+  if(error)throw new Error(error.message||'SCB-anropet misslyckades');
+  if(data?.error)throw new Error(data.error);
+  return data;
+}
+// L\u00e4ser/skriver en enkel lokal cache i S, s\u00e5 vi inte anropar SCB varje
+// g\u00e5ng en sida \u00f6ppnas \u2014 SCB:s data \u00e4r som mest m\u00e5natlig \u00e4nd\u00e5.
+function scbCacheGet(key,maxAgeMs){
+  const c=S.scbCache?.[key];
+  if(c&&Date.now()-c.ts<maxAgeMs)return c;
+  return null;
+}
+function scbCacheSet(key,value,period){
+  if(!S.scbCache)S.scbCache={};
+  S.scbCache[key]={value,period,ts:Date.now()};
+  saveLS();
+}
+const SCB_DAY_MS=24*60*60*1000;
+// Inflationstakt (KPI, \u00e5rsf\u00f6r\u00e4ndring) \u2014 tabell KPI2020M, ContentsCode
+// 00000804 = "\u00c5rsf\u00f6r\u00e4ndring". Bekr\u00e4ftat manuellt mot SCB:s API.
+async function fetchInflationRate(){
+  const cached=scbCacheGet('inflation',SCB_DAY_MS);
+  if(cached)return cached;
+  const result=await callSCBProxy('START/PR/PR0101/PR0101A/KPI2020M',{
+    query:[
+      {code:'ContentsCode',selection:{filter:'item',values:['00000804']}},
+      {code:'Tid',selection:{filter:'top',values:['1']}}
+    ],
+    response:{format:'json'}
+  });
+  const row=result?.data?.[0];
+  const value=parseFloat(row?.values?.[0]);
+  const period=row?.key?.[1];
+  scbCacheSet('inflation',value,period);
+  return{value,period,ts:Date.now()};
+}
+// Hush\u00e5llens genomsnittliga bol\u00e5ner\u00e4nta, nya avtal (MFI) \u2014 tabell
+// NTFM5001, NyckeltalSCB=FMS03, ContentsCode=000000UW = sj\u00e4lva
+// procenttalet. Bekr\u00e4ftat manuellt mot SCB:s API.
+async function fetchMortgageRate(){
+  const cached=scbCacheGet('mortgage',SCB_DAY_MS);
+  if(cached)return cached;
+  const result=await callSCBProxy('START/FM/FM5001/FM5001X/NTFM5001',{
+    query:[
+      {code:'NyckeltalSCB',selection:{filter:'item',values:['FMS03']}},
+      {code:'ContentsCode',selection:{filter:'item',values:['000000UW']}},
+      {code:'Tid',selection:{filter:'top',values:['1']}}
+    ],
+    response:{format:'json'}
+  });
+  const row=result?.data?.[0];
+  const value=parseFloat(row?.values?.[0]);
+  const period=row?.key?.[2];
+  scbCacheSet('mortgage',value,period);
+  return{value,period,ts:Date.now()};
+}
+
 async function callAIProxy(content,maxTokens,system){
   if(!sb||!sbUser)throw new Error('Logga in för att använda AI-funktioner');
   const{data:sessionData}=await sb.auth.getSession();
@@ -5494,11 +5567,28 @@ async function aiHealthCheck(){
   const debtToIncome=inc>0?Math.round(totD/(inc*12)*10)/10:0;
   const goalsSum=(S.goals||[]).map(g=>`${g.label}: ${Math.round(getEffectiveCurrent(g))}/${Math.round(g.target||0)} kr`).join(', ')||'inga sparm\u00e5l satta';
 
+  // H\u00e4mtar aktuell inflation + bor\u00e4nta fr\u00e5n SCB som kontext, om m\u00f6jligt \u2014
+  // AI:n f\u00e5r d\u00e5 v\u00e4ga hush\u00e5llets siffror mot det faktiska l\u00e4get just nu,
+  // inte bara siffrorna i isolering. Om anropet misslyckas forts\u00e4tter vi
+  // \u00e4nd\u00e5 utan den kontexten \u2014 h\u00e4lsokollen \u00e4r fortfarande anv\u00e4ndbar.
+  let macroCtx='';
+  try{
+    const infl=await fetchInflationRate();
+    if(infl.value!=null)macroCtx+=`\nAktuell inflationstakt (KPI, Sverige, ${infl.period}): ${infl.value.toFixed(1)}%`;
+  }catch(e){console.warn('[aiHealthCheck inflation]',e.message);}
+  const hasMortgage=(S.debts2||[]).some(d=>d.cat==='bolan');
+  if(hasMortgage){
+    try{
+      const mort=await fetchMortgageRate();
+      if(mort.value!=null)macroCtx+=`\nGenomsnittlig bol\u00e5ner\u00e4nta i Sverige just nu (${mort.period}): ${mort.value.toFixed(2)}%`;
+    }catch(e){console.warn('[aiHealthCheck mortgage]',e.message);}
+  }
+
   showAIInsightModal('Ekonomisk h\u00e4lsokoll');
   try{
     const raw=await callD(
-      `Du \u00e4r en svensk privatekonomirådgivare. H\u00e4r \u00e4r ett hush\u00e5lls nyckeltal:\nNettof\u00f6rm\u00f6genhet: ${Math.round(netWorth)} kr (tillg\u00e5ngar ${Math.round(totA)} kr, skulder ${Math.round(totD)} kr)\nM\u00e5natlig inkomst: ${Math.round(inc)} kr, m\u00e5natliga utgifter: ${Math.round(totExp)} kr, disponibelt: ${Math.round(disp)} kr (sparkvot ${savingsRate}%)\nSkuldsättning i f\u00f6rh\u00e5llande till \u00e5rsinkomst: ${debtToIncome}x\nSparm\u00e5l: ${goalsSum}\n\nGe en kort (3-4 meningar), balanserad bed\u00f6mning av det ekonomiska l\u00e4get p\u00e5 svenska \u2014 vad ser bra ut, vad kan f\u00f6rb\u00e4ttras. Ingen inledande fras, ingen markdown, inga siffror du inte f\u00e5tt (gissa aldrig).`,
-      500
+      `Du \u00e4r en svensk privatekonomirådgivare. H\u00e4r \u00e4r ett hush\u00e5lls nyckeltal:\nNettof\u00f6rm\u00f6genhet: ${Math.round(netWorth)} kr (tillg\u00e5ngar ${Math.round(totA)} kr, skulder ${Math.round(totD)} kr)\nM\u00e5natlig inkomst: ${Math.round(inc)} kr, m\u00e5natliga utgifter: ${Math.round(totExp)} kr, disponibelt: ${Math.round(disp)} kr (sparkvot ${savingsRate}%)\nSkuldsättning i f\u00f6rh\u00e5llande till \u00e5rsinkomst: ${debtToIncome}x\nSparm\u00e5l: ${goalsSum}${macroCtx}\n\nGe en kort (3-4 meningar), balanserad bed\u00f6mning av det ekonomiska l\u00e4get p\u00e5 svenska \u2014 vad ser bra ut, vad kan f\u00f6rb\u00e4ttras. Om makrodata (inflation/bor\u00e4nta) finns med, v\u00e4v in en kort j\u00e4mf\u00f6relse d\u00e4r det \u00e4r relevant. Ingen inledande fras, ingen markdown, inga siffror du inte f\u00e5tt (gissa aldrig).`,
+      550
     );
     setAIInsightBody(renderAIProse(raw));
   }catch(e){
@@ -6364,7 +6454,7 @@ const S={onboarded:false,onbStep:0,mode:'par',budSeg:'plan',
     {id:'ovrigt',  label:'Övrigt',             ic:'bag',   order:10},
     {id:'inkomst', label:'Inkomster',          ic:'coin',  order:11, isIncome:true},
   ],
-extraInc:[],assets2:[],debts2:[],goals:[],goalsAdvanced:false,plannedItems:[],catMemory:{},nwHist:[],nwHistImportLog:[],balTab:"shared",balCatOpen:{},hhVisibility:{income:true,expenses:true,assets:true,debts:true},budget:{
+extraInc:[],assets2:[],debts2:[],goals:[],goalsAdvanced:false,plannedItems:[],catMemory:{},scbCache:{},nwHist:[],nwHistImportLog:[],balTab:"shared",balCatOpen:{},hhVisibility:{income:true,expenses:true,assets:true,debts:true},budget:{
   sav:[
     {id:'s_buf', label:'Buffert',           split:'L', amount:0},
     {id:'s_long',label:'Långsiktigt / ISK', split:'L', amount:0},
@@ -6596,8 +6686,8 @@ function rBudget(){
 function _rBudPlan(ct){
   try {
     var html = '';
-    html += '<div id="transfer-widget"></div>';
     html += '<div id="budget-plan-alloc"></div>';
+    html += '<div id="transfer-widget"></div>';
     html += aiBtnHtml('AI-granskning av budgeten','aiBudgetReview()');
 
     // Filter-flikar: Alla / Gemensamt / per person (endast par/familj)
@@ -7938,6 +8028,7 @@ function rPlannedItems(el){
 
   el.innerHTML=`<div class="gc" style="overflow:hidden">
     <div onclick="BCO['planned-items']=(BCO['planned-items']!==false)?false:true;rPlannedItems(document.getElementById('ic-planned'))" style="display:flex;align-items:center;gap:7px;padding:12px 14px;cursor:pointer${isOpen?';border-bottom:.5px solid var(--bd)':''}">
+      <span style="color:var(--t2);flex-shrink:0;opacity:.85"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
       <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);opacity:.85;flex:1">Kommande poster</span>
       ${items.length?`<span style="font-size:11px;color:var(--t3)">${items.length}</span>`:''}
       <span style="display:inline-flex;width:18px;justify-content:center;flex-shrink:0"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:.2s;transform:rotate(${isOpen?'0':'180'}deg);opacity:.5"><polyline points="18 15 12 9 6 15"/></svg></span>
@@ -8469,7 +8560,7 @@ function rConnectionsCard(){
 function toggleBalCat(id){
   if(!S.balCatOpen)S.balCatOpen={};
   S.balCatOpen[id]=!S.balCatOpen[id];
-  saveLS();rBal();
+  saveLS();dirty('bal');
 }
 function toggleGemCat(gId){
   BCO[gId]=!BCO[gId];
@@ -8561,7 +8652,6 @@ function rOv(){
   const card1=`<div class="dash-card" onclick="navTo('bal')" style="animation-delay:.08s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
       <div class="dash-card-head">
-        <div class="dash-card-icon" style="background:var(--blbg)">${catI('bag',16,'var(--bl)')}</div>
         <div style="flex:1">
           <div class="dash-card-lbl">Tillg\u00e5ngar &amp; skulder</div>
           <div class="dash-card-lbl2">Nettov\u00e4rde</div>
@@ -8587,7 +8677,6 @@ function rOv(){
   const card2=`<div class="dash-card" onclick="navTo('budget')" style="animation-delay:.02s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
       <div class="dash-card-head">
-        <div class="dash-card-icon" style="background:var(--blbg)">${catI('cash',16,'var(--bl)')}</div>
         <div style="flex:1">
           <div class="dash-card-lbl">Inkomster &amp; utgifter</div>
           <div class="dash-card-lbl2">${fmt(Math.round(disp>0?disp:0))} kvar denna m\u00e5nad</div>
@@ -8612,7 +8701,6 @@ function rOv(){
   const card3=`<div class="dash-card" onclick="navTo('goals')" style="animation-delay:.14s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
       <div class="dash-card-head">
-        <div class="dash-card-icon" style="background:var(--blbg)">${catI('star',16,'var(--bl)')}</div>
         <div style="flex:1">
           <div class="dash-card-lbl">Sparande &amp; m\u00e5l</div>
           <div class="dash-card-lbl2">${goalLine}</div>
@@ -8639,7 +8727,6 @@ function rOv(){
       extraCard=`<div class="dash-card" style="animation-delay:.2s;background:var(--card);color:var(--t1)">
         <div class="dash-card-inner">
           <div class="dash-card-head">
-            <div class="dash-card-icon" style="background:var(--blbg)">${catI('baby',16,'var(--bl)')}</div>
             <div style="flex:1">
               <div class="dash-card-lbl">Barn &amp; familj</div>
               <div class="dash-card-lbl2">Budget ${fmt(barn.barnBudget)}</div>
@@ -8853,7 +8940,25 @@ function pickPhoto(prefix,cb){
   inp.onchange=e=>{
     const f=e.target.files[0];if(!f)return;
     const r=new FileReader();
-    r.onload=ev=>{cb(ev.target.result);};
+    r.onload=ev=>{
+      // Skalar ner och komprimerar bilden innan den sparas \u2014 en obearbetad
+      // kamerabild kan vara flera MB, vilket b\u00e5de g\u00f6r appen tr\u00f6g och g\u00f6r
+      // just profildata-synken on\u00f6digt k\u00e4nslig f\u00f6r att misslyckas p\u00e5 en
+      // ostabil uppkoppling. En avatar beh\u00f6ver aldrig vara stor.
+      const img=new Image();
+      img.onload=()=>{
+        const maxDim=300;
+        let w=img.width,h=img.height;
+        if(w>h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}
+        else if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        cb(canvas.toDataURL('image/jpeg',0.82));
+      };
+      img.onerror=()=>{cb(ev.target.result);}; // fallback: anv\u00e4nd originalet ok\u00e4nsligt om skalning misslyckas
+      img.src=ev.target.result;
+    };
     r.readAsDataURL(f);
   };
   inp.click();
