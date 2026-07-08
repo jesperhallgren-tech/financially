@@ -226,8 +226,8 @@ html,body{background:#1C1C1E!important}
 @keyframes dashCardIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .dash-card{
   border-radius:var(--r2);
-  padding:20px 20px 18px;
-  margin-bottom:14px;
+  padding:14px 16px;
+  margin-bottom:12px;
   position:relative;
   overflow:hidden;
   cursor:pointer;
@@ -240,24 +240,27 @@ html,body{background:#1C1C1E!important}
 }
 .dash-card:active{transform:scale(.97);}
 .dash-card-inner{position:relative;z-index:1}
+.dash-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dash-card-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .dash-card-lbl{
-  font-size:11px;font-weight:700;letter-spacing:.08em;
-  text-transform:uppercase;opacity:.85;
-  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;color:var(--t1);
 }
+.dash-card-lbl2{font-size:11px;color:var(--t3);margin-top:1px}
 .dash-card-val{
-  font-size:30px;font-weight:800;letter-spacing:-.6px;
-  font-variant-numeric:tabular-nums;line-height:1;margin:14px 0 4px;
+  font-size:22px;font-weight:700;letter-spacing:-.3px;
+  font-variant-numeric:tabular-nums;line-height:1;margin-bottom:10px;
 }
-.dash-card-sub{font-size:13px;color:var(--t2);margin-bottom:14px;font-weight:500}
-.dash-card-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden;margin-bottom:8px}
-.dash-card-bar-fill{height:100%;border-radius:3px;background:rgba(255,255,255,.55);transition:width .8s cubic-bezier(.16,1,.3,1)}
-.dash-card-footer{font-size:12px;display:flex;align-items:center;justify-content:space-between;font-weight:500}
+.dash-card-sub{font-size:12px;color:var(--t3);margin-bottom:10px;font-weight:500}
+.dash-card-bar{height:5px;border-radius:3px;background:rgba(128,128,128,.16);overflow:hidden;margin-bottom:8px}
+.dash-card-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.dash-card-footer{font-size:12px;display:flex;align-items:center;justify-content:space-between;font-weight:500;color:var(--t2)}
+.dash-card-micro-lbl{font-size:10px;color:var(--t3);margin-bottom:2px;font-weight:600;letter-spacing:.04em}
+.dash-card-micro-val{font-size:14px;font-weight:700;color:var(--t1)}
 .dash-card-badge{
   display:inline-flex;align-items:center;gap:4px;
   padding:4px 10px;border-radius:20px;
   font-size:11px;font-weight:700;
-  background:rgba(255,255,255,.14);
+  background:rgba(128,128,128,.14);
 }
 
 /* ── Onboarding ──────────────────────────────────────────── */
@@ -7406,7 +7409,7 @@ async function sbPush(silent){
     try{
       const{data:existing}=await sb.from('household_settings').select('planned_items,cat_memory').eq('household_id',sbHouseholdId).maybeSingle();
       if(existing){
-        if(existing.planned_items)mergedPlanned=mergeCloudList(S.plannedItems||[],existing.planned_items,x=>x);
+        if(existing.planned_items)mergedPlanned=mergePlannedItems(S.plannedItems||[],existing.planned_items);
         if(existing.cat_memory)mergedCatMem={...existing.cat_memory,...S.catMemory};
       }
     }catch(e){console.warn('[sbPush settings pre-merge]',e.message);}
@@ -7460,6 +7463,20 @@ function mergeCloudList(localArr,cloudRows,mapFn){
   const merged={};
   (localArr||[]).forEach(it=>{merged[it.id]=it;});
   (cloudRows||[]).forEach(row=>{const item=mapFn(row);merged[item.id]=item;});
+  return Object.values(merged);
+}
+// Samma id\u00e9 som mergeCloudList, men en lokal borttagning (status:'deleted')
+// v\u00e4ger alltid tyngre \u00e4n molnets version \u2014 annars kan en post man just
+// tagit bort "\u00e5teruppst\u00e5" om molnet inte hunnit synkas \u00e4n innan n\u00e4sta
+// h\u00e4mtning h\u00e4nder.
+function mergePlannedItems(localArr,cloudRows){
+  const merged={};
+  (localArr||[]).forEach(it=>{merged[it.id]=it;});
+  (cloudRows||[]).forEach(item=>{
+    const loc=merged[item.id];
+    if(loc&&loc.status==='deleted')return; // lokal borttagning vinner
+    merged[item.id]=item;
+  });
   return Object.values(merged);
 }
 // Manuell "Hämta från molnet"-knapp — pushar eventuell väntande lokal
@@ -7530,7 +7547,7 @@ async function sbPull(silent){
       if(hhSettings.use_separate_accounts!==null)S.useSeparateAccounts=!!hhSettings.use_separate_accounts;
       if(hhSettings.notif_enabled!==null)S.notifEnabled=!!hhSettings.notif_enabled;
       if(hhSettings.user_cats&&hhSettings.user_cats.length)S.userCats=hhSettings.user_cats;
-      if(hhSettings.planned_items)S.plannedItems=mergeCloudList(S.plannedItems,hhSettings.planned_items,x=>x);
+      if(hhSettings.planned_items)S.plannedItems=mergePlannedItems(S.plannedItems,hhSettings.planned_items);
       if(hhSettings.cat_memory&&typeof hhSettings.cat_memory==='object')S.catMemory={...hhSettings.cat_memory,...S.catMemory};
     }
   }catch(e){console.warn('[sbPull apply household_settings]',e.message);errors.push('Inställningar (tillämpa): '+e.message);}
@@ -7888,7 +7905,7 @@ function rGoals(){
 // st\u00f6rre g\u00e5va etc), skilt fr\u00e5n b\u00e5de \u00e5terkommande Budget och aspirationella M\u00e5l ══
 function rPlannedItems(el){
   if(!el)return;
-  const items=(S.plannedItems||[]).filter(p=>p.status!=='dismissed').sort((a,b)=>(a.month||'').localeCompare(b.month||''));
+  const items=(S.plannedItems||[]).filter(p=>p.status!=='dismissed'&&p.status!=='deleted').sort((a,b)=>(a.month||'').localeCompare(b.month||''));
   const isOpen=BCO['planned-items']!==false;
   const now=new Date();
   const curMonthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
@@ -8010,7 +8027,8 @@ function pinSetAmount(id,val){
 }
 function deletePlannedItem(id){
   if(!confirm('Ta bort denna kommande post?'))return;
-  S.plannedItems=(S.plannedItems||[]).filter(x=>x.id!==id);
+  const p=(S.plannedItems||[]).find(x=>x.id===id);
+  if(p)p.status='deleted';
   saveLS();
   document.getElementById('planned-modal')?.remove();
   hapMed();
@@ -8536,69 +8554,78 @@ function rOv(){
   // ── Cards ─────────────────────────────────────────────────────
   const nwDir=nwHist6.length>=2?(nwHist6[nwHist6.length-1]?.nw||0)>(nwHist6[0]?.nw||0):null;
   const nwTrend=nwDir===true?'↑ Ökande':nwDir===false?'↓ Minskande':'–';
-  const nwTrendCol=nwDir===true?'rgba(186,255,201,1)':nwDir===false?'rgba(255,196,196,1)':'rgba(255,255,255,.7)';
+  const nwTrendCol=nwDir===true?'var(--ok)':nwDir===false?'var(--err)':'var(--t3)';
 
 
-  // Card 1: Tillgångar & Skulder — softer indigo→teal
+  // Card 1: Tillgångar & Skulder
   const card1=`<div class="dash-card" onclick="navTo('bal')" style="animation-delay:.08s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-        <div class="dash-card-lbl"><span>Tillgångar &amp; skulder</span></div>
-        <div style="opacity:.8">${sparkSVG(nwHist6,64,28,'rgba(255,255,255,.55)')}</div>
+      <div class="dash-card-head">
+        <div class="dash-card-icon" style="background:var(--blbg)">${catI('bag',16,'var(--bl)')}</div>
+        <div style="flex:1">
+          <div class="dash-card-lbl">Tillg\u00e5ngar &amp; skulder</div>
+          <div class="dash-card-lbl2">Nettov\u00e4rde</div>
+        </div>
+        <div style="opacity:.7">${sparkSVG(nwHist6,56,24,'var(--t3)')}</div>
       </div>
       <div class="dash-card-val">${fmtM(netW)}</div>
-      <div class="dash-card-sub">Nettovärde &nbsp;·&nbsp; ${fmt(tA)} tillgångar</div>
-      <div style="display:flex;gap:16px;align-items:center">
-        <div><div style="font-size:10px;color:var(--t3);margin-bottom:2px;font-weight:600;letter-spacing:.04em">TILLGÅNGAR</div><div style="font-size:15px;font-weight:700">${fmt(tA)}</div></div>
-        <div style="width:.5px;height:24px;background:rgba(255,255,255,.15)"></div>
-        <div><div style="font-size:10px;color:var(--t3);margin-bottom:2px;font-weight:600;letter-spacing:.04em">SKULDER</div><div style="font-size:15px;font-weight:700">−${fmt(tD)}</div></div>
+      <div style="display:flex;gap:20px;align-items:center">
+        <div><div class="dash-card-micro-lbl">TILLG\u00c5NGAR</div><div class="dash-card-micro-val">${fmt(tA)}</div></div>
+        <div style="width:.5px;height:22px;background:rgba(128,128,128,.18)"></div>
+        <div><div class="dash-card-micro-lbl">SKULDER</div><div class="dash-card-micro-val">\u2212${fmt(tD)}</div></div>
         <div style="flex:1"></div>
         <div class="dash-card-badge" style="color:${nwTrendCol}">${nwTrend}</div>
       </div>
     </div>
   </div>`;
 
-  // Card 2: Hushållsekonomi — softer violet→rose
+  // Card 2: Hushållsekonomi
   const hushPct=inc>0?Math.round(thisMs.spent/inc*100):0;
   const statusTxt=onTrack?'I takt med budget':'Något över plan';
-  const statusCol=onTrack?'rgba(186,255,201,1)':'rgba(255,232,178,1)';
+  const statusCol=onTrack?'var(--ok)':'var(--warn)';
+  const barCol=onTrack?'var(--ok)':'var(--warn)';
   const card2=`<div class="dash-card" onclick="navTo('budget')" style="animation-delay:.02s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
-      <div class="dash-card-lbl"><span>Inkomster & utgifter</span></div>
-      <div class="dash-card-val">${fmt(Math.round(thisMs.spent))}</div>
-      <div class="dash-card-sub">Utfall denna månad &nbsp;·&nbsp; ${fmt(Math.round(disp>0?disp:0))} kvar</div>
-      <div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:${barAct}%"></div></div>
-      <div style="position:relative;height:0;margin-bottom:8px">
-        <div style="position:absolute;left:${barEl}%;top:-9px;width:2px;height:13px;border-radius:1px;background:rgba(255,255,255,.4);transform:translateX(-50%)"></div>
+      <div class="dash-card-head">
+        <div class="dash-card-icon" style="background:var(--blbg)">${catI('cash',16,'var(--bl)')}</div>
+        <div style="flex:1">
+          <div class="dash-card-lbl">Inkomster &amp; utgifter</div>
+          <div class="dash-card-lbl2">${fmt(Math.round(disp>0?disp:0))} kvar denna m\u00e5nad</div>
+        </div>
       </div>
+      <div class="dash-card-val">${fmt(Math.round(thisMs.spent))}</div>
+      <div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:${barAct}%;background:${barCol}"></div></div>
       <div class="dash-card-footer">
         <div class="dash-card-badge" style="color:${statusCol}">${statusTxt}</div>
-        <div style="color:var(--t2)">Dag ${pace.doy}/${pace.diy} &nbsp;·&nbsp; ${Math.round(pctUsed)}%</div>
+        <div>Dag ${pace.doy}/${pace.diy} &nbsp;\u00b7&nbsp; ${Math.round(pctUsed)}% av budget</div>
       </div>
     </div>
   </div>`;
 
-  // Card 3: Finansiella mål — softer amber→coral
+  // Card 3: Finansiella mål
   const hasGoals=activeGoals.length>0;
   const goalLine=hasGoals
-    ? `${activeGoals.length} aktiva mål &nbsp;·&nbsp; ${goalPct}% nått totalt`
-    : 'Inga mål inlagda ännu';
+    ? `${activeGoals.length} aktiva m\u00e5l &nbsp;\u00b7&nbsp; ${goalPct}% n\u00e5tt totalt`
+    : 'Sparm\u00e5l, bostad, resa eller pension';
   const nearestName=nearestGoal?.label||'–';
   const nearestPct=nearestGoal&&nearestGoal.target>0?Math.min(100,Math.round((nearestGoal.current||0)/nearestGoal.target*100)):0;
   const card3=`<div class="dash-card" onclick="navTo('goals')" style="animation-delay:.14s;background:var(--card);color:var(--t1)">
     <div class="dash-card-inner">
-      <div class="dash-card-lbl"><span>Sparande & mål</span></div>
+      <div class="dash-card-head">
+        <div class="dash-card-icon" style="background:var(--blbg)">${catI('star',16,'var(--bl)')}</div>
+        <div style="flex:1">
+          <div class="dash-card-lbl">Sparande &amp; m\u00e5l</div>
+          <div class="dash-card-lbl2">${goalLine}</div>
+        </div>
+      </div>
       ${hasGoals
         ? `<div class="dash-card-val">${fmtM(totalSaved)}</div>
-           <div class="dash-card-sub">${goalLine}</div>
-           <div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:${goalPct}%"></div></div>
+           <div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:${goalPct}%;background:var(--bl)"></div></div>
            <div class="dash-card-footer">
-             <div><div style="font-size:11px;color:var(--t3);margin-bottom:1px">Närmast målet</div><div style="font-size:13px;font-weight:700">${nearestName}</div></div>
+             <div>N\u00e4rmast m\u00e5let: <span style="color:var(--t1);font-weight:600">${nearestName}</span></div>
              <div class="dash-card-badge">${nearestPct}%</div>
            </div>`
-        : `<div style="font-size:18px;font-weight:700;margin:14px 0 4px;letter-spacing:-.2px">Sätt upp ditt första mål</div>
-           <div style="font-size:13px;color:var(--t2);margin-bottom:14px">Sparmål, bostad, resa eller pension</div>
-           <div class="dash-card-badge">+ Lägg till mål →</div>`
+        : `<div class="dash-card-badge" style="color:var(--bl);background:var(--blbg)">+ L\u00e4gg till m\u00e5l \u2192</div>`
       }
     </div>
   </div>`;
@@ -8611,10 +8638,15 @@ function rOv(){
       const bp=barn.barnBudget>0?Math.min(100,Math.round(barn.barnSpent/barn.barnBudget*100)):0;
       extraCard=`<div class="dash-card" style="animation-delay:.2s;background:var(--card);color:var(--t1)">
         <div class="dash-card-inner">
-          <div class="dash-card-lbl"><span>Barn &amp; familj</span></div>
+          <div class="dash-card-head">
+            <div class="dash-card-icon" style="background:var(--blbg)">${catI('baby',16,'var(--bl)')}</div>
+            <div style="flex:1">
+              <div class="dash-card-lbl">Barn &amp; familj</div>
+              <div class="dash-card-lbl2">Budget ${fmt(barn.barnBudget)}</div>
+            </div>
+          </div>
           <div class="dash-card-val">${fmt(Math.round(barn.barnSpent))}</div>
-          <div class="dash-card-sub">Barnkostnader denna månad &nbsp;·&nbsp; budget ${fmt(barn.barnBudget)}</div>
-          <div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:${bp}%"></div></div>
+          <div class="dash-card-bar"><div class="dash-card-bar-fill" style="width:${bp}%;background:var(--bl)"></div></div>
         </div>
       </div>`;
     }
