@@ -796,6 +796,7 @@ const CP={
   chevup:`<polyline points="18 15 12 9 6 15"/>`,
   chevdown:`<polyline points="6 9 12 15 18 9"/>`,
   info:`<circle cx="10" cy="10" r="9"/><line x1="10" y1="13.6" x2="10" y2="10"/><line x1="10" y1="6.4" x2="10.01" y2="6.4"/>`,
+  creditcard:`<rect x="1.5" y="4" width="17" height="12" rx="2"/><line x1="1.5" y1="8" x2="18.5" y2="8"/><line x1="4" y1="12.5" x2="8" y2="12.5"/>`,
 };
 const catI=(n,s,c)=>{const p=CP[n]||CP.star||'<circle cx="10" cy="10" r="6"/>';return si(p,s||20,c||'currentColor');};
 // Kategori-meta: muttade, harmoniserade färger
@@ -844,8 +845,39 @@ const CM={
 const AI=[{b:'c0',d:'M\u00e5nadsavgift'},{b:'c1',d:'Bol\u00e5ner\u00e4nta'},{b:'c2',d:'Amortering'},{b:'c3',d:'El'},{b:'c4',d:'Bredband & TV'},{b:'c5',d:'Hemf\u00f6rs\u00e4kring'},{b:'c7',d:'Barnf\u00f6rs\u00e4kring'},{b:'c9',d:'Mobiltelefoni'},{b:'c10',d:'Barnvakt'}];
 const AIS=new Set(AI.map(a=>a.b));
 function getCTC(){return S.budget.cos.map(i=>CM[i.id]?.t).filter(Boolean);}
-function bCats(){const _gemSrc=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];const key=_gemSrc.map(i=>i.id+'|'+(i.amount||0)).join(',');if(key===_cKey&&_cCache)return _cCache;_cKey=key;const cats=[];const idx={};const _gemItems=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];
-  for(const item of _gemItems){const m=CM[item.id];if(!m)continue;const a=Math.abs(cA(item));if(idx[m.t]!==undefined){cats[idx[m.t]].b+=a;cats[idx[m.t]].k=[...new Set([...cats[idx[m.t]].k,...(m.k||[])])];}else{idx[m.t]=cats.length;cats.push({id:item.id,la:item.label,t:m.t,ic:m.ic,cl:m.cl,bg:m.bg,b:a,k:m.k||[]});}}return(_cCache=cats);}
+function bCats(){
+  const _gemSrc=S.budget.gem&&S.budget.gem.length?S.budget.gem:[...S.budget.cos,...S.budget.exp];
+  const key=_gemSrc.map(i=>i.id+'|'+(i.amount||0)+'|'+(i.cat||'')).join(',');
+  if(key===_cKey&&_cCache)return _cCache;
+  _cKey=key;
+  const cats=[];
+  const idx={};
+  const userCatsById={};
+  getUserCats().forEach(c=>{userCatsById[c.id]=c;});
+  for(const item of _gemSrc){
+    if(item.cat==='inkomst')continue;
+    const m=CM[item.id];
+    // Anv\u00e4nder postens EGEN kategori f\u00f6rst (s\u00e5 egna kategorier fungerar),
+    // och faller bara tillbaka p\u00e5 den h\u00e5rdkodade CM-listan f\u00f6r \u00e4ldre,
+    // inbyggda poster som inte har ett explicit .cat-f\u00e4lt satt \u00e4nnu.
+    const t=item.cat||m?.t;
+    if(!t)continue;
+    const uc=userCatsById[t];
+    const la=uc?.label||m?.t||item.label||t;
+    const ic=uc?.ic||m?.ic||'bag';
+    const cl=m?.cl||'var(--t2)';
+    const bg=m?.bg||'var(--bd2)';
+    const a=Math.abs(cA(item));
+    if(idx[t]!==undefined){
+      cats[idx[t]].b+=a;
+      if(m?.k)cats[idx[t]].k=[...new Set([...cats[idx[t]].k,...m.k])];
+    }else{
+      idx[t]=cats.length;
+      cats.push({id:item.id,la,t,ic,cl,bg,b:a,k:m?.k||[]});
+    }
+  }
+  return(_cCache=cats);
+}
 function bustC(){_cCache=null;_cKey='';}
 // Normaliserar en beskrivning till en stabil "handlar-nyckel" — samma idé
 // som anv\u00e4nds f\u00f6r att gruppera transaktioner, men h\u00e4r f\u00f6r att komma ih\u00e5g
@@ -868,7 +900,16 @@ function recallCategory(desc){
 function gc(d){
   const remembered=recallCategory(d);
   if(remembered)return remembered;
-  const s=(d||'').toLowerCase();for(const[,m]of Object.entries(CM)){if(m.k?.some(k=>s.includes(k)))return m.t;}return'ovrigt';}
+  const s=(d||'').toLowerCase();
+  for(const[,m]of Object.entries(CM)){if(m.k?.some(k=>s.includes(k)))return m.t;}
+  // Anv\u00e4ndarens egna kategorier har inga inbyggda nyckelord (CM \u00e4r
+  // h\u00e5rdkodad och k\u00e4nner inte till dem), s\u00e5 kollar ocks\u00e5 eventuella
+  // nyckelord anv\u00e4ndaren sj\u00e4lv angett p\u00e5 sina egna kategorier.
+  for(const cat of(S.userCats||[])){
+    if(cat.keywords?.some(k=>k&&s.includes(k)))return cat.id;
+  }
+  return'ovrigt';
+}
 const fmt=n=>{const s=Math.abs(Math.round(n)).toLocaleString('sv-SE');return(n<0?'\u2212':'')+s+'\u202fkr'};
 const srcClr={manual:['var(--t3)',''],bank:['var(--bl)',''],avanza:['var(--ok)',''],nordnet:['#AF52DE','']};
 // Kommunalskatt 2026 (kommun + region, ungefärliga värden) för de ~35 största
@@ -923,7 +964,7 @@ const MORTGAGE_LENDERS=[
 const srcBadge=(src,size=10)=>{const[c]=srcClr[src]||srcClr.manual;return `<span style="font-size:${size}px;color:${c};font-weight:600">${{manual:'Manuell',bank:'Bank',avanza:'Avanza',nordnet:'Nordnet',annat:'K\u00e4lla'}[src]||'Manuell'}</span>`;};
 const PBB=59200,ST=643000,DF='hushallsbudget_data.json',LS='hb_v4';
 
-const DATA_V=8;
+const DATA_V=9;
 function migrateData(p){
   const v=p.v||1;
   if(v<2){if(!p.goals)p.goals=[];if(!p.nwHist)p.nwHist=[];}
@@ -1067,6 +1108,21 @@ function migrateData(p){
         }
       });
       Object.keys(rescued).forEach(k=>{p.TX[k]=rescued[k];});
+    }
+  }
+  if(v<9&&p.userCats){
+    // v8\u2192v9: "Bank & finans" blir en riktig standardkategori f\u00f6r alla,
+    // med egen ikon och f\u00f6rifyllda nyckelord (bankavgifter, kortavgifter,
+    // fackf\u00f6rbund, a-kassa m.m.) \u2014 \u00e5teranv\u00e4nder en redan manuellt skapad
+    // kategori med samma namn om en s\u00e5dan finns, s\u00e5 det inte blir en dubblett.
+    const bankKeywords=['bankavgift','kontoavgift','kortavgift','\u00e5rsavgift kort','fackf\u00f6rbund','handels','kommunal fack','unionen','byggnads','vision fack','ledarna','saco','seko','a-kassa','akassa'];
+    let bankCat=p.userCats.find(c=>(c.label||'').trim().toLowerCase()==='bank & finans');
+    if(!bankCat){
+      const maxOrder=Math.max(0,...p.userCats.map(c=>c.order||0));
+      p.userCats.push({id:'bank',label:'Bank & finans',ic:'creditcard',order:maxOrder+1,keywords:bankKeywords});
+    }else{
+      if(!bankCat.ic||bankCat.ic==='bag')bankCat.ic='creditcard';
+      if(!bankCat.keywords||!bankCat.keywords.length)bankCat.keywords=bankKeywords;
     }
   }
   p.v=DATA_V;return p;
@@ -2841,6 +2897,12 @@ function updateUserCat(id,label,ic){
   if(ic!==undefined)cat.ic=ic;
   markUns();
 }
+function updateCatKeywords(id,value){
+  const cat=(S.userCats||[]).find(c=>c.id===id);
+  if(!cat)return;
+  cat.keywords=value.split(',').map(k=>k.trim().toLowerCase()).filter(Boolean);
+  markUns();
+}
 function removeUserCat(id){
   // Reassign all items using this category to 'ovrigt' before removing
   const gem=S.budget.gem||[];
@@ -2905,6 +2967,10 @@ function rCatManager(){
       html+='<div style="display:flex;gap:8px;padding-top:8px">';
       html+='<input class="inp sm" type="text" id="new-sub-'+cat.id+'" placeholder="Ny underkategori" style="flex:1;background:var(--card)">';
       html+='<button onclick="submitNewSubcat(\''+cat.id+'\')" style="background:var(--bl);color:var(--t1);border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0">L\u00e4gg till</button>';
+      html+='</div>';
+      html+='<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--bd3)">';
+      html+='<div style="font-size:11px;color:var(--t3);margin-bottom:6px">Nyckelord f\u00f6r automatisk kategorisering (kommaseparerat) \u2014 transaktioner vars beskrivning inneh\u00e5ller n\u00e5got av dessa ord f\u00e5r denna kategori automatiskt vid import</div>';
+      html+='<input class="inp sm" type="text" value="'+((cat.keywords||[]).join(', ')).replace(/"/g,'&quot;')+'" placeholder="t.ex. bankavgift, v\u00e4xlingsavgift, swish" oninput="updateCatKeywords(\''+cat.id+'\',this.value)" style="width:100%;background:var(--card)">';
       html+='</div></div>';
     }
 
