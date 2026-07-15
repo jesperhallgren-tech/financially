@@ -937,6 +937,18 @@ function estimateKommunTax(city){
   const match=Object.keys(KOMMUN_TAX_2026).find(k=>key.includes(k));
   return match?KOMMUN_TAX_2026[match]:null;
 }
+// M\u00e4klararvode 2026 \u2014 regionala snitt f\u00f6r de tre st\u00f6rsta st\u00e4derna, d\u00e4r
+// vi har verifierad statistik (h\u00f6gre bostadspriser ger l\u00e4gre procentsats).
+// F\u00f6r alla andra orter anv\u00e4nds i st\u00e4llet det \u00e4rliga nationsgenomsnittet,
+// ist\u00e4llet f\u00f6r att hitta p\u00e5 siffror f\u00f6r orter vi inte har verifierad data f\u00f6r.
+const MAKLARARVODE_BY_CITY_2026={'stockholm':1.6,'göteborg':2.2,'malmö':3.1};
+function estimateMaklararvode(city,homeType){
+  const nationalAvg=homeType==='villa'?3.4:2.8;
+  if(!city)return nationalAvg;
+  const key=city.trim().toLowerCase();
+  const match=Object.keys(MAKLARARVODE_BY_CITY_2026).find(k=>key.includes(k));
+  return match?MAKLARARVODE_BY_CITY_2026[match]:nationalAvg;
+}
 
 const SPARANDE_SUBCATS=[
   {id:'konto',lbl:'Sparkonto & likvida medel'},
@@ -8001,10 +8013,11 @@ function calcBostadsbyte(g){
   const baseAdult1=8500,baseAdults2=14000,perKid=5000;
   const livingCost=(numAdults>=2?baseAdults2:baseAdult1)+numKids*perKid;
   const inc=ctxInc();
-  const netMonthlyIncome=inc*0.72; // grov schablon f\u00f6r nettoinkomst efter skatt
+  const netMonthlyIncome=inc; // ctxInc() returnerar redan n\u00e4ttoinkomst (efter skatt) via appens egen skattemotor
   const otherDebtMonthly=(S.debts2||[]).filter(d=>d.cat!=='bolan').reduce((s,d)=>s+Math.abs(d.amount||0)*0.03/12,0); // schablon 3%/\u00e5r amortering+r\u00e4nta p\u00e5 \u00f6vriga l\u00e5n
   const avgift=g.bbNewType==='bostadsratt'?(g.bbMaxAvgift||0):0;
-  const maxMonthlyForHousing=Math.max(0,netMonthlyIncome-livingCost-otherDebtMonthly);
+  const kalpMargin=numAdults*3000; // banker kr\u00e4ver vanligen 2\u2013000\u20138\u2009000 kr/m\u00e5n i marginal, inte bara nollresultat
+  const maxMonthlyForHousing=Math.max(0,netMonthlyIncome-livingCost-otherDebtMonthly-kalpMargin);
   const stressRate=(g.bbStressRate??7)/100;
 
   const amortRateAt=ltv=>ltv>70?0.02:ltv>=50?0.01:0;
@@ -8322,6 +8335,8 @@ function rebuildPlannedModal(id,isNew){
     <input class="inp" type="month" value="${p.month||''}" oninput="pinSyncField('${p.id}','month',this.value)"></div>
   <div class="fi" style="margin-bottom:14px"><div class="fl">\u00c4gare</div>
     <select class="sel" style="width:100%" onchange="pinSyncField('${p.id}','owner',this.value)">${oOpts}</select></div>
+  ${isExpense?`<div class="fi" style="margin-bottom:14px"><div class="fl">Kategori (anv\u00e4nds n\u00e4r du bokf\u00f6r)</div>
+    <select class="sel" style="width:100%" onchange="pinSyncField('${p.id}','cat',this.value)">${getUserCats().slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(c=>`<option value="${c.id}"${c.id===(p.cat||gc(p.label))?' selected':''}>${c.label}</option>`).join('')}</select></div>`:''}
   ${isExpense&&!p.linkedGoalId?`<button onclick="offerGoalForPlanned('${p.id}')" style="width:100%;background:var(--blbg);color:var(--bl);border:none;cursor:pointer;padding:10px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px">Vill du spara till detta? Skapa sparm\u00e5l \u2192</button>`:''}
   ${p.linkedGoalId?`<div style="font-size:12px;color:var(--ok);padding:8px 10px;background:var(--okbg);border-radius:8px;margin-bottom:14px">\u2713 Kopplat till ett sparm\u00e5l \u2014 se Sparande &amp; m\u00e5l</div>`:''}
   ${(()=>{const now=new Date();const cmk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');return p.month&&p.month<=cmk&&p.status==='planned';})()?`<button onclick="convertPlannedToTransaction('${p.id}');document.getElementById('planned-modal').remove()" style="width:100%;background:var(--warnbg);color:var(--warn);border:none;cursor:pointer;padding:10px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px">Bokf\u00f6r nu i Utfall</button>`:''}
@@ -8386,7 +8401,7 @@ function convertPlannedToTransaction(id){
   const now=new Date();
   const y=now.getFullYear(),m=now.getMonth();
   const txs=gTX(y,m);
-  txs.push({id:'plan_tx'+Date.now(),date:now.toISOString().slice(0,10),desc:p.label||'Kommande post',amount:-Math.abs(p.amount),cat:p.cat||'ovrigt',source:'manual'});
+  txs.push({id:'plan_tx'+Date.now(),date:now.toISOString().slice(0,10),desc:p.label||'Kommande post',amount:-Math.abs(p.amount),cat:p.cat||gc(p.label)||'ovrigt',source:'manual'});
   if(p.amount>0)txs[txs.length-1].amount=Math.abs(p.amount);
   sTX(y,m,txs);
   p.status='done';
@@ -8404,7 +8419,7 @@ function buildBostadsbyteSection(g){
   const existingMortgages=(S.debts2||[]).filter(d=>d.cat==='bolan');
   const suggestedMortgage=existingMortgages.reduce((s,d)=>s+Math.abs(d.amount||0),0);
   if(g.bbCurrentMortgage==null&&suggestedMortgage>0){g.bbCurrentMortgage=suggestedMortgage;saveLS();}
-  if(g.bbSellingCostPct==null){g.bbSellingCostPct=g.bbCurrentHomeType==='villa'?3.4:2.8;saveLS();}
+  if(g.bbSellingCostPct==null){g.bbSellingCostPct=estimateMaklararvode(P.me?.city,g.bbCurrentHomeType);saveLS();}
   const r=calcBostadsbyte(g);
   const isBR=g.bbNewType!=='villa';
   const isCurrBR=g.bbCurrentHomeType!=='villa';
@@ -8427,15 +8442,15 @@ function buildBostadsbyteSection(g){
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <div style="flex:2"><div class="fi"><div class="fl">F\u00f6rv\u00e4ntat f\u00f6rs\u00e4ljningspris</div>
-          <input class="inp" type="number" inputmode="decimal" value="${g.bbSalePrice||''}" placeholder="kr" oninput="S.goals.find(x=>x.id==='${g.id}').bbSalePrice=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div></div>
+          <input class="inp" type="number" inputmode="decimal" value="${g.bbSalePrice||''}" placeholder="kr" oninput="S.goals.find(x=>x.id==='${g.id}').bbSalePrice=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div></div>
         <div style="flex:1"><div class="fi"><div class="fl">M\u00e4klararvode</div>
-          <input class="inp" type="number" inputmode="decimal" value="${g.bbSellingCostPct}" oninput="S.goals.find(x=>x.id==='${g.id}').bbSellingCostPct=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div></div>
+          <input class="inp" type="number" inputmode="decimal" value="${g.bbSellingCostPct}" oninput="S.goals.find(x=>x.id==='${g.id}').bbSellingCostPct=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div></div>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">Snitt i Sverige: ${isCurrBR?'2,8% f\u00f6r bostadsr\u00e4tt':'3,4% f\u00f6r villa'} \u2014 varierar mycket regionalt (Stockholm ~1,6%, mindre orter ~4\u20135%)</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px">${(()=>{const city=P.me?.city;const est=estimateMaklararvode(city,g.bbCurrentHomeType);const isCitySpecific=city&&Object.keys(MAKLARARVODE_BY_CITY_2026).some(k=>city.trim().toLowerCase().includes(k));return isCitySpecific?`F\u00f6rslag baserat p\u00e5 din bostadsort (${city}): ${est}%`:`Nationsgenomsnitt: ${isCurrBR?'2,8% f\u00f6r bostadsr\u00e4tt':'3,4% f\u00f6r villa'} \u2014 l\u00e4gg till din bostadsort under Min profil f\u00f6r ett tr\u00e4ffs\u00e4krare f\u00f6rslag i storst\u00e4derna. Varierar mycket regionalt (Stockholm ~1,6%, mindre orter ~4\u20135%)`;})()}</div>
       <div class="fi" style="margin-bottom:8px"><div class="fl">Kvarvarande l\u00e5n att l\u00f6sa${suggestedMortgage>0?' (f\u00f6rifyllt fr\u00e5n Skulder)':''}</div>
-        <input class="inp" type="number" inputmode="decimal" value="${g.bbCurrentMortgage||0}" oninput="S.goals.find(x=>x.id==='${g.id}').bbCurrentMortgage=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div>
+        <input class="inp" type="number" inputmode="decimal" value="${g.bbCurrentMortgage||0}" oninput="S.goals.find(x=>x.id==='${g.id}').bbCurrentMortgage=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div>
       <div class="fi" style="margin-bottom:4px"><div class="fl">Extra sparande att l\u00e4gga in ut\u00f6ver nettolikviden</div>
-        <input class="inp" type="number" inputmode="decimal" value="${g.bbExtraSavings||0}" oninput="S.goals.find(x=>x.id==='${g.id}').bbExtraSavings=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div>
+        <input class="inp" type="number" inputmode="decimal" value="${g.bbExtraSavings||0}" oninput="S.goals.find(x=>x.id==='${g.id}').bbExtraSavings=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div>
       <div style="font-size:12px;color:var(--ok);padding:8px 10px;background:var(--okbg);border-radius:8px;margin-top:8px">Netto fr\u00e5n f\u00f6rs\u00e4ljning: ${fmt(r.netProceeds)} \u00b7 Totalt kontantinsats-kapital: ${fmt(r.totalCash)}</div>
     </div>
 
@@ -8452,9 +8467,9 @@ function buildBostadsbyteSection(g){
           <input class="inp" type="text" value="${(g.bbArea||'').replace(/"/g,'&quot;')}" placeholder="t.ex. S\u00f6dermalm" oninput="S.goals.find(x=>x.id==='${g.id}').bbArea=this.value;saveLS()"></div></div>
       </div>
       ${isBR?`<div class="fi" style="margin-bottom:8px"><div class="fl">Max m\u00e5nadsavgift</div>
-        <input class="inp" type="number" inputmode="decimal" value="${g.bbMaxAvgift||''}" placeholder="kr/m\u00e5n" oninput="S.goals.find(x=>x.id==='${g.id}').bbMaxAvgift=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div>`:''}
+        <input class="inp" type="number" inputmode="decimal" value="${g.bbMaxAvgift||''}" placeholder="kr/m\u00e5n" oninput="S.goals.find(x=>x.id==='${g.id}').bbMaxAvgift=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div>`:''}
       <div class="fi" style="margin-bottom:8px"><div class="fl">\u00d6nskat pris (om annat \u00e4n uppskattat maxbelopp nedan)</div>
-        <input class="inp" type="number" inputmode="decimal" value="${g.bbDesiredPrice||''}" placeholder="kr" oninput="S.goals.find(x=>x.id==='${g.id}').bbDesiredPrice=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div>
+        <input class="inp" type="number" inputmode="decimal" value="${g.bbDesiredPrice||''}" placeholder="kr" oninput="S.goals.find(x=>x.id==='${g.id}').bbDesiredPrice=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div>
       ${(g.bbArea||g.bbRooms)?aiBtnHtml('AI-bed\u00f6mning av prisniv\u00e5',`aiHousingPriceCheck('${g.id}')`):''}
     </div>
 
@@ -8462,9 +8477,9 @@ function buildBostadsbyteSection(g){
       <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px">R\u00e4nta</div>
       <div style="display:flex;gap:8px">
         <div style="flex:1"><div class="fi"><div class="fl">R\u00e4nta att r\u00e4kna med</div>
-          <input class="inp" type="number" step="0.05" inputmode="decimal" value="${g.bbInterestRate??4}" oninput="S.goals.find(x=>x.id==='${g.id}').bbInterestRate=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div></div>
+          <input class="inp" type="number" step="0.05" inputmode="decimal" value="${g.bbInterestRate??4}" oninput="S.goals.find(x=>x.id==='${g.id}').bbInterestRate=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div></div>
         <div style="flex:1"><div class="fi"><div class="fl">Stressr\u00e4nta (l\u00e5nekalkyl)</div>
-          <input class="inp" type="number" step="0.5" inputmode="decimal" value="${g.bbStressRate??7}" oninput="S.goals.find(x=>x.id==='${g.id}').bbStressRate=parseFloat(this.value)||0;saveLS();rebuildGoalModal('${g.id}')"></div></div>
+          <input class="inp" type="number" step="0.5" inputmode="decimal" value="${g.bbStressRate??7}" oninput="S.goals.find(x=>x.id==='${g.id}').bbStressRate=parseFloat(this.value)||0;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div></div>
       </div>
     </div>
 
@@ -8499,7 +8514,7 @@ function buildBostadsbyteSection(g){
       <div style="font-size:12px;color:var(--t3);margin:10px 0 6px">Ditt \u00f6nskade pris (${fmt(desiredPrice)}) ligger \u00f6ver ber\u00e4knat maxbelopp. F\u00f6r att t\u00e4cka mellanskillnaden i kontantinsats:</div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <div style="flex:1"><div class="fi"><div class="fl">Inom hur m\u00e5nga m\u00e5nader?</div>
-          <input class="inp" type="number" inputmode="numeric" value="${g.bbTimeframeMonths||24}" oninput="S.goals.find(x=>x.id==='${g.id}').bbTimeframeMonths=parseInt(this.value)||24;saveLS();rebuildGoalModal('${g.id}')"></div></div>
+          <input class="inp" type="number" inputmode="numeric" value="${g.bbTimeframeMonths||24}" oninput="S.goals.find(x=>x.id==='${g.id}').bbTimeframeMonths=parseInt(this.value)||24;saveLS()" onchange="rebuildGoalModal('${g.id}')"></div></div>
       </div>
       <div style="font-size:12px;color:var(--warn);padding:8px 10px;background:var(--warnbg);border-radius:8px;margin-bottom:8px">Beh\u00f6ver spara ${fmt(Math.round(monthlySavingsNeeded))}/m\u00e5n i ${months} m\u00e5nader (totalt ${fmt(Math.round(cashGap))} extra)</div>
       <button onclick="createSavingsGoalForBostadsbyte('${g.id}')" class="btn sec sm" style="width:100%">+ Skapa sparm\u00e5l f\u00f6r mellanskillnaden</button>
