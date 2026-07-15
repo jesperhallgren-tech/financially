@@ -5634,14 +5634,19 @@ async function aiBostadsbyteHelhet(goalId){
   const r=calcBostadsbyte(g);
   const inc=ctxInc();
   const gem=(S.budget.gem||[]).filter(i=>i.cat!=='inkomst');
+  // J\u00e4mf\u00f6r boendekostnad mot boendekostnad, inte total nuvarande
+  // konsumtion mot ny boendekostnad \u2014 annars blir det \u00e4pplen och p\u00e4ron.
+  const currentHousingCost=gem.filter(i=>i.cat==='boende').reduce((s,i)=>s+Math.abs(cA(i)),0);
   const currentExp=gem.reduce((s,i)=>s+Math.abs(cA(i)),0);
-  const currentDisp=inc-currentExp;
+  const currentDispOverall=inc-currentExp;
+  const currentHousingPct=inc>0?Math.round(currentHousingCost/inc*100):0;
+  const newHousingPct=inc>0?Math.round(r.totalMonthlyCostNet/inc*100):0;
   const otherGoals=S.goals.filter(x=>x.id!==goalId&&x.type!=='bostadsbyte').map(x=>`${x.label}: ${Math.round(getEffectiveMonthly(x))} kr/m\u00e5n`).join(', ')||'inga andra m\u00e5l';
 
   showAIInsightModal('H\u00e4nger det ihop?');
   try{
     const raw=await callD(
-      `Du \u00e4r en svensk privatekonomirådgivare. Ett hush\u00e5ll planerar ett bostadsbyte:\nNuvarande m\u00e5natlig disponibel inkomst (efter dagens boendekostnad): ${Math.round(currentDisp)} kr\nNy ber\u00e4knad boendekostnad efter bytet: ${Math.round(r.totalMonthlyCostNet)} kr/m\u00e5n (r\u00e4nta efter avdrag + amortering${r.avgift?' + avgift':''})\nHush\u00e5llets totala m\u00e5natliga inkomst: ${Math.round(inc)} kr\n\u00d6vriga sparm\u00e5l som ocks\u00e5 konkurrerar om utrymmet: ${otherGoals}\n\nGe en kort (3-4 meningar), balanserad helhetsbed\u00f6mning p\u00e5 svenska: h\u00e4nger den nya boendekostnaden ihop med \u00f6vrig ekonomi och andra m\u00e5l, eller riskerar den att tr\u00e4nga undan annat? Ge gärna en konkret prioriteringstanke om det k\u00e4nns relevant. Ingen inledande fras, ingen markdown.`,
+      `Du \u00e4r en svensk privatekonomirådgivare. Ett hush\u00e5ll planerar ett bostadsbyte:\nNuvarande boendekostnad: ${Math.round(currentHousingCost)} kr/m\u00e5n (${currentHousingPct}% av inkomsten)\nNy ber\u00e4knad boendekostnad efter bytet: ${Math.round(r.totalMonthlyCostNet)} kr/m\u00e5n (${newHousingPct}% av inkomsten) \u2014 r\u00e4nta efter avdrag + amortering${r.avgift?' + avgift':''}\nHush\u00e5llets totala m\u00e5natliga inkomst: ${Math.round(inc)} kr\nDisponibelt \u00f6ver huvud taget idag (efter ALLA nuvarande utgifter, inte bara boende): ${Math.round(currentDispOverall)} kr/m\u00e5n\n\u00d6vriga sparm\u00e5l som ocks\u00e5 konkurrerar om utrymmet: ${otherGoals}\n\nAnv\u00e4nd EXAKT de tv\u00e5 boendekostnads-procentsatserna som getts ovan f\u00f6r j\u00e4mf\u00f6relsen \u2014 r\u00e4kna inte om dem sj\u00e4lv. Ge en kort (3-4 meningar), balanserad helhetsbed\u00f6mning p\u00e5 svenska: h\u00e4nger den nya boendekostnaden ihop med \u00f6vrig ekonomi och andra m\u00e5l, eller riskerar den att tr\u00e4nga undan annat? Ge g\u00e4rna en konkret prioriteringstanke om det k\u00e4nns relevant. Ingen inledande fras, ingen markdown.`,
       500
     );
     setAIInsightBody(renderAIProse(raw));
