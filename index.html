@@ -5693,7 +5693,7 @@ async function aiFindRecurringPatterns(){
 }
 function aiAddSuggestedPlanned(label,amount,month,btn){
   if(!S.plannedItems)S.plannedItems=[];
-  S.plannedItems.push({id:'plan'+Date.now().toString(36),label,amount:-Math.abs(amount),month:month||'',cat:null,owner:'shared',linkedGoalId:null,status:'planned'});
+  S.plannedItems.push({id:'plan'+Date.now().toString(36),label,amount:-Math.abs(amount),month:month||'',cat:null,owner:'shared',linkedGoalId:null,status:'planned',updatedAt:Date.now()});
   saveLS();hapMed();
   if(btn){btn.textContent='\u2713 Tillagd';btn.disabled=true;btn.style.opacity='.6';}
   pinRefresh();
@@ -5879,6 +5879,23 @@ function deleteBySource(src,btn){
   showSnack(`\u2713 ${count} transaktion(er) borttagna`);
   refreshUtfall();
   if(btn){btn.textContent='\u2713 Borttaget';btn.disabled=true;btn.style.opacity='.6';}
+}
+
+function linkBostadsbyteAsset(goalId,assetId){
+  const g=S.goals.find(x=>x.id===goalId);
+  const a=(S.assets2||[]).find(x=>x.id===assetId);
+  if(!g)return;
+  g.bbLinkedAssetId=assetId||null;
+  if(a){
+    g.bbSalePrice=Math.abs(a.amount||0);
+    // propType har 4 alternativ (bostadsr\u00e4tt/villa/fritidshus/tomt), medan
+    // bostadsbyte-kalkylen bara skiljer p\u00e5 tv\u00e5 (avgift g\u00e4ller ju bara
+    // bostadsr\u00e4tt) \u2014 fritidshus/tomt r\u00e4knas som villa-liknande h\u00e4r.
+    g.bbCurrentHomeType=a.propType==='bostadsratt'?'bostadsratt':'villa';
+    g.bbSellingCostPct=estimateMaklararvode(P.me?.city,g.bbCurrentHomeType);
+  }
+  saveLS();hapLight();
+  rebuildGoalModal(goalId);
 }
 
 async function callD(prompt,tok,sys){
@@ -7710,7 +7727,16 @@ function mergePlannedItems(localArr,cloudRows){
   (localArr||[]).forEach(it=>{merged[it.id]=it;});
   (cloudRows||[]).forEach(item=>{
     const loc=merged[item.id];
-    if(loc&&loc.status==='deleted')return; // lokal borttagning vinner
+    if(loc){
+      const locTs=loc.updatedAt||0,cloudTs=item.updatedAt||0;
+      // Lokal borttagning vinner \u2014 om inte molnets version \u00e4r nyare (n\u00e5gon
+      // r\u00e4ttade posten p\u00e5 en annan enhet EFTER att den togs bort h\u00e4r).
+      if(loc.status==='deleted'&&cloudTs<=locTs)return;
+      // F\u00f6r \u00f6vriga f\u00e4lt-\u00e4ndringar: den senast \u00e4ndrade versionen vinner,
+      // ist\u00e4llet f\u00f6r att molnet alltid skriver \u00f6ver en lokal \u00e4ndring som
+      // \u00e4nnu inte hunnit synkas upp.
+      if(locTs>cloudTs)return;
+    }
     merged[item.id]=item;
   });
   return Object.values(merged);
@@ -8241,7 +8267,7 @@ function rGoals(){
 // st\u00f6rre g\u00e5va etc), skilt fr\u00e5n b\u00e5de \u00e5terkommande Budget och aspirationella M\u00e5l ══
 function rPlannedItems(el){
   if(!el)return;
-  const items=(S.plannedItems||[]).filter(p=>p.status!=='dismissed'&&p.status!=='deleted').sort((a,b)=>(a.month||'').localeCompare(b.month||''));
+  const items=(S.plannedItems||[]).filter(p=>p.status==='planned').sort((a,b)=>(a.month||'').localeCompare(b.month||''));
   const isOpen=BCO['planned-items']!==false;
   const now=new Date();
   const curMonthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
@@ -8298,7 +8324,7 @@ function editPlannedItem(id){
     if(!S.plannedItems)S.plannedItems=[];
     const now=new Date();
     const nm=new Date(now.getFullYear(),now.getMonth()+1,1);
-    p={id:'plan'+Date.now().toString(36),label:'',amount:-10000,month:nm.getFullYear()+'-'+String(nm.getMonth()+1).padStart(2,'0'),cat:null,owner:'shared',linkedGoalId:null,status:'planned'};
+    p={id:'plan'+Date.now().toString(36),label:'',amount:-10000,month:nm.getFullYear()+'-'+String(nm.getMonth()+1).padStart(2,'0'),cat:null,owner:'shared',linkedGoalId:null,status:'planned',updatedAt:Date.now()};
     S.plannedItems.push(p);saveLS();
   }
   const modal=document.createElement('div');
@@ -8347,13 +8373,14 @@ function rebuildPlannedModal(id,isNew){
 }
 function pinSyncField(id,field,val){
   const p=(S.plannedItems||[]).find(x=>x.id===id);
-  if(p){p[field]=val;saveLS();}
+  if(p){p[field]=val;p.updatedAt=Date.now();saveLS();}
 }
 function pinSetType(id,expense){
   const p=(S.plannedItems||[]).find(x=>x.id===id);
   if(!p)return;
   const abs=Math.abs(p.amount||0)||10000;
   p.amount=expense?-abs:abs;
+  p.updatedAt=Date.now();
   saveLS();
   rebuildPlannedModal(id,false);
 }
@@ -8362,12 +8389,13 @@ function pinSetAmount(id,val){
   if(!p)return;
   const n=Math.abs(parseFloat(val)||0);
   p.amount=p.amount<0?-n:n;
+  p.updatedAt=Date.now();
   saveLS();
 }
 function deletePlannedItem(id){
   if(!confirm('Ta bort denna kommande post?'))return;
   const p=(S.plannedItems||[]).find(x=>x.id===id);
-  if(p)p.status='deleted';
+  if(p){p.status='deleted';p.updatedAt=Date.now();}
   saveLS();
   document.getElementById('planned-modal')?.remove();
   hapMed();
@@ -8388,6 +8416,7 @@ function offerGoalForPlanned(id){
   if(!S.goals)S.goals=[];
   S.goals.push(goal);
   p.linkedGoalId=goal.id;
+  p.updatedAt=Date.now();
   saveLS();
   hapMed();
   showSnack('\u2713 Sparm\u00e5l skapat');
@@ -8405,6 +8434,7 @@ function convertPlannedToTransaction(id){
   if(p.amount>0)txs[txs.length-1].amount=Math.abs(p.amount);
   sTX(y,m,txs);
   p.status='done';
+  p.updatedAt=Date.now();
   saveLS();
   hapMed();
   showSnack('\u2713 Bokf\u00f6rd i Utfall');
@@ -8419,6 +8449,9 @@ function buildBostadsbyteSection(g){
   const existingMortgages=(S.debts2||[]).filter(d=>d.cat==='bolan');
   const suggestedMortgage=existingMortgages.reduce((s,d)=>s+Math.abs(d.amount||0),0);
   if(g.bbCurrentMortgage==null&&suggestedMortgage>0){g.bbCurrentMortgage=suggestedMortgage;saveLS();}
+  const homeAssets=(S.assets2||[]).filter(a=>a.cat==='boende');
+  if(g.bbLinkedAssetId===undefined&&homeAssets.length===1){g.bbLinkedAssetId=homeAssets[0].id;saveLS();}
+  const linkedAsset=homeAssets.find(a=>a.id===g.bbLinkedAssetId);
   if(g.bbSellingCostPct==null){g.bbSellingCostPct=estimateMaklararvode(P.me?.city,g.bbCurrentHomeType);saveLS();}
   const r=calcBostadsbyte(g);
   const isBR=g.bbNewType!=='villa';
@@ -8436,6 +8469,10 @@ function buildBostadsbyteSection(g){
   return `
     <div style="border-top:.5px solid rgba(128,128,128,.15);margin:12px 0;padding-top:12px">
       <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px">S\u00e4lja nuvarande bostad</div>
+      ${homeAssets.length>1?`<div class="fi" style="margin-bottom:8px"><div class="fl">Vilken bostad (fr\u00e5n Tillg\u00e5ngar)?</div>
+        <select class="sel" style="width:100%" onchange="linkBostadsbyteAsset('${g.id}',this.value)"><option value="">Ingen koppling \u2014 fyll i manuellt</option>${homeAssets.map(a=>`<option value="${a.id}"${a.id===g.bbLinkedAssetId?' selected':''}>${a.label||a.address||'Bostad'} (${fmt(a.amount)})</option>`).join('')}</select></div>`
+      :homeAssets.length===1?`<div style="font-size:12px;color:var(--ok);padding:8px 10px;background:var(--okbg);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span>\u2713 Kopplad till "${linkedAsset?.label||linkedAsset?.address||'din bostad'}" i Tillg\u00e5ngar</span><button onclick="linkBostadsbyteAsset('${g.id}','${homeAssets[0].id}')" style="background:none;border:none;color:var(--ok);font-weight:700;cursor:pointer;font-size:11px;flex-shrink:0;margin-left:8px">\u21bb Uppdatera</button></div>`
+      :`<div style="font-size:12px;color:var(--t3);margin-bottom:8px">Ingen bostad hittad under Tillg\u00e5ngar att koppla till \u2014 fyll i f\u00f6rs\u00e4ljningspriset manuellt nedan.</div>`}
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <button onclick="S.goals.find(x=>x.id==='${g.id}').bbCurrentHomeType='bostadsratt';saveLS();rebuildGoalModal('${g.id}')" class="btn ${isCurrBR?'pri':'sec'} sm" style="flex:1">S\u00e4ljer bostadsr\u00e4tt</button>
         <button onclick="S.goals.find(x=>x.id==='${g.id}').bbCurrentHomeType='villa';saveLS();rebuildGoalModal('${g.id}')" class="btn ${!isCurrBR?'pri':'sec'} sm" style="flex:1">S\u00e4ljer villa/hus</button>
